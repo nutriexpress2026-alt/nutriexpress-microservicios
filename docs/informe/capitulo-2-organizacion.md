@@ -1,13 +1,9 @@
 # CAPÍTULO 2 – LA ORGANIZACIÓN
 
-> Los datos marcados con **[COMPLETAR]** dependen del negocio y deben confirmarse antes de pasar el
-> capítulo al informe final.
-
 ## 2.1 Antecedentes
 
 NutriExpress es un emprendimiento de la ciudad de Montero (Santa Cruz, Bolivia) dedicado a la
-preparación y venta de comida saludable. Nació **[COMPLETAR: año de fundación]** como respuesta a la
-demanda creciente de alimentos preparados con insumos frescos, porciones balanceadas e información
+preparación y venta de comida saludable. Nació como respuesta a la demanda creciente de alimentos preparados con insumos frescos, porciones balanceadas e información
 nutricional clara, una oferta poco común entre los locales de comida de la zona, orientados en su
 mayoría a la comida rápida tradicional.
 
@@ -65,8 +61,9 @@ El trabajo diario del negocio sigue este ciclo:
 5. **Control y cierre:** el administrador revisa las ventas del día, los pedidos entregados y
    cancelados, el stock disponible y los insumos que deben reponerse.
 
+<!-- figura: Ciclo de trabajo diario de NutriExpress -->
 ```mermaid
-flowchart LR
+flowchart TD
     A[Compra de insumos] --> B[Almacén]
     B --> C[Cocina: producción según receta]
     C --> D[Productos listos]
@@ -80,6 +77,7 @@ flowchart LR
 
 ## 2.5 Estructura organizacional
 
+<!-- figura: Organigrama de NutriExpress -->
 ```mermaid
 flowchart TD
     P[Propietario / Administrador] --> V[Área de ventas]
@@ -92,15 +90,15 @@ flowchart TD
     R --> R1[Repartidores]
 ```
 
-| Cargo | Funciones principales |
-|---|---|
-| **Administrador** | Dirige el negocio, define precios y productos, administra el personal y revisa los reportes. |
-| **Vendedor** | Atiende en el mostrador, registra las ventas, cobra y gestiona los pedidos recibidos. |
-| **Cocinero** | Elabora los productos según las recetas y registra la producción. |
-| **Almacenero** | Recibe las compras, controla el stock y los vencimientos y registra ingresos y egresos. |
-| **Repartidor** | Entrega los pedidos a domicilio y cobra los pagos en efectivo. |
+NutriExpress opera con una sola sucursal y un equipo de ocho personas:
 
-Personal actual: **[COMPLETAR: cantidad de personas por cargo]**.
+| Cargo | Personas | Funciones principales |
+|---|---|---|
+| **Administrador** | 1 | Dirige el negocio, define precios y productos, administra el personal y revisa los reportes. |
+| **Vendedor** | 2 | Atienden en el mostrador por turnos, registran las ventas, cobran y gestionan los pedidos recibidos. |
+| **Cocinero** | 2 | Elaboran los productos según las recetas y registran la producción. |
+| **Almacenero** | 1 | Recibe las compras, controla el stock y los vencimientos y registra ingresos y egresos. |
+| **Repartidor** | 2 | Entregan los pedidos a domicilio y cobran los pagos en efectivo. |
 
 Estos cargos son la base de los actores del sistema: el **Administrador**, el **Empleado** (según su
 cargo de vendedor, cocinero, almacenero o repartidor) y el **Cliente**, que interactúa desde el

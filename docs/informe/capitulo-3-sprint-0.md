@@ -1,6 +1,6 @@
 # PARTE II: DESARROLLO DEL SISTEMA
 
-# CAPÍTULO 3
+# CAPÍTULO 3 – DESARROLLO CON SCRUM
 
 ## 3.1 Sprint 0
 
@@ -16,8 +16,8 @@ repositorio preparado para comenzar el Sprint 1.
 
 | Rol Scrum | Persona | Responsabilidades |
 |---|---|---|
-| **Product Owner** | Joseph Flores García **[CONFIRMAR]** | Representa al negocio NutriExpress. Mantiene y prioriza el Product Backlog, acepta o rechaza las historias terminadas en la Sprint Review. |
-| **Scrum Master** | Nilser Rodrigo Condori Ortiz **[CONFIRMAR]** | Facilita los eventos Scrum, mantiene el tablero y las gráficas al día y elimina impedimentos. |
+| **Product Owner** | Nilser Rodrigo Condori Ortiz | Representa al negocio NutriExpress. Mantiene y prioriza el Product Backlog, acepta o rechaza las historias terminadas en la Sprint Review. |
+| **Scrum Master** | Joseph Flores García | Facilita los eventos Scrum, mantiene el tablero y las gráficas al día y elimina impedimentos. |
 | **Equipo de desarrollo** | Nilser Rodrigo Condori Ortiz y Joseph Flores García | Diseñan, programan, prueban y despliegan los microservicios y el frontend. |
 | **Interesado (stakeholder)** | Ing. Edwin Calle Terrazas (docente) | Revisa los incrementos y aporta retroalimentación. |
 
@@ -52,37 +52,29 @@ respuestas se registran en el tablero para el apartado *Daily Meeting* de cada s
 
 **Proceso de pedido a domicilio**
 
+<!-- figura: Diagrama de actividades del pedido a domicilio -->
 ```mermaid
 flowchart TD
-    subgraph Cliente
-        C1([Inicio]) --> C2[Busca productos en el catálogo]
-        C2 --> C3[Agrega productos al carrito]
-        C3 --> C4[Indica la ubicación de entrega]
-        C4 --> C5{¿Paga en línea?}
-        C5 -- Sí --> C6[Paga con QR o tarjeta]
-        C5 -- No --> C7[Elige pagar en efectivo]
-        C12[Recibe el pedido] --> C13([Fin])
-    end
-    subgraph Sistema
-        S1[Verifica y reserva el stock]
-        S2{¿Pago confirmado?}
-        S3[Cancela el pedido y libera el stock]
-    end
-    subgraph Personal
-        P1[Prepara el pedido]
-        P2[Asigna repartidor]
-        R1[Repartidor entrega y cobra si es efectivo]
-    end
-    C6 --> S1
-    C7 --> S1
-    S1 --> S2
-    S2 -- No / vence --> S3
-    S2 -- Sí o efectivo --> P1
-    P1 --> P2 --> R1 --> C12
+    C1([Inicio]) --> C2[Cliente: busca productos en el catálogo]
+    C2 --> C3[Cliente: agrega productos al carrito]
+    C3 --> C4[Cliente: indica la ubicación de entrega]
+    C4 --> S1[Sistema: verifica y reserva el stock]
+    S1 --> C5{¿Paga en línea?}
+    C5 -- Sí --> C6[Cliente: paga con QR o tarjeta]
+    C5 -- No, en efectivo --> P1
+    C6 --> S2{¿Pago confirmado?}
+    S2 -- No o vence --> S3[Sistema: cancela el pedido y libera el stock]
+    S3 --> F2([Fin])
+    S2 -- Sí --> P1[Vendedor: prepara el pedido]
+    P1 --> P2[Vendedor: asigna repartidor]
+    P2 --> R1[Repartidor: entrega y cobra si es efectivo]
+    R1 --> C12[Cliente: recibe el pedido]
+    C12 --> F1([Fin])
 ```
 
 **Proceso de venta en el local**
 
+<!-- figura: Diagrama de actividades de la venta en el local -->
 ```mermaid
 flowchart TD
     A([Cliente llega al mostrador]) --> B[Vendedor registra los productos]
@@ -96,6 +88,7 @@ flowchart TD
 
 **Proceso de producción e inventario**
 
+<!-- figura: Diagrama de actividades de producción e inventario -->
 ```mermaid
 flowchart TD
     A([Inicio de jornada]) --> B[Almacenero registra la compra de insumos]
@@ -414,7 +407,7 @@ terminado). Si la entrega se adelanta al 6 de diciembre, HU-07 y HU-30 quedan fu
 | **Entorno de desarrollo** | Visual Studio Code, Docker Desktop, Git, asistente de IA Claude Code | Mismo entorno en ambas computadoras. |
 | **Contenedores** | Docker y Docker Compose | Cada servicio en su contenedor; todo el sistema con un comando. |
 | **Infraestructura en la nube** | Servidor virtual (VPS) Contabo con Ubuntu, Caddy como proxy HTTPS | Ya disponible para el equipo; Caddy obtiene el certificado HTTPS automáticamente. |
-| **Seguimiento del proyecto** | Jira Software (tablero Scrum) **[CONFIRMAR]** | Tablero To Do / Doing / Done, sprints y gráficas Burndown y Burnup automáticas. |
+| **Seguimiento del proyecto** | Jira Software (tablero Scrum) | Tablero To Do / Doing / Done, sprints y gráficas Burndown y Burnup automáticas. |
 | **Control de versiones** | Git | Historial de cambios y trabajo en ramas. |
 | **Gestión de código en la nube** | GitHub (cuenta `nutriexpress2026-alt`) | Repositorio compartido y revisión de cambios por *pull request*. |
 | **Pruebas** | Vitest (unitarias), Supertest (integración de API), Playwright (punta a punta) | Cubren los tres tipos de prueba exigidos. |
@@ -434,6 +427,7 @@ Cada servicio con PostgreSQL tiene **su propia base** dentro del mismo servidor 
 
 **Nivel 1 – Contexto:** quién usa el sistema y con qué sistemas externos se comunica.
 
+<!-- figura: Modelo C4, nivel 1: diagrama de contexto -->
 ```mermaid
 flowchart TB
     cli([Cliente<br/>pide comida a domicilio])
@@ -454,6 +448,7 @@ flowchart TB
 
 **Nivel 2 – Contenedores:** las piezas que se ejecutan por separado.
 
+<!-- figura: Modelo C4, nivel 2: diagrama de contenedores -->
 ```mermaid
 flowchart TB
     nav[Navegador] --> web[Frontend Next.js]
@@ -472,9 +467,9 @@ flowchart TB
     ped --- dbped[(PostgreSQL<br/>pedidos_db)]
     pag --- dbpag[(PostgreSQL<br/>pagos_db)]
     rep --- dbrep[(MongoDB<br/>reportes)]
-    mq{{RabbitMQ}}
-    cat & inv & ven & ped & pag -. publican eventos .-> mq
-    mq -. entrega eventos .-> rep & inv & ped
+    mq{{RabbitMQ: eventos}}
+    cat & inv & ven & ped & pag -.-> mq
+    mq -.-> rep & inv & ped
 ```
 
 **Responsabilidad de cada microservicio**
@@ -505,6 +500,7 @@ flowchart TB
 
 **Saga del pedido a domicilio (coreografía)**
 
+<!-- figura: Saga del pedido a domicilio -->
 ```mermaid
 sequenceDiagram
     participant C as Cliente
@@ -546,13 +542,13 @@ sequenceDiagram
 
 ---
 
-### Resultado del Sprint 0
+### 3.1.8 Resultado del Sprint 0
 
 | Entregable | Estado |
 |---|---|
 | Capítulo 1 – Perfil del proyecto | Hecho |
-| Capítulo 2 – La organización | Hecho (faltan datos marcados [COMPLETAR]) |
-| Roles Scrum y acuerdos de trabajo | Hecho (por confirmar) |
+| Capítulo 2 – La organización | Hecho |
+| Roles Scrum y acuerdos de trabajo | Hecho |
 | Modelo de negocio | Hecho en Mermaid; pendiente pasarlo a Enterprise Architect |
 | Requisitos funcionales y no funcionales | Hecho |
 | Historias de usuario y Product Backlog | Hecho |
