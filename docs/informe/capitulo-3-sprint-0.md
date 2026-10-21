@@ -48,60 +48,23 @@ respuestas se registran en el tablero para el apartado *Daily Meeting* de cada s
 
 ### 3.1.2 Modelo de negocio (diagrama de actividades)
 
-> Los diagramas definitivos se dibujan en Enterprise Architect; aquí se describe su contenido.
+Los diagramas de actividades se elaboraron en Enterprise Architect, con un carril por cada actor que
+participa en el proceso (archivo `docs/diagramasEA/NutriExpress_Microservicios.eapx`).
 
 **Proceso de pedido a domicilio**
 
 <!-- figura: Diagrama de actividades del pedido a domicilio -->
-```mermaid
-flowchart TD
-    C1([Inicio]) --> C2[Cliente: busca productos en el catálogo]
-    C2 --> C3[Cliente: agrega productos al carrito]
-    C3 --> C4[Cliente: indica la ubicación de entrega]
-    C4 --> S1[Sistema: verifica y reserva el stock]
-    S1 --> C5{¿Paga en línea?}
-    C5 -- Sí --> C6[Cliente: paga con QR o tarjeta]
-    C5 -- No, en efectivo --> P1
-    C6 --> S2{¿Pago confirmado?}
-    S2 -- No o vence --> S3[Sistema: cancela el pedido y libera el stock]
-    S3 --> F2([Fin])
-    S2 -- Sí --> P1[Vendedor: prepara el pedido]
-    P1 --> P2[Vendedor: asigna repartidor]
-    P2 --> R1[Repartidor: entrega y cobra si es efectivo]
-    R1 --> C12[Cliente: recibe el pedido]
-    C12 --> F1([Fin])
-```
+![Diagrama de actividades del pedido a domicilio](../diagramasEA/imagenes/3.1.2-pedido-a-domicilio.png)
 
 **Proceso de venta en el local**
 
 <!-- figura: Diagrama de actividades de la venta en el local -->
-```mermaid
-flowchart TD
-    A([Cliente llega al mostrador]) --> B[Vendedor registra los productos]
-    B --> C{¿Hay stock?}
-    C -- No --> D[Cocina elabora el producto]
-    D --> E
-    C -- Sí --> E[Vendedor cobra en efectivo o QR]
-    E --> F[Se descuenta el stock y se emite el comprobante]
-    F --> G([Entrega al cliente])
-```
+![Diagrama de actividades de la venta en el local](../diagramasEA/imagenes/3.1.2-venta-en-el-local.png)
 
 **Proceso de producción e inventario**
 
 <!-- figura: Diagrama de actividades de producción e inventario -->
-```mermaid
-flowchart TD
-    A([Inicio de jornada]) --> B[Almacenero registra la compra de insumos]
-    B --> C[Cocinero crea la orden de producción]
-    C --> D{¿Alcanzan los insumos?}
-    D -- No --> B
-    D -- Sí --> E[Elabora según la receta]
-    E --> F[Se descuentan los insumos y se suman los productos al stock]
-    F --> G{¿Insumo bajo el mínimo?}
-    G -- Sí --> H[Alerta de reposición]
-    G -- No --> I([Fin])
-    H --> I
-```
+![Diagrama de actividades de producción e inventario](../diagramasEA/imagenes/3.1.2-produccion-e-inventario.png)
 
 ---
 
@@ -428,49 +391,12 @@ Cada servicio con PostgreSQL tiene **su propia base** dentro del mismo servidor 
 **Nivel 1 – Contexto:** quién usa el sistema y con qué sistemas externos se comunica.
 
 <!-- figura: Modelo C4, nivel 1: diagrama de contexto -->
-```mermaid
-flowchart TB
-    cli([Cliente<br/>pide comida a domicilio])
-    emp([Empleado<br/>vende, cocina, almacena, reparte])
-    adm([Administrador<br/>gestiona y analiza])
-    sis[[Sistema NutriExpress]]
-    lib[(Libélula<br/>pasarela de pagos)]
-    cor[(Servidor de correo<br/>Brevo / SMTP)]
-    osm[(OpenStreetMap<br/>mapas)]
-    cli --> sis
-    emp --> sis
-    adm --> sis
-    sis --> lib
-    lib -- aviso de pago --> sis
-    sis --> cor
-    sis --> osm
-```
+![Modelo C4, nivel 1: diagrama de contexto](../diagramasEA/imagenes/3.1.7-c4-nivel-1-contexto.png)
 
 **Nivel 2 – Contenedores:** las piezas que se ejecutan por separado.
 
 <!-- figura: Modelo C4, nivel 2: diagrama de contenedores -->
-```mermaid
-flowchart TB
-    nav[Navegador] --> web[Frontend Next.js]
-    web --> gw[API Gateway Nginx]
-    gw --> id[ms-identidad]
-    gw --> cat[ms-catalogo]
-    gw --> inv[ms-inventario]
-    gw --> ven[ms-ventas]
-    gw --> ped[ms-pedidos]
-    gw --> pag[ms-pagos]
-    gw --> rep[ms-reportes]
-    id --- dbid[(PostgreSQL<br/>identidad_db)]
-    cat --- dbcat[(PostgreSQL<br/>catalogo_db)]
-    inv --- dbinv[(PostgreSQL<br/>inventario_db)]
-    ven --- dbven[(PostgreSQL<br/>ventas_db)]
-    ped --- dbped[(PostgreSQL<br/>pedidos_db)]
-    pag --- dbpag[(PostgreSQL<br/>pagos_db)]
-    rep --- dbrep[(MongoDB<br/>reportes)]
-    mq{{RabbitMQ: eventos}}
-    cat & inv & ven & ped & pag -.-> mq
-    mq -.-> rep & inv & ped
-```
+![Modelo C4, nivel 2: diagrama de contenedores](../diagramasEA/imagenes/3.1.7-c4-nivel-2-contenedores.png)
 
 **Responsabilidad de cada microservicio**
 
@@ -501,31 +427,7 @@ flowchart TB
 **Saga del pedido a domicilio (coreografía)**
 
 <!-- figura: Saga del pedido a domicilio -->
-```mermaid
-sequenceDiagram
-    participant C as Cliente
-    participant P as ms-pedidos
-    participant I as ms-inventario
-    participant G as ms-pagos
-    participant R as ms-reportes
-    C->>P: Confirmar pedido
-    P->>P: Pedido "Pendiente"
-    P-->>I: PedidoCreado
-    I->>I: Reserva stock
-    I-->>P: StockReservado
-    P->>G: Crear cobro (REST)
-    G-->>C: QR / página de pago
-    alt pago confirmado
-        G-->>P: PagoConfirmado
-        P->>P: Pedido "Recibido"
-        P-->>R: PedidoEstadoCambiado (correo al cliente)
-    else pago vencido o fallido
-        G-->>P: PagoFallido
-        P->>P: Pedido "Cancelado" (Sin pago)
-        P-->>I: PedidoCancelado
-        I->>I: Libera la reserva (compensación)
-    end
-```
+![Saga del pedido a domicilio](../diagramasEA/imagenes/3.1.7-saga-del-pedido.png)
 
 **Decisiones de arquitectura**
 
@@ -549,9 +451,9 @@ sequenceDiagram
 | Capítulo 1 – Perfil del proyecto | Hecho |
 | Capítulo 2 – La organización | Hecho |
 | Roles Scrum y acuerdos de trabajo | Hecho |
-| Modelo de negocio | Hecho en Mermaid; pendiente pasarlo a Enterprise Architect |
+| Modelo de negocio | Hecho en Enterprise Architect |
 | Requisitos funcionales y no funcionales | Hecho |
 | Historias de usuario y Product Backlog | Hecho |
 | Herramientas, arquitectura C4 y eventos | Hecho |
-| Repositorio en GitHub | Pendiente |
+| Repositorio en GitHub | Hecho: `github.com/nutriexpress2026-alt/nutriexpress-microservicios` |
 | Tablero Scrum (Jira) con el backlog cargado | Pendiente |

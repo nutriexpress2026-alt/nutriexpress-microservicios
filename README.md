@@ -29,7 +29,9 @@ docs/
     capitulo-2-organizacion.md
     capitulo-3-sprint-0.md
     informe.docx           Informe en Word generado desde los capítulos
+  diagramasEA/             Proyecto de Enterprise Architect y sus diagramas exportados (imagenes/)
 herramientas/informe/      Scripts que arman el Word
+herramientas/diagramas-ea/ Scripts que dibujan los diagramas en Enterprise Architect
 servicios/                 Un microservicio por carpeta (desde el Sprint 1)
 frontend/                  Aplicación web Next.js (desde el Sprint 1)
 gateway/                   Puerta de entrada única (desde el Sprint 1)

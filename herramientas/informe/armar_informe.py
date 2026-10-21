@@ -9,6 +9,7 @@ import json
 import os
 import re
 import shutil
+import struct
 import sys
 import tempfile
 import zipfile
@@ -190,19 +191,35 @@ def tabla(filas):
 
 
 # ---------------------------------------------------------------- figuras
+def tamano_png(ruta):
+    """Ancho y alto en pixeles, leidos de la cabecera IHDR del PNG."""
+    with open(ruta, 'rb') as f:
+        cabecera = f.read(24)
+    return struct.unpack('>II', cabecera[16:24])
+
+
 class Figuras:
+    """Figuras numeradas: diagramas Mermaid (manifiesto) o imagenes ya hechas, como las de EA."""
+
     def __init__(self, manifiesto):
         self.lista = manifiesto
-        self.usadas = []  # (rId, archivo)
+        self.usadas = []  # (rId, archivo de origen, nombre dentro del docx)
         self.siguiente_id = 1000
 
-    def xml(self, titulo):
-        f = next(x for x in self.lista if x['titulo'] == titulo)
-        ancho_in, alto_in = f['ancho'] / 96, f['alto'] / 96
+    def xml(self, titulo, ruta=None):
+        if ruta:
+            ancho_px, alto_px = tamano_png(ruta)
+            origen = ruta
+        else:
+            f = next(x for x in self.lista if x['titulo'] == titulo)
+            ancho_px, alto_px = f['ancho'], f['alto']
+            origen = os.path.join(FIGURAS, f['archivo'])
+        ancho_in, alto_in = ancho_px / 96, alto_px / 96
         escala = min(1, MAX_ANCHO_IN / ancho_in, MAX_ALTO_IN / alto_in)
         cx, cy = int(ancho_in * escala * EMU_POR_PULGADA), int(alto_in * escala * EMU_POR_PULGADA)
         rid = f'rIdFig{len(self.usadas) + 1}'
-        self.usadas.append((rid, f['archivo']))
+        media = f'figura-{len(self.usadas) + 1:02d}.png'
+        self.usadas.append((rid, origen, media))
         self.siguiente_id += 1
         n = self.siguiente_id
         dibujo = (
@@ -212,7 +229,7 @@ class Figuras:
             '<wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" noChangeAspect="1"/></wp:cNvGraphicFramePr>'
             '<a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture">'
             '<pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture">'
-            f'<pic:nvPicPr><pic:cNvPr id="{n}" name="{f["archivo"]}"/><pic:cNvPicPr/></pic:nvPicPr>'
+            f'<pic:nvPicPr><pic:cNvPr id="{n}" name="{media}"/><pic:cNvPicPr/></pic:nvPicPr>'
             f'<pic:blipFill><a:blip r:embed="{rid}"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>'
             f'<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="{cx}" cy="{cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr>'
             '</pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r>')
@@ -245,9 +262,14 @@ def convertir(md, listas, figuras):
         if s.startswith('<!-- figura:'):
             nombre = re.match(r'<!-- figura: (.*?) -->', s).group(1).strip()
             i += 1
-            while not lineas[i].startswith('```'):
+            while not lineas[i].strip():
                 i += 1
-            i += 1
+            imagen = re.match(r'!\[[^\]]*\]\(([^)]+)\)', lineas[i].strip())
+            if imagen:  # imagen ya hecha (por ejemplo, exportada de Enterprise Architect)
+                out.append(figuras.xml(nombre, os.path.normpath(os.path.join(DOCS, imagen.group(1)))))
+                i += 1
+                continue
+            i += 1  # apertura del bloque mermaid
             while not lineas[i].startswith('```'):
                 i += 1
             i += 1
@@ -524,10 +546,10 @@ def main():
     nuevas = ('<Relationship Id="rIdPie1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer" '
               'Target="footer1.xml"/>')
     os.makedirs(os.path.join(w, 'media'), exist_ok=True)
-    for rid, archivo in figuras.usadas:
-        shutil.copy(os.path.join(FIGURAS, archivo), os.path.join(w, 'media', archivo))
+    for rid, origen, media in figuras.usadas:
+        shutil.copy(origen, os.path.join(w, 'media', media))
         nuevas += (f'<Relationship Id="{rid}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" '
-                   f'Target="media/{archivo}"/>')
+                   f'Target="media/{media}"/>')
     open(rels, 'w', encoding='utf8').write(rx.replace('</Relationships>', nuevas + '</Relationships>'))
 
     ct = os.path.join(tmp, '[Content_Types].xml')
