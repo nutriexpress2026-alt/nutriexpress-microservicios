@@ -4,6 +4,10 @@ Los capítulos se escriben en `docs/informe/*.md` (fuente). `docs/informe/inform
 partir de ellos con la carátula y el formato del informe del Proyecto 1 (Arial 11, interlineado 1,5,
 tablas con encabezado negro).
 
+Desde el 21-oct todas las figuras son imágenes de Enterprise Architect (`docs/diagramasEA/imagenes`),
+citadas en los .md con `<!-- figura: Título -->` y `![Título](ruta.png)`. El paso 1 solo hace falta si
+algún capítulo vuelve a usar un bloque Mermaid.
+
 1. `render-mermaid.cjs` dibuja cada bloque ```` ```mermaid ```` precedido de `<!-- figura: Título -->`
    como PNG (necesita el paquete `mermaid` y Playwright con Google Chrome):
    `node render-mermaid.cjs <docs/informe> <mermaid.min.js> <carpeta-figuras> <ruta a playwright>`

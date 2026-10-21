@@ -1,0 +1,207 @@
+"Summary","Issue Type","Description","Story Points","Priority","Labels","Labels","Labels","Sprint","Orden"
+"HT-01 Repositorio y Docker Compose","Task","Como equipo, queremos un repositorio con Docker Compose que levante bases de datos, broker y servicios, para trabajar todos sobre el mismo entorno.
+
+Criterios de aceptación:
+- Docker compose up levanta PostgreSQL, MongoDB, RabbitMQ y los servicios.
+- Cada servicio responde GET /salud.","5","High","todos","","","Sprint 1","1"
+"HT-02 API Gateway","Task","Como equipo, queremos un API Gateway, para que el navegador tenga una única dirección de entrada.
+
+Criterios de aceptación:
+- Las rutas /api/<servicio>/* llegan a su servicio.
+- Una ruta inexistente responde 404.","3","High","gateway","","","Sprint 1","2"
+"HU-01 Iniciar sesión","Story","Como usuario, quiero iniciar sesión con mi usuario y contraseña, para acceder a las funciones que me corresponden.
+
+Criterios de aceptación:
+- Credenciales válidas devuelven un token.
+- Tres intentos fallidos bloquean la cuenta temporalmente.
+- El mensaje no revela si el usuario existe.","5","High","ms-identidad","","","Sprint 1","3"
+"HU-02 Registro de cliente","Story","Como cliente, quiero registrarme en el portal, para hacer pedidos a domicilio.
+
+Criterios de aceptación:
+- La contraseña cumple la política (RF-SEG-03).
+- El correo y el usuario no se repiten.
+- La cuenta nace con rol Cliente.","3","High","ms-identidad","","","Sprint 1","4"
+"HU-03 Gestionar usuarios","Story","Como administrador, quiero registrar, modificar, dar de baja y reactivar usuarios, para controlar quién accede.
+
+Criterios de aceptación:
+- Se asigna rol y, a los empleados, cargo.
+- Nadie puede darse de baja ni cambiarse el rol a sí mismo.","5","High","ms-identidad","","","Sprint 1","5"
+"HU-04 Gestionar roles y permisos","Story","Como administrador, quiero crear roles y asignarles permisos, para definir qué puede hacer cada tipo de usuario.
+
+Criterios de aceptación:
+- Existen al menos los roles Administrador, Empleado y Cliente.
+- Un rol con usuarios no se elimina.","5","High","ms-identidad","","","Sprint 1","6"
+"HU-34 Menú dinámico","Story","Como empleado, quiero un menú que muestre solo los módulos a los que tengo acceso, para no perderme en opciones que no uso.
+
+Criterios de aceptación:
+- El menú se arma con los permisos del usuario.
+- Un cliente nunca ve el escritorio del personal.","3","High","frontend","","","Sprint 1","7"
+"HU-31 Contador de visitas","Story","Como visitante, quiero ver cuántas visitas tiene cada página en su pie, para conocer su popularidad.
+
+Criterios de aceptación:
+- Cada página suma una visita al cargarse y muestra su total.","2","High","ms-reportes","","","Sprint 1","8"
+"HU-08 Gestionar productos","Story","Como administrador, quiero registrar productos con su precio, foto e información nutricional, para ofrecerlos a los clientes.
+
+Criterios de aceptación:
+- Precio mayor a cero.
+- La información nutricional no es negativa.
+- Se puede desactivar un producto.","5","High","ms-catalogo","","","Sprint 2","9"
+"HU-11 Catálogo y búsqueda","Story","Como cliente, quiero ver el catálogo y buscar productos e información del negocio desde el encabezado, para encontrar rápido lo que busco.
+
+Criterios de aceptación:
+- La búsqueda no distingue mayúsculas ni tildes.
+- Muestra productos activos con precio y nutrientes.
+- Encuentra horario y contacto.","5","High","ms-catalogo","","","Sprint 2","10"
+"HU-12 Gestionar insumos","Story","Como almacenero, quiero registrar los insumos con su unidad y stock mínimo, para controlarlos.
+
+Criterios de aceptación:
+- Unidades kilogramo, litro o unidad.
+- Se indica si es perecedero.","3","High","ms-inventario","","","Sprint 2","11"
+"HU-13 Gestionar almacenes","Story","Como administrador, quiero registrar los almacenes con su tipo de conservación, para ubicar cada ítem donde corresponde.
+
+Criterios de aceptación:
+- Tipos ambiente, refrigerado y congelado.
+- Un perecedero solo entra a un almacén apto.","2","High","ms-inventario","","","Sprint 2","12"
+"HU-14 Notas de ingreso","Story","Como almacenero, quiero registrar notas de ingreso, para sumar al stock lo que compro o repongo.
+
+Criterios de aceptación:
+- Motivos compra, reposición, ajuste y devolución.
+- La compra recalcula el costo promedio.
+- Los perecederos generan lote con vencimiento.","8","High","ms-inventario","","","Sprint 2","13"
+"HU-15 Notas de egreso","Story","Como almacenero, quiero registrar notas de egreso, para descontar mermas y ajustes.
+
+Criterios de aceptación:
+- No se egresa más de lo disponible.
+- Motivos merma, ajuste y devolución al proveedor.","5","High","ms-inventario","","","Sprint 2","14"
+"HU-16 Stock y alertas","Story","Como administrador, quiero consultar el stock por almacén y ver alertas de stock mínimo y lotes por vencer, para reponer a tiempo.
+
+Criterios de aceptación:
+- Filtra por almacén.
+- Marca los insumos bajo el mínimo según la suma de todos los almacenes.","5","High","ms-inventario","","","Sprint 2","15"
+"HT-03 Eventos en RabbitMQ","Task","Como equipo, queremos un catálogo de eventos publicado en RabbitMQ, para que los servicios se avisen sin depender unos de otros.
+
+Criterios de aceptación:
+- Un evento publicado por un servicio llega a sus consumidores.
+- Un evento repetido no se procesa dos veces.","5","High","todos","","","Sprint 3","16"
+"HU-09 Gestionar recetas","Story","Como cocinero, quiero registrar la receta de cada producto con sus insumos y cantidades, para elaborarlo siempre igual y conocer su costo.
+
+Criterios de aceptación:
+- Una sola receta activa por producto.
+- Los insumos se eligen de los registrados en inventario.","5","High","ms-catalogo","","","Sprint 3","17"
+"HU-10 Órdenes de producción","Story","Como cocinero, quiero crear y finalizar órdenes de producción, para registrar lo que elaboro.
+
+Criterios de aceptación:
+- Calcula los insumos según el rendimiento.
+- No se finaliza sin insumos suficientes.
+- Al finalizar se descuentan los insumos y se suma el producto.","8","High","ms-catalogo","ms-inventario","","Sprint 3","18"
+"HU-17 Reservar y liberar stock","Story","Como sistema, quiero reservar y liberar stock cuando otros servicios lo piden, para no vender lo que no hay.
+
+Criterios de aceptación:
+- Una reserva sin stock se rechaza.
+- Una reserva liberada vuelve al disponible.
+- Repetir la misma reserva no descuenta dos veces.","8","High","ms-inventario","","","Sprint 3","19"
+"HU-05 Permisos por usuario","Story","Como administrador, quiero ajustar los permisos de un usuario, para darle o quitarle tareas puntuales.
+
+Criterios de aceptación:
+- Solo se asignan permisos habilitados para su rol.
+- El cambio rige en la siguiente petición.","3","Medium","ms-identidad","","","Sprint 3","20"
+"HU-06 Recuperar contraseña","Story","Como usuario, quiero recuperar mi contraseña con un código enviado a mi correo, para volver a entrar si la olvido.
+
+Criterios de aceptación:
+- El código vence a los 15 minutos y sirve una vez.
+- La respuesta es la misma exista o no la cuenta.","5","Medium","ms-identidad","ms-reportes","","Sprint 3","21"
+"HU-21 Carrito y pedido","Story","Como cliente, quiero armar un carrito y confirmar mi pedido, para recibirlo en casa.
+
+Criterios de aceptación:
+- Se reserva el stock al confirmar.
+- Si falta stock se informa qué producto.
+- Pago en línea o efectivo.","8","High","ms-pedidos","","","Sprint 4","22"
+"HU-22 Direcciones en mapa","Story","Como cliente, quiero guardar mis direcciones de entrega marcándolas en un mapa, para no escribirlas cada vez.
+
+Criterios de aceptación:
+- Coordenadas con seis decimales.
+- Una dirección puede quedar como principal.","3","Medium","ms-pedidos","","","Sprint 4","23"
+"HU-26 Pago en línea (saga)","Story","Como cliente, quiero pagar mi pedido en línea con QR o tarjeta, para no manejar efectivo.
+
+Criterios de aceptación:
+- Se genera el cobro en Libélula o en la pasarela simulada.
+- Al confirmarse el pago el pedido avanza.
+- Si vence, el pedido se cancela y el stock se libera.","13","High","ms-pagos","ms-pedidos","ms-inventario","Sprint 4","24"
+"HU-27 Modo de cobro","Story","Como administrador, quiero alternar entre cobro simulado y real, para hacer demostraciones sin dinero.
+
+Criterios de aceptación:
+- El cambio rige sin reiniciar.
+- Cada pago conserva el modo con que nació.","2","Medium","ms-pagos","","","Sprint 4","25"
+"HU-25 Mis pedidos y seguimiento","Story","Como cliente, quiero ver el estado de mis pedidos, cancelarlos antes de que salgan y seguir al repartidor en el mapa, para saber cuándo llega.
+
+Criterios de aceptación:
+- Solo ve sus pedidos.
+- Cancelar libera el stock.
+- La posición solo se ve con el pedido en camino.","5","Medium","ms-pedidos","","","Sprint 4","26"
+"HU-23 Tablero de pedidos","Story","Como vendedor, quiero ver los pedidos en un tablero, cambiar su estado y asignar un repartidor, para despacharlos en orden.
+
+Criterios de aceptación:
+- Solo se asignan empleados con cargo Repartidor.
+- Los estados siguen el flujo definido.","8","High","ms-pedidos","","","Sprint 5","27"
+"HU-24 Mis entregas (repartidor)","Story","Como repartidor, quiero ver mis entregas, compartir mi ubicación y marcar el pedido como entregado o no entregado, para cerrar el reparto.
+
+Criterios de aceptación:
+- Solo el repartidor asignado cierra la entrega.
+- Entregar cobra el efectivo.
+- No entregar devuelve el stock.","8","Medium","ms-pedidos","","","Sprint 5","28"
+"HU-18 Venta de mostrador","Story","Como vendedor, quiero registrar una venta en el mostrador cobrando en efectivo o QR, para atender rápido al cliente.
+
+Criterios de aceptación:
+- El precio lo pone el sistema.
+- Sin stock no se confirma.
+- Al confirmar se descuenta el stock.","8","High","ms-ventas","","","Sprint 5","29"
+"HU-19 Comprobante y anulación","Story","Como vendedor, quiero emitir el comprobante y anular una venta equivocada, para dar constancia y corregir errores.
+
+Criterios de aceptación:
+- El comprobante muestra productos, total y método.
+- Anular devuelve el stock y no cuenta en lo recaudado.","5","Medium","ms-ventas","","","Sprint 5","30"
+"HU-20 Gestionar clientes","Story","Como vendedor, quiero registrar y buscar clientes, para asociarlos a sus ventas.
+
+Criterios de aceptación:
+- El correo no se repite.
+- La búsqueda no distingue tildes.","3","Medium","ms-ventas","","","Sprint 5","31"
+"HU-28 Reporte de ventas","Story","Como administrador, quiero un reporte de ventas por fechas, producto y vendedor, exportable a PDF y enviable a varios correos, para analizar el negocio.
+
+Criterios de aceptación:
+- Las ventas anuladas no suman.
+- El PDF llega a todos los correos indicados.","8","High","ms-reportes","","","Sprint 6","32"
+"HU-29 Reporte de pedidos","Story","Como administrador, quiero un reporte de pedidos por fechas, estado y repartidor, exportable a PDF y enviable por correo, para medir el reparto.
+
+Criterios de aceptación:
+- Los cancelados no suman al total.
+- Distingue asignados de entregados.","5","High","ms-reportes","","","Sprint 6","33"
+"HU-33 Temas y modo día/noche","Story","Como usuario, quiero elegir el tema niños, jóvenes o adultos y que el modo día/noche siga mi horario, para una experiencia a mi gusto.
+
+Criterios de aceptación:
+- Tres temas completos.
+- El modo cambia según la hora local.
+- La elección se recuerda.","5","High","frontend","","","Sprint 6","34"
+"HU-32 Notificaciones por correo","Story","Como cliente, quiero recibir por correo el comprobante y los cambios de estado de mi pedido, para estar informado.
+
+Criterios de aceptación:
+- El correo sale aunque el servicio de pedidos esté ocupado (asíncrono).","5","Medium","ms-reportes","","","Sprint 6","35"
+"HT-04 Despliegue en el VPS","Task","Como equipo, queremos desplegar el sistema en el VPS con HTTPS, para que el docente y los clientes lo usen desde internet.
+
+Criterios de aceptación:
+- El sistema responde por HTTPS en su dominio.
+- El despliegue no afecta a otros sistemas del servidor.","5","High","todos","","","Sprint 6","36"
+"HT-05 Tres tipos de prueba","Task","Como equipo, queremos pruebas unitarias, de integración y de punta a punta, para verificar el sistema en cada sprint.
+
+Criterios de aceptación:
+- Existen y pasan los tres tipos de prueba.
+- Se ejecutan con un solo comando.","8","High","todos","","","","37"
+"HU-07 Perfil propio","Story","Como usuario, quiero editar mis datos y cambiar mi contraseña, para mantener mi cuenta al día.
+
+Criterios de aceptación:
+- Se pide la contraseña actual para cambiarla.
+- No se puede cambiar el rol ni el estado de la cuenta.","3","Medium","ms-identidad","","","Sprint 7","38"
+"HU-30 Reporte de producción e inventario","Story","Como administrador, quiero un reporte de producción y movimientos de inventario, para controlar consumos y mermas.
+
+Criterios de aceptación:
+- Filtra por fechas e ítem.
+- Cuenta como salida lo vendido.","5","Medium","ms-reportes","","","Sprint 7","39"

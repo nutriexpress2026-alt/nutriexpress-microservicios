@@ -436,6 +436,7 @@ def resto_del_indice(listas):
     return ''.join(out)
 
 
+INCLUIR_AGRADECIMIENTOS = False
 AGRADECIMIENTOS = [
     'Agradecemos a la Universidad Autónoma Gabriel René Moreno y a la Facultad Integral del Norte por '
     'la formación que nos brindan, y al Ing. Edwin Calle Terrazas, docente de la materia Tecnología Web, '
@@ -510,8 +511,9 @@ def main():
     listas = Listas()
     figuras = Figuras(json.load(open(os.path.join(FIGURAS, 'figuras.json'), encoding='utf8')))
     contenido = []
-    contenido.append(portada_interior('AGRADECIMIENTOS', AGRADECIMIENTOS))
-    contenido.append(portada_interior('DEDICATORIA', DEDICATORIA))
+    if INCLUIR_AGRADECIMIENTOS:  # el equipo los quito del informe (21-oct)
+        contenido.append(portada_interior('AGRADECIMIENTOS', AGRADECIMIENTOS))
+        contenido.append(portada_interior('DEDICATORIA', DEDICATORIA))
     contenido.append(indice('ÍNDICE GENERAL', 'TOC \\o "1-3" \\h \\z \\u', 'Actualice el índice: clic derecho › Actualizar campos.'))
     contenido.append(indice('ÍNDICE DE FIGURAS', 'TOC \\h \\z \\c "Figura"', 'Actualice el índice: clic derecho › Actualizar campos.'))
     for nombre in ('capitulo-1-perfil.md', 'capitulo-2-organizacion.md', 'capitulo-3-sprint-0.md'):

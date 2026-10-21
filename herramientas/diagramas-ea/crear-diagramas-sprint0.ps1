@@ -1,4 +1,4 @@
-# Crea en Enterprise Architect los diagramas del Sprint 0 (secciones 3.1.2 y 3.1.7 del informe)
+# Crea en Enterprise Architect los diagramas del Sprint 0 (secciones 1.8, 2.4, 2.5, 3.1.2 y 3.1.7)
 # y exporta cada uno como PNG a docs/diagramasEA/imagenes.
 #
 # Uso (PowerShell, con EA instalado):
@@ -67,6 +67,23 @@ function Fin($pkg, $diag, $carril, $t) {
   Poner $diag $e ($carril * $ANCHO + $ANCHO / 2 - 12) $t 24 24 | Out-Null
   return $e
 }
+function SinCompartimentos($diag) {
+  $estilo = $diag.ExtendedStyle -replace 'HideAtts=\d;', '' -replace 'HideOps=\d;', ''
+  $diag.ExtendedStyle = $estilo + "HideAtts=1;HideOps=1;"
+  $diag.Update() | Out-Null
+}
+function Caja($pkg, $diag, $nombre, $l, $t, $w, $h, $estereotipo = $null) {
+  $e = Nuevo $pkg $nombre "Class" -estereotipo $estereotipo
+  Poner $diag $e $l $t $w $h | Out-Null
+  return $e
+}
+function Linea($a, $b) {
+  $c = $a.Connectors.AddNew("", "Association")
+  $c.SupplierID = $b.ElementID
+  $c.Direction = "Unspecified"
+  $c.Update() | Out-Null
+}
+
 function Carriles($diag, $nombres) {
   $diag.SwimlaneDef.Orientation = 0
   foreach ($n in $nombres) { $diag.SwimlaneDef.Swimlanes.Add($n, $ANCHO) | Out-Null }
@@ -82,6 +99,95 @@ try {
   $negocio = $sprint0.Packages.AddNew("3.1.2 Modelo de negocio", ""); $negocio.Update() | Out-Null
   $arq = $sprint0.Packages.AddNew("3.1.7 Arquitectura", ""); $arq.Update() | Out-Null
   $diagramas = @()
+
+  # ============================================================ Capitulos 1 y 2
+  $cap1 = $modelo.Packages.AddNew("Capítulo 1", ""); $cap1.Update() | Out-Null
+  $cap2 = $modelo.Packages.AddNew("Capítulo 2", ""); $cap2.Update() | Out-Null
+
+  # ------------------------------------------------------------ 1.8 Alcance: microservicios y funciones
+  $p = $cap1.Packages.AddNew("1.8 Alcance", ""); $p.Update() | Out-Null
+  $d = $p.Diagrams.AddNew("Microservicios y funciones del sistema", "Component"); $d.Update() | Out-Null
+  SinCompartimentos $d
+  # El sistema es un marco que contiene a los microservicios (sin lineas que crucen las cajas).
+  $raizSis = Nuevo $p "Sistema NutriExpress" "Component" -estereotipo "sistema de microservicios"
+  $marcoSis = Poner $d $raizSis 5 20 885 450  # con l=0 EA ignora la posicion y lo deja chico
+  $marcoSis.Sequence = 100; $marcoSis.Update() | Out-Null
+  $alcance = @(
+    @("ms-identidad", "PostgreSQL", @("Iniciar sesión", "Registrar cliente", "Gestionar usuarios", "Roles y permisos", "Recuperar contraseña", "Perfil propio")),
+    @("ms-catalogo", "PostgreSQL", @("Gestionar productos", "Gestionar recetas", "Órdenes de producción", "Catálogo y búsqueda")),
+    @("ms-inventario", "PostgreSQL", @("Gestionar insumos", "Gestionar almacenes", "Notas de ingreso", "Notas de egreso", "Stock y alertas", "Reservar stock")),
+    @("ms-ventas", "PostgreSQL", @("Venta de mostrador", "Comprobante y anulación", "Gestionar clientes")),
+    @("ms-pedidos", "PostgreSQL", @("Carrito y pedido", "Direcciones en mapa", "Tablero de pedidos", "Entregas del repartidor", "Seguimiento en vivo")),
+    @("ms-pagos", "PostgreSQL", @("Pago con QR o tarjeta", "Modo de cobro")),
+    @("ms-reportes", "MongoDB", @("Reporte de ventas", "Reporte de pedidos", "Reporte de producción", "Reporte de inventario", "PDF por correo", "Contador de visitas"))
+  )
+  $x = 15
+  foreach ($s in $alcance) {
+    $funciones = $s[2]
+    $alto = 50 + $funciones.Count * 50 + 6
+    $ms = Nuevo $p $s[0] "Component" -estereotipo "microservicio"
+    $marco = Poner $d $ms $x 90 115 $alto
+    $marco.Sequence = 50; $marco.Update() | Out-Null
+    $y = 90 + 50
+    foreach ($f in $funciones) {
+      $e = Nuevo $p $f "Class"
+      $o = Poner $d $e ($x + 8) $y 99 42
+      $o.Sequence = 1; $o.Update() | Out-Null
+      $y += 50
+    }
+    $x += 125
+  }
+  $diagramas += ,@($d, "1.8-alcance-microservicios.png")
+
+  # ------------------------------------------------------------ 2.4 Ciclo de trabajo diario
+  $p = $cap2.Packages.AddNew("2.4 Metodología de trabajo", ""); $p.Update() | Out-Null
+  $d = $p.Diagrams.AddNew("Ciclo de trabajo diario", "Activity"); $d.Update() | Out-Null
+  $ANCHO = 160; $ACCION = 130
+  Carriles $d @("Almacenero", "Cocinero", "Vendedor", "Repartidor", "Administrador")
+  $i = Inicio $p $d 0 50
+  $a1 = Accion $p $d 0 100 "Compra los insumos"
+  $a2 = Accion $p $d 0 180 "Guarda los insumos en el almacén"
+  $a3 = Accion $p $d 1 180 "Elabora los productos según la receta"
+  $k1 = Decision $p $d 2 185 "¿Canal de venta?"
+  $a4 = Accion $p $d 2 270 "Atiende y cobra en el mostrador"
+  $a5 = Accion $p $d 3 180 "Entrega el pedido y cobra"
+  $a6 = Accion $p $d 4 360 "Revisa ventas, pedidos y stock"
+  $k2 = Decision $p $d 4 450 "¿Faltan insumos?"
+  $a7 = Accion $p $d 0 445 "Registra los insumos por reponer"
+  $f1 = Fin $p $d 0 540
+  $f2 = Fin $p $d 4 540
+  Unir $i $a1 | Out-Null; Unir $a1 $a2 | Out-Null; Unir $a2 $a3 | Out-Null; Unir $a3 $k1 | Out-Null
+  Unir $k1 $a4 -guarda "En el local" | Out-Null
+  Unir $k1 $a5 -guarda "A domicilio" | Out-Null
+  Unir $a4 $a6 | Out-Null; Unir $a5 $a6 | Out-Null; Unir $a6 $k2 | Out-Null
+  Unir $k2 $a7 -guarda "Sí" | Out-Null
+  Unir $k2 $f2 -guarda "No" | Out-Null
+  Unir $a7 $f1 | Out-Null
+  $nota = Nuevo $p "" "Note" -notas "El ciclo se repite cada jornada: los insumos por reponer son la compra del día siguiente."
+  Poner $d $nota 180 590 300 45 | Out-Null
+  $ANCHO = 200; $ACCION = 150
+  $diagramas += ,@($d, "2.4-ciclo-de-trabajo.png")
+
+  # ------------------------------------------------------------ 2.5 Estructura organizacional
+  $p = $cap2.Packages.AddNew("2.5 Estructura organizacional", ""); $p.Update() | Out-Null
+  $d = $p.Diagrams.AddNew("Organigrama de NutriExpress", "Logical"); $d.Update() | Out-Null
+  SinCompartimentos $d
+  $jefe = Caja $p $d "Propietario / Administrador (1)" 290 30 220 50
+  $columnas = @(
+    @("Área de ventas", "Vendedores (2)"),
+    @("Área de cocina", "Cocineros (2)"),
+    @("Área de almacén", "Almacenero (1)"),
+    @("Área de reparto", "Repartidores (2)")
+  )
+  $x = 10
+  foreach ($c in $columnas) {
+    $area = Caja $p $d $c[0] $x 150 170 45
+    $cargo = Caja $p $d $c[1] $x 250 170 45
+    Linea $jefe $area
+    Linea $area $cargo
+    $x += 200
+  }
+  $diagramas += ,@($d, "2.5-organigrama.png")
 
   # ------------------------------------------------------------ Pedido a domicilio
   # Cuando una decision manda a otro carril, el destino queda a la misma altura: la flecha

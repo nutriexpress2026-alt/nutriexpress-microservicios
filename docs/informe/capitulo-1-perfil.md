@@ -1,5 +1,3 @@
-# PARTE I: FUNDAMENTOS TEÓRICOS
-
 # CAPÍTULO 1 – PERFIL DE PROYECTO
 
 ## 1.1 Introducción
@@ -10,15 +8,9 @@ hábitos alimenticios y la mayor difusión de información sobre nutrición camb
 consumo: cada vez más personas buscan comida preparada con insumos frescos y con información clara
 sobre lo que contiene.
 
-Al mismo tiempo, la transformación digital cambió la forma en que los consumidores acceden a los
-alimentos. El comercio electrónico y las plataformas de entrega a domicilio crearon nuevas
-expectativas: atención rápida, servicio disponible en todo momento, información detallada del
-producto y la posibilidad de pagar y seguir un pedido desde el teléfono.
+Paralelamente, la transformación digital ha modificado la manera en que los consumidores acceden a los productos alimenticios. La masificación del comercio electrónico y de las plataformas de entrega a domicilio ha establecido nuevas expectativas en el cliente, que hoy demanda rapidez en la atención, disponibilidad permanente del servicio, información detallada del producto y la posibilidad de realizar y hacer seguimiento de sus pedidos desde cualquier dispositivo. Los negocios que no logran responder a estas expectativas quedan progresivamente relegados frente a competidores que sí incorporan tecnología en sus procesos.
 
-Atender a la vez el canal presencial y el canal digital es un desafío operativo considerable para
-un negocio de comida saludable. Debe coordinar la atención en el local, los pedidos a domicilio, la
-producción diaria en cocina y un inventario formado sobre todo por insumos perecederos. Cada área
-genera información que las demás necesitan en el momento.
+Sin embargo, atender simultáneamente el canal presencial y el canal digital representa un desafío operativo considerable. Un negocio de comida saludable debe coordinar la atención al cliente en el local, la recepción y despacho de pedidos a domicilio, la planificación de la producción diaria en cocina y el control de un inventario compuesto mayoritariamente por insumos perecederos. Cada una de estas actividades genera información que afecta directamente a las demás: lo que se vende determina lo que debe producirse, y lo que se produce determina los insumos que deben reponerse. Cuando esta información no fluye de manera integrada, aparecen errores en los pedidos, demoras en la entrega, desabastecimiento de ingredientes y pérdidas por compras mal dimensionadas.
 
 En este contexto se ubica **NutriExpress**, un negocio de Montero dedicado a preparar y vender
 comida saludable, con atención en el local y entrega a domicilio. El presente proyecto propone un
@@ -150,10 +142,15 @@ Architect y con el modelo C4 para la arquitectura.
 
 ## 1.8 Alcance
 
-El sistema abarcará los siguientes módulos, cada uno implementado como uno o más microservicios:
+El sistema abarcará siete microservicios, cada uno responsable de un área del negocio y de las
+funciones que se muestran en la figura:
 
-<!-- figura: Módulos y casos de uso del sistema -->
-![Módulos y casos de uso del sistema](imagenes/1.8-alcance.png)
+<!-- figura: Microservicios y funciones del sistema -->
+![Microservicios y funciones del sistema](../diagramasEA/imagenes/1.8-alcance-microservicios.png)
+
+El frontend web completa el alcance con un estilo propio, tres temas visuales (niños, jóvenes y
+adultos), el modo día/noche según el horario del cliente y un menú dinámico según los permisos del
+usuario.
 
 ## 1.9 Metodología de desarrollo
 

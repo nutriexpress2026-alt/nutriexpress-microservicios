@@ -62,33 +62,12 @@ El trabajo diario del negocio sigue este ciclo:
    cancelados, el stock disponible y los insumos que deben reponerse.
 
 <!-- figura: Ciclo de trabajo diario de NutriExpress -->
-```mermaid
-flowchart TD
-    A[Compra de insumos] --> B[Almacén]
-    B --> C[Cocina: producción según receta]
-    C --> D[Productos listos]
-    D --> E[Venta en el local]
-    D --> F[Pedido a domicilio]
-    F --> G[Reparto y entrega]
-    E --> H[Cierre y control del administrador]
-    G --> H
-    H -.reposición.-> A
-```
+![Ciclo de trabajo diario de NutriExpress](../diagramasEA/imagenes/2.4-ciclo-de-trabajo.png)
 
 ## 2.5 Estructura organizacional
 
 <!-- figura: Organigrama de NutriExpress -->
-```mermaid
-flowchart TD
-    P[Propietario / Administrador] --> V[Área de ventas]
-    P --> K[Área de cocina]
-    P --> AL[Área de almacén]
-    P --> R[Área de reparto]
-    V --> V1[Vendedores]
-    K --> K1[Cocineros]
-    AL --> AL1[Almacenero]
-    R --> R1[Repartidores]
-```
+![Organigrama de NutriExpress](../diagramasEA/imagenes/2.5-organigrama.png)
 
 NutriExpress opera con una sola sucursal y un equipo de ocho personas:
 
