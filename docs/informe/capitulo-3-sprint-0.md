@@ -19,7 +19,6 @@ repositorio preparado para comenzar el Sprint 1.
 | **Product Owner** | Nilser Rodrigo Condori Ortiz | Representa al negocio NutriExpress. Mantiene y prioriza el Product Backlog, acepta o rechaza las historias terminadas en la Sprint Review. |
 | **Scrum Master** | Joseph Flores García | Facilita los eventos Scrum, mantiene el tablero y las gráficas al día y elimina impedimentos. |
 | **Equipo de desarrollo** | Nilser Rodrigo Condori Ortiz y Joseph Flores García | Diseñan, programan, prueban y despliegan los microservicios y el frontend. |
-| **Interesado (stakeholder)** | Ing. Edwin Calle Terrazas (docente) | Revisa los incrementos y aporta retroalimentación. |
 
 Por ser un equipo de dos personas, el Product Owner y el Scrum Master también forman parte del
 equipo de desarrollo, práctica admitida por la Guía Scrum para equipos pequeños.

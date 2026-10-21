@@ -152,19 +152,8 @@ Architect y con el modelo C4 para la arquitectura.
 
 El sistema abarcará los siguientes módulos, cada uno implementado como uno o más microservicios:
 
-| Módulo | Alcance |
-|---|---|
-| **Administración y seguridad** | Inicio de sesión con contraseña cifrada y bloqueo por intentos fallidos, autorregistro de clientes, recuperación de contraseña por correo, gestión de usuarios, roles, permisos y perfil propio. |
-| **Catálogo y producción** | Productos con información nutricional y foto, recetas con sus insumos, órdenes de producción con cálculo de insumos y costo, catálogo público y búsqueda de información del negocio. |
-| **Inventario** | Insumos, almacenes por tipo de conservación, notas de ingreso y egreso, control de stock por almacén, lotes con vencimiento y alertas de stock mínimo. |
-| **Ventas** | Venta en el local (mesa o para llevar) con cobro en efectivo o QR, comprobante y gestión de clientes. |
-| **Pedidos** | Carrito, ubicación de entrega en mapa, seguimiento del estado, asignación de repartidor y seguimiento en vivo de la entrega. |
-| **Pagos** | Cobro en línea por QR o tarjeta mediante la pasarela Libélula, con un modo simulado para demostraciones. |
-| **Reportes** | Reportes parametrizados de ventas, pedidos, producción e inventario, exportables a PDF y enviables a una o varias cuentas de correo, y contador de visitas por página. |
-| **Sitio web** | Estilo propio con tres temas (niños, jóvenes, adultos), modo día/noche según el horario del cliente y menú dinámico según los permisos del usuario. |
-
-Quedan fuera del alcance: la facturación electrónica ante Impuestos Nacionales, la aplicación móvil
-nativa y la integración con plataformas de delivery de terceros.
+<!-- figura: Módulos y casos de uso del sistema -->
+![Módulos y casos de uso del sistema](imagenes/1.8-alcance.png)
 
 ## 1.9 Metodología de desarrollo
 
