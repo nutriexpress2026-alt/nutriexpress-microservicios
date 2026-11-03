@@ -1,4 +1,4 @@
-# Crea en Enterprise Architect los diagramas del informe (1.8, 2.4, 2.5, 3.1.2, 3.1.7 y 3.2.3)
+﻿# Crea en Enterprise Architect los diagramas del informe (1.8, 2.4, 2.5, 3.1.2, 3.1.7, 3.2.3 y 3.3.3)
 # y exporta cada uno como PNG a docs/diagramasEA/imagenes.
 #
 # Uso (PowerShell, con EA instalado):
@@ -442,6 +442,77 @@ try {
     "Sus permisos son los de su rol que se le habilitaron (UsuarioRolPermiso); viajan en el token RS256.")
   Poner $d $nota 760 360 260 80 | Out-Null
   $diagramas += ,@($d, "3.2.3-clases-ms-identidad.png")
+
+  # ============================================================ Sprint 2
+  $sprint2 = $modelo.Packages.AddNew("Sprint 2", ""); $sprint2.Update() | Out-Null
+  function Replica($e) { $e.Stereotype = "réplica"; $e.Update() | Out-Null }
+
+  # --- 3.3.3 ms-catalogo
+  $p = $sprint2.Packages.AddNew("3.3.3 Clases de ms-catalogo", ""); $p.Update() | Out-Null
+  $d = $p.Diagrams.AddNew("Clases de ms-catalogo", "Logical"); $d.Update() | Out-Null
+  $categoria = Clase "Categoria" @("idCategoria: int", "nombre: string") 20 40 150
+  $producto = Clase "Producto" @("idProducto: int", "nombre: string", "descripcion: string", "precioVenta: decimal",
+    "activo: bool", "tipoConservacion: string", "imagen: bytes", "imagenTipo: string", "imagenActualizadaEn: datetime") 250 40 210
+  $nutricion = Clase "ValorNutricional" @("calorias: int", "proteinasG: decimal", "carbohidratosG: decimal",
+    "grasasG: decimal", "fibraG: decimal") 540 40 190
+  $config = Clase "Configuracion" @("clave: string", "valor: string", "descripcion: string", "actualizadoEn: datetime",
+    "idUsuario: int") 250 260 210
+  Asociar $producto $categoria "0..*" "1" "pertenece a"
+  Asociar $nutricion $producto "0..1" "1" "describe"
+  $nota = Nuevo $p "" "Note" -notas ("Base catalogo_db (PostgreSQL). Configuracion guarda la información del negocio " +
+    "(horario, contacto). El stock no está aquí: se lo pide a ms-inventario por REST interno, y cada alta o cambio " +
+    "de producto se le avisa para que actualice su réplica.")
+  Poner $d $nota 540 220 260 100 | Out-Null
+  $diagramas += ,@($d, "3.3.3-clases-ms-catalogo.png")
+
+  # --- 3.3.3 ms-inventario
+  $p = $sprint2.Packages.AddNew("3.3.3 Clases de ms-inventario", ""); $p.Update() | Out-Null
+  $d = $p.Diagrams.AddNew("Clases de ms-inventario", "Logical"); $d.Update() | Out-Null
+  $unidad = Clase "UnidadMedida" @("idUnidad: int", "nombre: string", "abreviatura: string") 20 20 160
+  $insumo = Clase "Ingrediente" @("idIngrediente: int", "nombre: string", "stockMinimo: decimal", "costoUnitario: decimal",
+    "activo: bool", "tipoConservacion: string", "controlaVencimiento: bool") 230 20 190
+  $insumoAlm = Clase "IngredienteAlmacen" @("stockActual: decimal") 470 20 170
+  $almacen = Clase "Almacen" @("idAlmacen: int", "nombre: string", "tipoConservacion: string", "ubicacionFisica: string",
+    "preferido: bool") 690 20 180
+  $prodAlm = Clase "ProductoAlmacen" @("stockActual: int") 960 20 160
+  $prodRep = Clase "Producto" @("idProducto: int", "nombre: string", "tipoConservacion: string", "activo: bool") 1250 400 170
+  Replica $prodRep
+  $lote = Clase "Lote" @("idLote: int", "codigo: string", "fechaVencimiento: date", "fechaRegistro: datetime") 20 240 170
+  $loteAlm = Clase "LoteAlmacen" @("stockActual: decimal") 20 420 170
+  $detIngIns = Clase "DetalleIngresoInsumo" @("cantidad: decimal", "costoUnitario: decimal") 240 260 190
+  $ingreso = Clase "NotaIngreso" @("idNotaIngreso: int", "fecha: datetime", "motivo: string", "proveedor: string",
+    "numeroDocumento: string", "total: decimal") 500 260 190
+  $detIngProd = Clase "DetalleIngresoProducto" @("cantidad: int", "costoUnitario: decimal") 1000 260 190
+  $empRep = Clase "Empleado" @("idEmpleado: int", "nombre: string", "apellido: string") 760 420 170
+  Replica $empRep
+  $detEgrIns = Clase "DetalleEgresoInsumo" @("cantidad: decimal") 240 560 190
+  $egreso = Clase "NotaEgreso" @("idNotaEgreso: int", "fecha: datetime", "motivo: string", "observacion: string") 500 560 190
+  $detEgrProd = Clase "DetalleEgresoProducto" @("cantidad: int") 1000 560 190
+
+  Asociar $insumo $unidad "0..*" "1" "se mide en"
+  Asociar $insumoAlm $insumo "0..*" "1"
+  Asociar $insumoAlm $almacen "0..*" "1"
+  Asociar $prodAlm $almacen "0..*" "1"
+  Asociar $prodAlm $prodRep "0..*" "1"
+  Asociar $lote $insumo "0..*" "1" "de"
+  Asociar $loteAlm $lote "0..*" "1"
+  Asociar $detIngIns $ingreso "1..*" "1"
+  Asociar $detIngIns $insumo "0..*" "1"
+  Asociar $detIngIns $lote "0..1" "0..1" "abre"
+  Asociar $detIngProd $ingreso "0..*" "1"
+  Asociar $detIngProd $prodRep "0..*" "1"
+  Asociar $detEgrIns $egreso "0..*" "1"
+  Asociar $detEgrIns $insumo "0..*" "1"
+  Asociar $detEgrProd $egreso "0..*" "1"
+  Asociar $detEgrProd $prodRep "0..*" "1"
+  Asociar $ingreso $empRep "0..*" "1" "registra"
+  Asociar $egreso $empRep "0..*" "1" "registra"
+  Asociar $egreso $ingreso "0..*" "0..1" "devuelve de"
+  $nota = Nuevo $p "" "Note" -notas ("Base inventario_db (PostgreSQL). «réplica»: copia local con lo mínimo que este " +
+    "servicio necesita (RNF-ARQ-02). Producto la mantiene ms-catalogo; Empleado sale del token de quien registra. " +
+    "Un perecedero entra por lotes con vencimiento; la reposición indica su devolución y la devolución su compra.")
+  Poner $d $nota 20 700 680 60 | Out-Null
+  $diagramas += ,@($d, "3.3.3-clases-ms-inventario.png")
 
   $proyecto = $r.GetProjectInterface()
   foreach ($par in $diagramas) {
