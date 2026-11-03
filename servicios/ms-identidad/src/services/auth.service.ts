@@ -88,6 +88,8 @@ export async function iniciarSesion(nombreUsuario: string, contrasena: string): 
   const token = firmarToken({
     idUsuario: usuario.id_usuario,
     nombreUsuario: usuario.nombre_usuario,
+    nombre: usuario.nombre,
+    apellido: usuario.apellido,
     idRol: usuario.id_rol,
     rol: usuario.rol.nombre,
     cargo: usuario.empleado?.cargo.nombre ?? null,

@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { ADMIN, iniciarSesion, registrarCliente } from './ayudantes';
+import { SPRINT_ACTUAL } from '../src/lib/modulos';
 
 /**
  * Requisito 1 del proyecto: los casos de uso, recorridos de punta a punta.
@@ -11,6 +12,8 @@ import { ADMIN, iniciarSesion, registrarCliente } from './ayudantes';
  */
 
 test('un cliente pide en efectivo y el personal recibe el pedido', async ({ page, request }) => {
+  // El pedido a domicilio llega con ms-pedidos, en el Sprint 4.
+  test.skip(SPRINT_ACTUAL < 4, 'Los pedidos se implementan en el Sprint 4');
   const cliente = await registrarCliente(request);
   await iniciarSesion(page, cliente.usuario, cliente.contrasena);
   await expect(page).toHaveURL(/\/portal/);

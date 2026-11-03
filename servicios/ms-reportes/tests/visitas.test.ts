@@ -32,7 +32,11 @@ describe('HU-31 Contador de visitas por página (RF-WEB-03)', () => {
   });
 
   it('visitas simultáneas no se pisan: el $inc de MongoDB es atómico', async () => {
-    await Promise.all(Array.from({ length: 20 }, () => request(app).post('/api/visitas').send({ ruta: '/carrera' })));
+    // Página nueva: las veinte compiten por crear el documento y ninguna falla.
+    const respuestas = await Promise.all(
+      Array.from({ length: 20 }, () => request(app).post('/api/visitas').send({ ruta: '/carrera' })),
+    );
+    expect(respuestas.map((x) => x.status)).toEqual(Array(20).fill(201));
     const r = await request(app).get('/api/visitas').query({ ruta: '/carrera' }).expect(200);
     expect(r.body.total).toBe(20);
   });

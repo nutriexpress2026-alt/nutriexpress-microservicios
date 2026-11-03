@@ -139,7 +139,7 @@ describe('BuscadorGeneral', () => {
     dibujar();
     await usuario.click(screen.getByRole('button', { name: /Buscar/ }));
 
-    // «io» coincide con Inicio y Usuarios: la segunda se elige con ↓.
+    // «io» coincide con Inicio y con las pestañas de Inventario: la segunda, Stock, se elige con ↓.
     await usuario.type(caja(), 'io');
     const opciones = screen.getAllByRole('option');
     expect(opciones.length).toBeGreaterThan(1);
@@ -148,7 +148,7 @@ describe('BuscadorGeneral', () => {
     expect(screen.getAllByRole('option')[1]).toHaveAttribute('aria-selected', 'true');
     await usuario.keyboard('{Enter}');
     expect(empujar).toHaveBeenCalledTimes(1);
-    expect(empujar).toHaveBeenCalledWith('/usuarios');
+    expect(empujar).toHaveBeenCalledWith('/inventario/stock');
   });
 
   it('dice cuando nada coincide', async () => {

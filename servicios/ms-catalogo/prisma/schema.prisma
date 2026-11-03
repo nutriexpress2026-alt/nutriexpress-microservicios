@@ -1,0 +1,52 @@
+// Generado a partir de prisma/esquema.sql (fuente de verdad). Con la base levantada,
+// `npm run db:pull` lo regenera; no editar a mano.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model categoria {
+  id_categoria Int        @id @default(autoincrement())
+  nombre       String     @unique @db.VarChar(50)
+  producto     producto[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model producto {
+  id_producto           Int                @id @default(autoincrement())
+  nombre                String             @db.VarChar(100)
+  descripcion           String?            @db.VarChar(250)
+  precio_venta          Decimal            @db.Decimal(10, 2)
+  activo                Boolean            @default(true)
+  id_categoria          Int
+  tipo_conservacion     String             @default("Seco") @db.VarChar(20)
+  imagen                Bytes?
+  imagen_tipo           String?            @db.VarChar(20)
+  imagen_actualizada_en DateTime?          @db.Timestamptz(6)
+  categoria             categoria          @relation(fields: [id_categoria], references: [id_categoria], onDelete: NoAction, onUpdate: NoAction, map: "fk_producto_categoria")
+  valor_nutricional     valor_nutricional?
+}
+
+model valor_nutricional {
+  id_producto     Int      @id
+  calorias        Int
+  proteinas_g     Decimal  @db.Decimal(6, 2)
+  carbohidratos_g Decimal  @db.Decimal(6, 2)
+  grasas_g        Decimal  @db.Decimal(6, 2)
+  fibra_g         Decimal? @db.Decimal(6, 2)
+  producto        producto @relation(fields: [id_producto], references: [id_producto], onDelete: Cascade, onUpdate: NoAction, map: "fk_valnut_producto")
+}
+
+model configuracion {
+  clave          String   @id @db.VarChar(50)
+  valor          String   @db.VarChar(200)
+  descripcion    String?  @db.VarChar(200)
+  actualizado_en DateTime @default(now()) @db.Timestamp(6)
+  id_usuario     Int?
+
+  @@index([id_usuario], map: "ix_config_usuario")
+}

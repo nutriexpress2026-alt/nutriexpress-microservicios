@@ -15,6 +15,9 @@ import { env } from '../config/env.js';
 export interface PayloadToken {
   idUsuario: number;
   nombreUsuario: string;
+  /** Nombre y apellido: los demás servicios lo guardan en sus réplicas (quién registró qué). */
+  nombre: string;
+  apellido: string;
   idRol: number;
   rol: string;
   cargo: string | null;

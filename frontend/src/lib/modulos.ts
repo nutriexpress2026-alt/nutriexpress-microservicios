@@ -35,7 +35,15 @@ export interface Seccion {
   permiso?: string;
   /** Otras palabras con las que el buscador general encuentra la pantalla. */
   alias?: string;
+  /** Sprint en que llega su microservicio; antes no se muestra. */
+  desdeSprint?: number;
 }
+
+/**
+ * Sprint en curso del proyecto de microservicios. Las pestañas cuyo servicio
+ * llega en un sprint posterior no se muestran todavía (`desdeSprint`).
+ */
+export const SPRINT_ACTUAL = 2;
 
 export interface Modulo {
   /** Nombre corto, para la barra lateral. */
@@ -68,7 +76,7 @@ export interface Modulo {
   alias?: string;
 }
 
-const REPORTES = { etiqueta: 'Reportes', icono: ChartColumn, alias: 'informe pdf periodo' };
+const REPORTES = { etiqueta: 'Reportes', icono: ChartColumn, alias: 'informe pdf periodo', desdeSprint: 6 };
 
 export const MODULOS: Modulo[] = [
   {
@@ -107,7 +115,7 @@ export const MODULOS: Modulo[] = [
     ruta: '/inventario',
     icono: Boxes,
     permiso: 'STOCK_CONSULTAR',
-    implementado: false, // se habilita con su microservicio (Sprint 2)
+    implementado: true,
     secciones: [
       {
         ruta: '/inventario/stock',
@@ -198,7 +206,7 @@ export const MODULOS: Modulo[] = [
     ruta: '/produccion',
     icono: ChefHat,
     permiso: 'PRODUCTO_GESTIONAR',
-    implementado: false, // se habilita con su microservicio (Sprint 2)
+    implementado: true,
     secciones: [
       {
         ruta: '/produccion/productos',
@@ -213,15 +221,19 @@ export const MODULOS: Modulo[] = [
         icono: Factory,
         permiso: 'ORDEN_PRODUCCION_GESTIONAR',
         alias: 'producir cocina orden de produccion',
+        desdeSprint: 3,
       },
       { ruta: '/produccion/reportes', ...REPORTES, permiso: 'ORDEN_PRODUCCION_GESTIONAR' },
     ],
   },
 ];
 
-/** Las pestañas de un módulo, tal como están declaradas. */
+/** Que la pestaña ya llegó: las de un sprint posterior todavía no se muestran. */
+const yaDisponible = (s: Seccion) => (s.desdeSprint ?? 0) <= SPRINT_ACTUAL;
+
+/** Las pestañas de un módulo disponibles en este sprint, en el orden declarado. */
 export function seccionesDe(ruta: string): Seccion[] {
-  return MODULOS.find((m) => m.ruta === ruta)?.secciones ?? [];
+  return (MODULOS.find((m) => m.ruta === ruta)?.secciones ?? []).filter(yaDisponible);
 }
 
 /**
@@ -235,6 +247,7 @@ export function seccionesAccesibles(
   const modulo = MODULOS.find((m) => m.ruta === ruta);
   if (!modulo) return [];
   return (modulo.secciones ?? []).filter((s) => {
+    if (!yaDisponible(s)) return false;
     const permiso = s.permiso ?? modulo.permiso;
     return permiso === null || tienePermiso(permiso);
   });
