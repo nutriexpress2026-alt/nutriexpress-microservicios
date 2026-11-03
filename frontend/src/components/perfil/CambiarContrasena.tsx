@@ -1,0 +1,123 @@
+'use client';
+
+import { useState } from 'react';
+import { KeyRound, ShieldCheck } from 'lucide-react';
+import { api, ErrorApi } from '@/lib/api';
+import { useNotificaciones } from '@/components/ui/Notificaciones';
+import { Campo } from '@/components/ui/Campo';
+import { Boton } from '@/components/ui/Boton';
+import { RequisitosContrasena } from '@/components/ui/RequisitosContrasena';
+import { REQUISITOS_CONTRASENA } from '@/lib/dominio';
+
+/**
+ * Cambio de la propia contraseña. Lo usan el empleado y el cliente por igual.
+ *
+ * Vive en un componente compartido porque la operación es idéntica para los
+ * dos: misma política, mismos avisos, mismo endpoint. Dos copias habrían
+ * significado que corregir un texto en una dejara la otra atrás.
+ *
+ * Los requisitos se muestran **mientras se escribe**, no como un error después
+ * de enviar. Una política que solo se conoce al fallar obliga a adivinar.
+ */
+
+/** RF-SEG-03. La lista vive en `lib/dominio`, junto al resto de la política. */
+const REQUISITOS = REQUISITOS_CONTRASENA;
+
+export function CambiarContrasena() {
+  const { notificar } = useNotificaciones();
+
+  const [actual, setActual] = useState('');
+  const [nueva, setNueva] = useState('');
+  const [repetida, setRepetida] = useState('');
+  const [enviando, setEnviando] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const cumpleTodo = REQUISITOS.every((r) => r.cumple(nueva));
+  const coinciden = nueva.length > 0 && nueva === repetida;
+  const esOtra = nueva !== actual;
+  const listo = actual.length > 0 && cumpleTodo && coinciden && esOtra;
+
+  async function enviar(evento: React.FormEvent) {
+    evento.preventDefault();
+    setError(null);
+    setEnviando(true);
+
+    try {
+      await api.put('/perfil/contrasena', {
+        contrasenaActual: actual,
+        contrasenaNueva: nueva,
+      });
+      setActual('');
+      setNueva('');
+      setRepetida('');
+      notificar('exito', 'Contraseña actualizada. Úsela la próxima vez que inicie sesión.');
+    } catch (e) {
+      setError(e instanceof ErrorApi ? e.message : 'No se pudo cambiar la contraseña');
+    } finally {
+      setEnviando(false);
+    }
+  }
+
+  return (
+    <section className="superficie-tarjeta rounded-2xl">
+      <header className="flex items-center gap-2 border-b border-borde px-5 py-4">
+        <KeyRound className="size-4 shrink-0 text-marca-400" aria-hidden />
+        <h2 className="text-sm font-medium text-tinta">Contraseña</h2>
+      </header>
+
+      <form onSubmit={enviar} className="space-y-4 px-5 py-5">
+        <Campo
+          etiqueta="Contraseña actual"
+          type="password"
+          autoComplete="current-password"
+          required
+          value={actual}
+          onChange={(e) => setActual(e.target.value)}
+          ayuda="Se pide aunque su sesión esté abierta: es lo que impide que alguien que la encuentre abierta se quede con la cuenta"
+        />
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Campo
+            etiqueta="Contraseña nueva"
+            type="password"
+            autoComplete="new-password"
+            required
+            value={nueva}
+            onChange={(e) => setNueva(e.target.value)}
+          />
+          <Campo
+            etiqueta="Repetir la nueva"
+            type="password"
+            autoComplete="new-password"
+            required
+            value={repetida}
+            onChange={(e) => setRepetida(e.target.value)}
+            error={repetida.length > 0 && !coinciden ? 'No coinciden' : undefined}
+          />
+        </div>
+
+        <RequisitosContrasena valor={nueva} />
+
+        {nueva.length > 0 && !esOtra && (
+          <p className="text-xs text-aviso">La nueva debe ser distinta de la actual.</p>
+        )}
+
+        {error && (
+          <p role="alert" className="rounded-xl bg-peligro/10 px-3.5 py-2.5 text-sm text-peligro">
+            {error}
+          </p>
+        )}
+
+        <div className="flex items-center justify-between gap-3 border-t border-borde pt-4">
+          <p className="flex items-start gap-1.5 text-[11px] leading-relaxed text-tinta-tenue">
+            <ShieldCheck className="mt-0.5 size-3 shrink-0" aria-hidden />
+            Las sesiones abiertas en otros dispositivos siguen activas.
+          </p>
+          <Boton type="submit" variante="primario" cargando={enviando} disabled={!listo}>
+            Cambiar
+          </Boton>
+        </div>
+      </form>
+    </section>
+  );
+}

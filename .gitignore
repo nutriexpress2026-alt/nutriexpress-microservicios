@@ -9,3 +9,8 @@ coverage/
 .DS_Store
 Thumbs.db
 ~$*
+!.env.test
+# Claves RS256 de desarrollo y de pruebas (nunca al repositorio)
+claves/
+claves-prueba/
+*.tsbuildinfo

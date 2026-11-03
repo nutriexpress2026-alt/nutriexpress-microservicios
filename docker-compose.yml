@@ -1,0 +1,89 @@
+# NutriExpress — microservicios (HT-01, RNF-ARQ-06).
+#
+#   docker compose up -d --build     levanta todo
+#   docker compose logs -f ms-identidad
+#
+# Puertos hacia la PC (los de adentro de la red de Docker no cambian):
+#   8080  API Gateway: la única entrada para el navegador (RNF-ARQ-04)
+#   5433  PostgreSQL (5433 para no chocar con un PostgreSQL local en el 5432)
+#   27018 MongoDB
+#   15672 Panel de RabbitMQ (usuario y contraseña en .env)
+#
+# Cada microservicio tiene su propia base (RNF-ARQ-02): un mismo servidor de
+# PostgreSQL con una base y un usuario por servicio, y MongoDB para ms-reportes.
+
+name: nutriexpress
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    ports:
+      - "5433:5432"
+    volumes:
+      - datos-postgres:/var/lib/postgresql/data
+      # Crea una base y un usuario por microservicio la primera vez.
+      - ./infra/postgres:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      retries: 20
+
+  mongo:
+    image: mongo:7
+    ports:
+      - "27018:27017"
+    volumes:
+      - datos-mongo:/data/db
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USUARIO:-nutriexpress}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_CLAVE:-nutriexpress}
+    ports:
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      retries: 12
+
+  ms-identidad:
+    build: ./servicios/ms-identidad
+    environment:
+      DATABASE_URL: postgresql://identidad:${IDENTIDAD_CLAVE_BD:-identidad}@postgres:5432/identidad_db
+      PORT: 4001
+      CLAVES_DIR: /claves
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-8h}
+    volumes:
+      # Par de claves con que se firman los tokens (RS256). Se crea solo la
+      # primera vez y sobrevive a los reinicios.
+      - claves-jwt:/claves
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  ms-reportes:
+    build: ./servicios/ms-reportes
+    environment:
+      MONGO_URL: mongodb://mongo:27017/reportes
+      PORT: 4007
+    depends_on:
+      - mongo
+
+  gateway:
+    image: nginx:1.27-alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./gateway/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - ms-identidad
+      - ms-reportes
+
+volumes:
+  datos-postgres:
+  datos-mongo:
+  claves-jwt:
