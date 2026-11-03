@@ -11,14 +11,25 @@ Docente: Ing. Edwin Calle Terrazas.
 
 | Sprint | Fechas (2026) | Objetivo | Estado |
 |---|---|---|---|
-| Sprint 0 | 20-oct – 25-oct | Planificación: perfil, organización, backlog, arquitectura | En curso |
-| Sprint 1 | 26-oct – 01-nov | Infraestructura base + Identidad (inicio de sesión) | Pendiente |
-| Sprint 2 | 02-nov – 08-nov | Catálogo de productos e inventario básico | Pendiente |
+| Sprint 0 | 20-oct – 25-oct | Planificación: perfil, organización, backlog, arquitectura | Terminado |
+| Sprint 1 | 26-oct – 01-nov | Infraestructura base + Identidad (inicio de sesión) | Terminado |
+| Sprint 2 | 02-nov – 08-nov | Catálogo de productos e inventario básico | Terminado |
 | Sprint 3 | 09-nov – 15-nov | Recetas, producción y eventos entre servicios | Pendiente |
 | Sprint 4 | 16-nov – 22-nov | Pedidos a domicilio y pago en línea (saga) | Pendiente |
 | Sprint 5 | 23-nov – 29-nov | Gestión de pedidos, reparto y ventas de mostrador | Pendiente |
 | Sprint 6 | 30-nov – 06-dic | Reportes, temas, despliegue y pruebas | Pendiente |
 | Sprint 7 | 07-dic – 13-dic | Reserva: ajustes y cierre del informe | Pendiente |
+
+## Instalación
+
+Para tenerlo funcionando en otra computadora: [`INSTALACION.md`](INSTALACION.md). En resumen, con
+Git, Node.js 22 y Docker Desktop instalados:
+
+```powershell
+git clone https://github.com/nutriexpress2026-alt/nutriexpress-microservicios.git
+cd nutriexpress-microservicios
+powershell -ExecutionPolicy Bypass -File herramientas\instalar.ps1
+```
 
 ## Estructura del repositorio
 
