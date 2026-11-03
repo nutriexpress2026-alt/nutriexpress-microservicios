@@ -336,6 +336,8 @@ def convertir(md, listas, figuras):
             i += 1
         if re.fullmatch(r'\*\*[^*]+\*\*', texto):
             out.append(subtitulo_negrita(texto))
+        elif texto.startswith('Pendiente:'):
+            out.append(pendiente(texto))
         else:
             out.append(parrafo(runs(texto)))
     return ''.join(out)
@@ -405,9 +407,11 @@ BIBLIOGRAFIA = [
 ]
 
 
-def resto_del_indice(listas):
+def resto_del_indice(listas, documentados):
     out = []
     for n, fechas, objetivo in SPRINTS:
+        if n in documentados:  # ese sprint ya tiene su capitulo-3-sprint-N.md
+            continue
         sec = n + 1
         out.append(titulo(2, f'3.{sec} SPRINT {n}'))
         out.append(parrafo(runs(f'**Fechas:** {fechas}. **Objetivo previsto:** {objetivo}')))
@@ -516,10 +520,15 @@ def main():
         contenido.append(portada_interior('DEDICATORIA', DEDICATORIA))
     contenido.append(indice('ÍNDICE GENERAL', 'TOC \\o "1-3" \\h \\z \\u', 'Actualice el índice: clic derecho › Actualizar campos.'))
     contenido.append(indice('ÍNDICE DE FIGURAS', 'TOC \\h \\z \\c "Figura"', 'Actualice el índice: clic derecho › Actualizar campos.'))
-    for nombre in ('capitulo-1-perfil.md', 'capitulo-2-organizacion.md', 'capitulo-3-sprint-0.md'):
+    # Un archivo por sprint: capitulo-3-sprint-0.md, -1.md, -2.md...
+    sprints = sorted(
+        (int(m.group(1)), f) for f in os.listdir(DOCS)
+        if (m := re.fullmatch(r'capitulo-3-sprint-(\d+)\.md', f))
+    )
+    for nombre in ['capitulo-1-perfil.md', 'capitulo-2-organizacion.md'] + [f for _, f in sprints]:
         md = open(os.path.join(DOCS, nombre), encoding='utf8').read()
         contenido.append(convertir(md, listas, figuras))
-    contenido.append(resto_del_indice(listas))
+    contenido.append(resto_del_indice(listas, {n for n, _ in sprints}))
 
     seccion = ('<w:sectPr><w:footerReference w:type="default" r:id="rIdPie1"/>'
                '<w:pgSz w:w="12240" w:h="15840" w:code="1"/>'
