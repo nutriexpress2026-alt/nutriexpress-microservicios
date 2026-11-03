@@ -11,7 +11,8 @@ en la de Nilser. Lleva entre 30 minutos y una hora la primera vez, casi todo esp
 | **Node.js 22 LTS** (o más nuevo) | Frontend y pruebas | https://nodejs.org |
 | **Docker Desktop** | Levanta las bases de datos y los microservicios | https://www.docker.com/products/docker-desktop |
 | Google Chrome | Las pruebas de punta a punta lo usan | (opcional) |
-| Enterprise Architect, Word, Excel | Diagramas, informe y seguimiento Scrum | (solo para la documentación) |
+| Enterprise Architect 15, Word, Excel | Diagramas, informe y seguimiento Scrum | (solo para la documentación) |
+| Python 3 con `pip install openpyxl` | Regenerar el Excel y armar el Word | https://www.python.org (marcar «Add to PATH») |
 
 Docker Desktop pide **WSL 2**. Si al abrirlo avisa que falta, abrir PowerShell **como administrador**,
 ejecutar `wsl --install` y reiniciar la computadora.
@@ -20,6 +21,9 @@ Antes de seguir:
 
 - Abrir **Docker Desktop** y esperar a que abajo a la izquierda diga **Engine running**.
 - Tener **al menos 10 GB libres** en el disco C: (con menos, Docker falla de formas raras).
+- Memoria: con 8 GB de RAM alcanza para lo que hay hoy. Cuando se agregue Elasticsearch (ver
+  `CLAUDE.md`, «Decisión pendiente de aplicar») hacen falta 16 GB, y en Docker Desktop › Settings ›
+  Resources darle al menos 4 GB.
 
 ## 2. Descargar el repositorio
 
