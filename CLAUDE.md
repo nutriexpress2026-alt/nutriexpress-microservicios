@@ -12,8 +12,12 @@ El informe se escribe en `docs/informe/` siguiendo el índice SCRUM del docente.
 completa (requisitos, historias, backlog, arquitectura, eventos) está en
 `docs/informe/capitulo-3-sprint-0.md`: **leerlo antes de implementar cualquier historia.**
 
-Existe una versión monolítica anterior (otro repositorio, `COMIDASALUDABLE`). Sirve de referencia
-de las reglas del negocio, **no se copia su código**: este proyecto se construye desde cero.
+Existe una versión monolítica anterior (otro repositorio, `COMIDASALUDABLE`). La **arquitectura** se
+construye desde cero, pero se **reutilizan sus piezas adaptadas** (decisión del equipo, 3-nov): el
+frontend (pantallas, temas, componentes), las reglas de negocio de cada servicio y las integraciones
+(Libélula, correo, PDF). Cada pieza va al microservicio dueño de esos datos y se adapta: sin consultas
+a tablas ajenas y con las operaciones entre servicios por REST o eventos. El API Gateway conserva las
+rutas del monolito (`/api/auth`, `/api/usuarios`…) para que el frontend reutilizado funcione igual.
 
 ## Convenciones
 

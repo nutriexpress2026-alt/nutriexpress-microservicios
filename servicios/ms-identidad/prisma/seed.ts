@@ -106,7 +106,7 @@ async function crearCuenta(c: CuentaDePrueba) {
   for (const rp of delRol) {
     await prisma.usuario_rol_permiso.upsert({
       where: {
-        uq_usuario_rol_permiso: { id_usuario: usuario.id_usuario, id_rol_permiso: rp.id_rol_permiso },
+        id_usuario_id_rol_permiso: { id_usuario: usuario.id_usuario, id_rol_permiso: rp.id_rol_permiso },
       },
       update: {},
       create: { id_usuario: usuario.id_usuario, id_rol_permiso: rp.id_rol_permiso },
@@ -124,7 +124,7 @@ export async function main() {
     const rol = await prisma.rol.upsert({ where: { nombre: nombreRol }, update: {}, create: { nombre: nombreRol } });
     for (const np of nombres) {
       await prisma.rol_permiso.upsert({
-        where: { uq_rol_permiso: { id_rol: rol.id_rol, id_permiso: idPermiso.get(np)! } },
+        where: { id_rol_id_permiso: { id_rol: rol.id_rol, id_permiso: idPermiso.get(np)! } },
         update: {},
         create: { id_rol: rol.id_rol, id_permiso: idPermiso.get(np)! },
       });

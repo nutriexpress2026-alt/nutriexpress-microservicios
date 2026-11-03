@@ -32,14 +32,14 @@ equipo de desarrollo, práctica admitida por la Guía Scrum para equipos pequeñ
 | Sprint Retrospective | Domingo, después de la review | 15 minutos |
 
 En la Daily cada integrante responde: ¿qué hice ayer?, ¿qué haré hoy?, ¿qué me lo impide? Las
-respuestas se registran en el tablero para el apartado *Daily Meeting* de cada sprint.
+respuestas se registran en la hoja *Daily* del Excel de seguimiento para el apartado *Daily Meeting* de cada sprint.
 
 **Definición de terminado (Definition of Done).** Una historia está terminada cuando:
 1. Su código está en la rama principal del repositorio, revisado por el otro integrante.
 2. Cumple todos sus criterios de aceptación.
 3. Tiene pruebas automatizadas que pasan.
 4. Funciona levantando el sistema completo con `docker compose up`.
-5. Su tarjeta está en la columna *Done* del tablero.
+5. Su tarea está en estado *Done* en el Excel de seguimiento, con su fecha de término real.
 
 ---
 
@@ -207,7 +207,7 @@ Formato: *Como* <rol>, *quiero* <acción>, *para* <beneficio>. Estimación en pu
 | HT-01 | Como equipo, queremos un repositorio con Docker Compose que levante bases de datos, broker y servicios, para trabajar todos sobre el mismo entorno. | `docker compose up` levanta PostgreSQL, MongoDB, RabbitMQ y los servicios; cada servicio responde `GET /salud`. | 5 | Alta |
 | HT-02 | Como equipo, queremos un API Gateway, para que el navegador tenga una única dirección de entrada. | Las rutas `/api/<servicio>/*` llegan a su servicio; una ruta inexistente responde 404. | 3 | Alta |
 | HT-03 | Como equipo, queremos un catálogo de eventos publicado en RabbitMQ, para que los servicios se avisen sin depender unos de otros. | Un evento publicado por un servicio llega a sus consumidores; un evento repetido no se procesa dos veces. | 5 | Alta |
-| HT-04 | Como equipo, queremos desplegar el sistema en el VPS con HTTPS, para que el docente y los clientes lo usen desde internet. | El sistema responde por HTTPS en su dominio; el despliegue no afecta a otros sistemas del servidor. | 5 | Alta |
+| HT-04 | Como equipo, queremos desplegar el sistema en el VPS con HTTPS, para que los clientes lo usen desde internet. | El sistema responde por HTTPS en su dominio. | 5 | Alta |
 | HT-05 | Como equipo, queremos pruebas unitarias, de integración y de punta a punta, para verificar el sistema en cada sprint. | Existen y pasan los tres tipos de prueba; se ejecutan con un solo comando. | 8 | Alta |
 
 #### Épica 1 – Identidad y seguridad (ms-identidad)
@@ -357,17 +357,17 @@ terminado). Si la entrega se adelanta al 6 de diciembre, HU-07 y HU-30 quedan fu
 |---|---|---|
 | **Lenguaje de programación** | TypeScript 5 | Tipado estático en todos los servicios y en el frontend; un solo lenguaje para todo el equipo. |
 | **Entorno de ejecución** | Node.js 22 LTS | Liviano, ideal para servicios pequeños de entrada y salida intensiva. |
-| **Framework de los microservicios** | Express 5, Zod (validación), Prisma 7 (PostgreSQL), Mongoose 8 (MongoDB), amqplib (RabbitMQ) | Conocidos por el equipo y maduros. |
+| **Framework de los microservicios** | Express 5, Zod (validación), Prisma 7 (PostgreSQL), driver oficial de MongoDB 6, amqplib (RabbitMQ) | Conocidos por el equipo y maduros. |
 | **Framework del frontend** | Next.js 16 con React 19 y Tailwind CSS 4 | Interfaz responsiva y temas por variables CSS. |
 | **API Gateway** | Nginx | Reparte las rutas `/api/*` a cada servicio y sirve de punto único de entrada. |
 | **Broker de mensajes** | RabbitMQ 3 | Entrega de eventos entre servicios con colas persistentes y reintentos. |
-| **SGBD** | PostgreSQL 16 y MongoDB 7 | Ver justificación abajo. |
+| **SGBD** | PostgreSQL 16 y MongoDB 4.4 | Ver justificación abajo. MongoDB 4.4 porque desde la 5.0 exige un procesador con instrucciones AVX, que la computadora de desarrollo no tiene. |
 | **Modelado de arquitectura** | Modelo C4 (contexto, contenedores, componentes) | Describe la arquitectura de microservicios por niveles de detalle. |
 | **Diseño y modelado** | Enterprise Architect | Diagramas UML: actividades, clases, componentes y despliegue. |
 | **Entorno de desarrollo** | Visual Studio Code, Docker Desktop, Git, asistente de IA Claude Code | Mismo entorno en ambas computadoras. |
 | **Contenedores** | Docker y Docker Compose | Cada servicio en su contenedor; todo el sistema con un comando. |
 | **Infraestructura en la nube** | Servidor virtual (VPS) Contabo con Ubuntu, Caddy como proxy HTTPS | Ya disponible para el equipo; Caddy obtiene el certificado HTTPS automáticamente. |
-| **Seguimiento del proyecto** | Jira Software (tablero Scrum) | Tablero To Do / Doing / Done, sprints y gráficas Burndown y Burnup automáticas. |
+| **Seguimiento del proyecto** | Microsoft Excel (`docs/scrum/seguimiento-scrum.xlsx`) | Product Backlog, tareas de cada sprint con su estado (To Do / Doing / Done), Daily y gráficas Burndown y Burnup calculadas con fórmulas a partir de las fechas reales de término. Se probó Jira y se descartó por su curva de aprendizaje. |
 | **Control de versiones** | Git | Historial de cambios y trabajo en ramas. |
 | **Gestión de código en la nube** | GitHub (cuenta `nutriexpress2026-alt`) | Repositorio compartido y revisión de cambios por *pull request*. |
 | **Pruebas** | Vitest (unitarias), Supertest (integración de API), Playwright (punta a punta) | Cubren los tres tipos de prueba exigidos. |
@@ -453,4 +453,4 @@ Cada servicio con PostgreSQL tiene **su propia base** dentro del mismo servidor 
 | Historias de usuario y Product Backlog | Hecho |
 | Herramientas, arquitectura C4 y eventos | Hecho |
 | Repositorio en GitHub | Hecho: `github.com/nutriexpress2026-alt/nutriexpress-microservicios` |
-| Tablero Scrum (Jira) con el backlog cargado | Pendiente |
+| Seguimiento Scrum en Excel (backlog, sprints, daily, gráficas) | Hecho |

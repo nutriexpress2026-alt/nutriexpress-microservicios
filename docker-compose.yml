@@ -32,7 +32,9 @@ services:
       retries: 20
 
   mongo:
-    image: mongo:7
+    # 4.4 y no 7: MongoDB 5.0+ exige un procesador con AVX, y la PC de desarrollo
+    # no lo tiene (el contenedor arrancaba y se cerraba solo).
+    image: mongo:4.4
     ports:
       - "27018:27017"
     volumes:

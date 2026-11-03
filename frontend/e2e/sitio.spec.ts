@@ -27,7 +27,7 @@ test.describe('Sitio', () => {
   });
 
   test('el pie de cada página muestra el número de visitas', async ({ page, request }) => {
-    const contador = page.getByText(/\d+ visitas? acumuladas?/);
+    const contador = page.getByText(/\d+ visitas? a esta página/);
 
     await page.goto('/login');
     await expect(contador).toBeVisible();

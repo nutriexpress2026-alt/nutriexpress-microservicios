@@ -25,11 +25,12 @@ vi.mock('next/navigation', () => ({
 }));
 
 let permisos = new Set<string>();
+// Valores estables entre renders, como los entrega AuthContext (useCallback):
+// una función nueva en cada render recalculaba la lista y reiniciaba el resaltado.
+const sesionFija = { usuario: { id: 1, cargo: 'Administrador' } };
+const tienePermisoFijo = (p: string) => permisos.has(p);
 vi.mock('@/context/AuthContext', () => ({
-  useAuth: () => ({
-    sesion: { usuario: { id: 1, cargo: 'Administrador' } },
-    tienePermiso: (p: string) => permisos.has(p),
-  }),
+  useAuth: () => ({ sesion: sesionFija, tienePermiso: tienePermisoFijo }),
 }));
 
 const { api } = await import('@/lib/api');
@@ -53,7 +54,7 @@ const PEDIDO_12: BusquedaGeneral = {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  permisos = new Set(['PEDIDO_LEER', 'VENTA_LEER', 'VENTA_REGISTRAR', 'STOCK_CONSULTAR']);
+  permisos = new Set(['PEDIDO_LEER', 'VENTA_LEER', 'VENTA_REGISTRAR', 'STOCK_CONSULTAR', 'USUARIO_LEER', 'ROL_LEER']);
   consultar.mockResolvedValue({ termino: '', resultados: [] });
 });
 
@@ -84,11 +85,13 @@ describe('BuscadorGeneral', () => {
     dibujar();
     await usuario.click(screen.getByRole('button', { name: /Buscar/ }));
 
-    await usuario.type(caja(), 'cobrar');
+    // Sprint 1: solo Usuarios y Roles están habilitados (los demás módulos llegan
+    // con su microservicio). «desbloqueo» es lo que se hace en Usuarios.
+    await usuario.type(caja(), 'desbloqueo');
 
-    expect(screen.getByRole('option', { name: /Punto de venta/ })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: /Usuarios/ })).toBeInTheDocument();
     await usuario.keyboard('{Enter}');
-    expect(empujar).toHaveBeenCalledWith('/ventas/registro');
+    expect(empujar).toHaveBeenCalledWith('/usuarios');
   });
 
   it('no ofrece pantallas que los permisos no dejan abrir', async () => {
@@ -136,14 +139,16 @@ describe('BuscadorGeneral', () => {
     dibujar();
     await usuario.click(screen.getByRole('button', { name: /Buscar/ }));
 
-    // «reportes» coincide con varias pantallas: la segunda se elige con ↓.
-    await usuario.type(caja(), 'reportes');
+    // «io» coincide con Inicio y Usuarios: la segunda se elige con ↓.
+    await usuario.type(caja(), 'io');
     const opciones = screen.getAllByRole('option');
     expect(opciones.length).toBeGreaterThan(1);
 
-    await usuario.keyboard('{ArrowDown}{Enter}');
+    await usuario.keyboard('{ArrowDown}');
+    expect(screen.getAllByRole('option')[1]).toHaveAttribute('aria-selected', 'true');
+    await usuario.keyboard('{Enter}');
     expect(empujar).toHaveBeenCalledTimes(1);
-    expect(opciones[1]).toHaveTextContent('Reportes');
+    expect(empujar).toHaveBeenCalledWith('/usuarios');
   });
 
   it('dice cuando nada coincide', async () => {

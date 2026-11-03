@@ -30,8 +30,6 @@ Hoy estos procesos se registran de forma manual y separada:
 | Almacén | Planilla de cálculo actualizada a mano | Faltantes de insumos y mermas de perecederos que se descubren tarde. |
 | Personal y accesos | Sin registro | No se sabe quién registró cada venta o movimiento. |
 
-Horario de atención: lunes a sábado de 08:00 a 20:00 y domingos de 09:00 a 14:00.
-
 ## 2.3 Servicios que presta
 
 1. **Venta de comida saludable en el local**, para consumir en mesa o para llevar.

@@ -1,4 +1,4 @@
-# Crea en Enterprise Architect los diagramas del Sprint 0 (secciones 1.8, 2.4, 2.5, 3.1.2 y 3.1.7)
+# Crea en Enterprise Architect los diagramas del informe (1.8, 2.4, 2.5, 3.1.2, 3.1.7 y 3.2.3)
 # y exporta cada uno como PNG a docs/diagramasEA/imagenes.
 #
 # Uso (PowerShell, con EA instalado):
@@ -387,6 +387,61 @@ try {
     "porque el pago no se completó. Flechas abiertas: eventos asíncronos por RabbitMQ; flechas llenas: llamadas REST.")
   Poner $d $nota 180 650 420 60 | Out-Null
   $diagramas += ,@($d, "3.1.7-saga-del-pedido.png")
+
+
+  # ============================================================ Sprint 1
+  $sprint1 = $modelo.Packages.AddNew("Sprint 1", ""); $sprint1.Update() | Out-Null
+  $p = $sprint1.Packages.AddNew("3.2.3 Clases de ms-identidad", ""); $p.Update() | Out-Null
+  $d = $p.Diagrams.AddNew("Clases de ms-identidad", "Logical"); $d.Update() | Out-Null
+
+  function Clase($nombre, $atributos, $l, $t, $w) {
+    $e = $p.Elements.AddNew($nombre, "Class"); $e.Update() | Out-Null
+    foreach ($a in $atributos) {
+      $partes = $a.Split(':')
+      $at = $e.Attributes.AddNew($partes[0].Trim(), $partes[1].Trim())
+      $at.Visibility = "Private"
+      $at.Update() | Out-Null
+    }
+    $e.Attributes.Refresh()
+    $h = 32 + 15 * $atributos.Count
+    Poner $d $e $l $t $w $h | Out-Null
+    return $e
+  }
+  function Asociar($a, $b, $cardA, $cardB, $nombre = "") {
+    $c = $a.Connectors.AddNew($nombre, "Association")
+    $c.SupplierID = $b.ElementID
+    $c.ClientEnd.Cardinality = $cardA
+    $c.SupplierEnd.Cardinality = $cardB
+    $c.Update() | Out-Null
+  }
+
+  $usuario = Clase "Usuario" @("idUsuario: int", "nombre: string", "apellido: string", "email: string", "telefono: string",
+    "nombreUsuario: string", "contrasenaHash: string", "intentosFallidos: int", "bloqueado: bool", "fechaBloqueo: datetime",
+    "vecesBloqueado: int", "activo: bool", "fechaRegistro: datetime", "ultimoAcceso: datetime") 300 40 190
+  $rol = Clase "Rol" @("idRol: int", "nombre: string") 600 40 150
+  $permiso = Clase "Permiso" @("idPermiso: int", "nombre: string") 880 40 150
+  $rolPermiso = Clase "RolPermiso" @("idRolPermiso: int") 740 180 150
+  $urp = Clase "UsuarioRolPermiso" @("idUsuarioRolPermiso: int") 560 300 170
+  $empleado = Clase "Empleado" @("fechaIngreso: date", "disponible: bool") 200 360 160
+  $cliente = Clase "Cliente" @("preferenciaAlimentaria: string", "restriccionDietetica: string") 390 360 200
+  $cargo = Clase "Cargo" @("idCargo: int", "nombre: string", "salarioBase: decimal") 20 360 150
+  $recup = Clase "RecuperacionContrasena" @("idRecuperacion: int", "codigoHash: string", "creadoEn: datetime",
+    "expiraEn: datetime", "intentos: int", "usadoEn: datetime") 20 40 200
+
+  foreach ($sub in @($empleado, $cliente)) {
+    $g = $sub.Connectors.AddNew("", "Generalization"); $g.SupplierID = $usuario.ElementID; $g.Update() | Out-Null
+  }
+  Asociar $usuario $rol "0..*" "1" "tiene"
+  Asociar $rolPermiso $rol "0..*" "1"
+  Asociar $rolPermiso $permiso "0..*" "1"
+  Asociar $urp $usuario "0..*" "1"
+  Asociar $urp $rolPermiso "0..*" "1"
+  Asociar $empleado $cargo "0..*" "1" "ocupa"
+  Asociar $recup $usuario "0..*" "1" "solicita"
+  $nota = Nuevo $p "" "Note" -notas ("Base identidad_db (PostgreSQL). Un usuario es Empleado o Cliente (subtipos). " +
+    "Sus permisos son los de su rol que se le habilitaron (UsuarioRolPermiso); viajan en el token RS256.")
+  Poner $d $nota 760 360 260 80 | Out-Null
+  $diagramas += ,@($d, "3.2.3-clases-ms-identidad.png")
 
   $proyecto = $r.GetProjectInterface()
   foreach ($par in $diagramas) {

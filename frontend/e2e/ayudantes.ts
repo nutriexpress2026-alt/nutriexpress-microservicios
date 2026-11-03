@@ -1,7 +1,7 @@
 import { expect, type APIRequestContext, type Page } from '@playwright/test';
 
 /** La API contra la que corre la interfaz probada. */
-export const API = process.env.E2E_API ?? 'http://localhost:4000/api';
+export const API = process.env.E2E_API ?? 'http://localhost:8080/api';
 
 /** El administrador del seed (`backend/prisma/seed.ts`). */
 export const ADMIN = {

@@ -148,10 +148,6 @@ funciones que se muestran en la figura:
 <!-- figura: Microservicios y funciones del sistema -->
 ![Microservicios y funciones del sistema](../diagramasEA/imagenes/1.8-alcance-microservicios.png)
 
-El frontend web completa el alcance con un estilo propio, tres temas visuales (niños, jóvenes y
-adultos), el modo día/noche según el horario del cliente y un menú dinámico según los permisos del
-usuario.
-
 ## 1.9 Metodología de desarrollo
 
 ### 1.9.1 Scrum
