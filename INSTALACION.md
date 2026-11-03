@@ -97,16 +97,21 @@ ms-identidad con `docker compose restart ms-identidad`.
 
 ## 7. Subir cambios a GitHub
 
-1. Nilser invita a Joseph como colaborador: en GitHub, el repositorio › **Settings** ›
-   **Collaborators** › **Add people**. Joseph acepta la invitación que le llega al correo.
-2. Joseph configura su nombre una sola vez:
+Los dos integrantes suben con **la misma cuenta de GitHub del proyecto** (`nutriexpress2026-alt`), así
+que no hace falta invitar a nadie.
+
+1. La primera vez que se ejecute `git push`, Windows abre una ventana para iniciar sesión en GitHub:
+   entrar con la cuenta `nutriexpress2026-alt`. Queda guardada y no vuelve a pedirla.
+2. Cada integrante configura **su propio nombre** una sola vez. La cuenta es compartida, pero así cada
+   commit dice quién lo hizo, que es lo que muestra el trabajo de cada uno en el sprint:
 
    ```powershell
    git config --global user.name "Joseph Flores García"
    git config --global user.email "su-correo@ejemplo.com"
    ```
 
-3. Cada historia en su rama y entra a `main` por *pull request* revisado por el otro integrante
+3. Antes de empezar a trabajar, `git pull`, para no partir de una versión vieja.
+4. Cada historia en su rama y entra a `main` por *pull request* revisado por el otro integrante
    (ver `CLAUDE.md`):
 
    ```powershell
