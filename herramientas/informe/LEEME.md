@@ -13,7 +13,8 @@ algún capítulo vuelve a usar un bloque Mermaid.
    `node render-mermaid.cjs <docs/informe> <mermaid.min.js> <carpeta-figuras> <ruta a playwright>`
 2. `armar_informe.py` agrega a la carátula los índices, los capítulos, las figuras y el esqueleto de
    los sprints pendientes:
-   `python armar_informe.py <caratula.docx> <docs/informe> <carpeta-figuras> <salida.docx>`
+   `python armar_informe.py docs/informe/caratula.docx docs/informe <carpeta-vacía> <salida.docx>`
+   (incluye solo cada `capitulo-3-sprint-N.md` que exista; los sprints sin archivo salen como pendientes)
 3. Abrir la salida en Word y actualizar los campos (clic derecho en el índice › Actualizar campos)
    para que el índice general y el de figuras tengan sus números de página.
 

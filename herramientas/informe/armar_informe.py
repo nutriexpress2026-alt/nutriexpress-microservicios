@@ -513,7 +513,9 @@ def main():
     caratula = re.sub(r'(<w:p [^>]*><w:pPr>(?:(?!</w:p>).)*?</w:pPr></w:p>)+$', '', caratula, flags=re.S)
 
     listas = Listas()
-    figuras = Figuras(json.load(open(os.path.join(FIGURAS, 'figuras.json'), encoding='utf8')))
+    manifiesto = os.path.join(FIGURAS, 'figuras.json')
+    # Sin diagramas Mermaid (todas las figuras son imágenes de EA o capturas) no hay manifiesto.
+    figuras = Figuras(json.load(open(manifiesto, encoding='utf8')) if os.path.exists(manifiesto) else [])
     contenido = []
     if INCLUIR_AGRADECIMIENTOS:  # el equipo los quito del informe (21-oct)
         contenido.append(portada_interior('AGRADECIMIENTOS', AGRADECIMIENTOS))
