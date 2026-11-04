@@ -39,7 +39,7 @@ rutas del monolito (`/api/auth`, `/api/usuarios`…) para que el frontend reutil
 | 0 | Terminado | Perfil, organización, backlog, arquitectura (capítulos 1, 2 y 3.1 del informe) |
 | 1 | Terminado | Docker Compose, API Gateway, ms-identidad, ms-reportes (visitas), frontend reutilizado |
 | 2 | Terminado | ms-catalogo y ms-inventario, con réplicas entre servicios |
-| 3 | Planificado | Recetas y órdenes de producción; eventos por RabbitMQ (las réplicas pasan a eventos). Tareas, responsables y orden de trabajo en `capitulo-3-sprint-3.md` |
+| 3 | En curso | Recetas y órdenes de producción; eventos por RabbitMQ. Tareas en `capitulo-3-sprint-3.md`. **Hechas** (3-nov, en ramas apiladas sin unir a `main`): T1.1, T2.1 módulo de eventos (`ht-03-modulo-eventos`), T7.1–T7.3 HU-06 (`hu-06-recuperar-contrasena`), T6.1 HU-05 (`hu-05-permisos-en-servicios`). **Faltan**: T2.2, HU-09, HU-17, HU-10 (Nilser; el módulo de eventos ya está en ms-catalogo y ms-inventario), el punta a punta de Órdenes de T8.2 (cuando exista HU-10), T9.1 y T9.2 |
 
 Desde el 3-nov el trabajo sigue en la computadora de Joseph (`INSTALACION.md`); los dos suben con la
 cuenta compartida `nutriexpress2026-alt`, cada uno con su `git config user.name`.
