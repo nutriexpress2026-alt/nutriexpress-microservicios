@@ -46,7 +46,8 @@ async function pedir<T>(ruta: string, cuerpo: unknown): Promise<T> {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(cuerpo),
-      signal: AbortSignal.timeout(5000),
+      // Inventario se da hasta 15 s para reservar (reserva.service.ts): esperar lo mismo.
+      signal: AbortSignal.timeout(15000),
     });
   } catch {
     throw new ErrorApp(503, 'El servicio de inventario no responde: no se puede confirmar el stock de los insumos. Intente de nuevo.');

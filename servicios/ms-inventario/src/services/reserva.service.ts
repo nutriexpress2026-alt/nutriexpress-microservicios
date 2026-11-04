@@ -61,6 +61,14 @@ function aDTO(r: ReservaCompleta): ReservaDTO {
   };
 }
 
+/**
+ * Margen de las transacciones de reserva. Bloquean filas y hacen una docena de
+ * consultas: con los 2 s / 5 s de Prisma por defecto, en una computadora lenta
+ * con todos los contenedores encendidos no alcanzaban (P2028), como ya pasaba
+ * con la producción (produccion.service.ts usa 15 s).
+ */
+const MARGEN = { maxWait: 10000, timeout: 15000 };
+
 type Saldos = Awaited<ReturnType<typeof reservaModel.saldosDeInsumos>>;
 
 /** Lo que falta para cubrir cada línea, en palabras; vacío si alcanza. */
@@ -133,7 +141,7 @@ async function resolverDestino(tx: ClientePrisma, destino: PedidoReserva['destin
 
 /** Comprueba si alcanza y cuánto cuesta, sin reservar (para registrar una orden). */
 export function verificar(pedido: Omit<PedidoReserva, 'id' | 'origen'>): Promise<PrevisionDTO> {
-  return prisma.$transaction((tx) => revisar(tx, pedido));
+  return prisma.$transaction((tx) => revisar(tx, pedido), MARGEN);
 }
 
 /**
@@ -164,7 +172,7 @@ export async function reservar(pedido: PedidoReserva): Promise<{ reserva: Reserv
         productos: pedido.productos,
       });
       return { reserva: aDTO((await reservaModel.buscar(pedido.id, tx))!), nueva: true };
-    });
+    }, MARGEN);
   } catch (e) {
     // Dos pedidos con el mismo id al mismo tiempo: el segundo choca con la clave; vale la del primero.
     if ((e as { code?: string }).code === 'P2002') {
@@ -188,7 +196,7 @@ export async function liberar(id: string): Promise<ReservaDTO> {
     if (reserva.estado === 'Consumida') throw new ErrorApp(409, 'La reserva ya se consumió: no se puede liberar');
     await reservaModel.cerrar(tx, id, 'Liberada');
     return aDTO((await reservaModel.buscar(id, tx))!);
-  });
+  }, MARGEN);
 }
 
 /**
