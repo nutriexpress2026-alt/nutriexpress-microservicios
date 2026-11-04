@@ -41,12 +41,12 @@ $libreGB = [math]::Round((Get-PSDrive C).Free / 1GB, 1)
 if ($libreGB -lt 10) { Falla "Solo hay $libreGB GB libres en C:. Hacen falta al menos 10 GB (Docker se queda sin espacio y falla)" }
 Bien "$libreGB GB libres en C:"
 
-foreach ($puerto in 3000, 5433, 8080, 27018) {
+foreach ($puerto in 3000, 5433, 6380, 8080, 27018) {
   $ocupado = Get-NetTCPConnection -LocalPort $puerto -State Listen -ErrorAction SilentlyContinue |
     Where-Object { (Get-Process -Id $_.OwningProcess -ErrorAction SilentlyContinue).ProcessName -notmatch 'docker|wsl|vpnkit|node' }
   if ($ocupado) { Falla "El puerto $puerto lo usa otro programa (proceso $($ocupado[0].OwningProcess)). Ciérrelo y repita" }
 }
-Bien "Puertos 3000, 5433, 8080 y 27018 disponibles"
+Bien "Puertos 3000, 5433, 6380, 8080 y 27018 disponibles"
 
 # ------------------------------------------------------------------ 2. Configuración
 Paso "2/5 Configuración del frontend"
@@ -89,6 +89,17 @@ function Responde($url, $intentos = 40) {
   }
   return $false
 }
+
+# Redis no tiene ruta en el gateway y todavía ningún servicio depende de él: se le
+# pregunta directamente.
+$redisVivo = $false
+for ($i = 0; $i -lt 40 -and -not $redisVivo; $i++) {
+  $redisVivo = @(docker compose exec -T redis redis-cli ping 2>$null) -contains 'PONG'
+  if (-not $redisVivo) { Start-Sleep -Seconds 3 }
+}
+if (-not $redisVivo) { Falla "Redis no responde. Mire su registro con: docker compose logs redis" }
+Bien "Redis"
+
 $comprobaciones = [ordered]@{
   "API Gateway"   = "http://localhost:8080/api/health"
   "ms-identidad"  = "http://localhost:8080/api/auth/clave-publica"
@@ -106,7 +117,8 @@ foreach ($nombre in $comprobaciones.Keys) {
       catch { if ($_.Exception.Response -and [int]$_.Exception.Response.StatusCode -eq 401) { $vivo = $true } else { Start-Sleep -Seconds 3 } }
     }
   } else { $vivo = Responde $url }
-  if (-not $vivo) { Falla "$nombre no responde. Mire su registro con: docker compose logs $($nombre.ToLower())" }
+  $servicio = if ($nombre -eq "API Gateway") { "gateway" } else { $nombre }
+  if (-not $vivo) { Falla "$nombre no responde. Mire su registro con: docker compose logs $servicio" }
   Bien $nombre
 }
 

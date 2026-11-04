@@ -39,9 +39,9 @@ cd nutriexpress-microservicios
 powershell -ExecutionPolicy Bypass -File herramientas\instalar.ps1
 ```
 
-El script comprueba los programas, levanta los nueve contenedores (PostgreSQL, MongoDB, RabbitMQ, los
-microservicios y el API Gateway), instala y compila el frontend, y al final verifica que cada servicio
-responda. Si algo falta, dice qué y cómo resolverlo; se corrige y se vuelve a ejecutar. La primera vez
+El script comprueba los programas, levanta los nueve contenedores (PostgreSQL, MongoDB, Redis,
+RabbitMQ, los cuatro microservicios y el API Gateway), instala y compila el frontend, y al final
+verifica que cada servicio responda. Si algo falta, dice qué y cómo resolverlo; se corrige y se vuelve a ejecutar. La primera vez
 tarda de 5 a 15 minutos en el paso 3.
 
 Al terminar, abrir el sistema:
@@ -147,7 +147,8 @@ Quien programe con Claude Code: el asistente lee `CLAUDE.md` solo y sigue sus co
 | El script dice que Docker está apagado | Abrir Docker Desktop y esperar *Engine running*. |
 | Docker Desktop no arranca después de un apagado brusco | En PowerShell: `wsl --shutdown` y volver a abrir Docker Desktop. Si sigue igual, reiniciar la computadora. |
 | Errores de «read-only file system» o «no space left» | Disco C: casi lleno. Liberar espacio (al menos 10 GB) y repetir. |
-| «El puerto 5433 / 8080 / 3000 lo usa otro programa» | Otra base de datos u otro proyecto está usando ese puerto. Cerrarlo y repetir. |
+| «El puerto 5433 / 6380 / 8080 / 27018 / 3000 lo usa otro programa» | Otra base de datos u otro proyecto está usando ese puerto. Cerrarlo y repetir. |
+| `npm ci` falla con `ECONNRESET` al construir los contenedores | Se cortó la conexión mientras descargaba paquetes. Repetir el script: lo ya descargado no se vuelve a bajar. |
 | `npm run build` falla al descargar las fuentes de Google | Conexión inestable: repetir el script. |
 | Con `npm run dev`, el inicio de sesión vuelve a la misma página | En modo desarrollo la página tarda en estar lista: esperar a que termine de cargar antes de pulsar Entrar, o usar `npx next start`. |
 | Una pantalla dice «Este módulo todavía no está disponible» | Es normal: ese módulo llega en un sprint posterior. |

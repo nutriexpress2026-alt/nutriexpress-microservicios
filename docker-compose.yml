@@ -7,10 +7,14 @@
 #   8080  API Gateway: la única entrada para el navegador (RNF-ARQ-04)
 #   5433  PostgreSQL (5433 para no chocar con un PostgreSQL local en el 5432)
 #   27018 MongoDB
+#   6380  Redis (6380 para no chocar con un Redis local en el 6379), solo desde esta PC
 #   15672 Panel de RabbitMQ (usuario y contraseña en .env)
 #
 # Cada microservicio tiene su propia base (RNF-ARQ-02): un mismo servidor de
 # PostgreSQL con una base y un usuario por servicio, y MongoDB para ms-reportes.
+# Redis es un complemento en memoria (RNF-ARQ-03) de ms-identidad y ms-catalogo,
+# con un prefijo de clave por servicio: no guarda nada que no exista también en
+# su gestor principal.
 
 name: nutriexpress
 
@@ -39,6 +43,21 @@ services:
       - "27018:27017"
     volumes:
       - datos-mongo:/data/db
+
+  redis:
+    image: redis:7.4-alpine
+    # appendonly: lo que guarda (por ejemplo, tokens revocados) sobrevive a un reinicio.
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_CLAVE:-nutriexpress}"]
+    environment:
+      REDISCLI_AUTH: ${REDIS_CLAVE:-nutriexpress}
+    ports:
+      - "127.0.0.1:6380:6379"
+    volumes:
+      - datos-redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 20
 
   rabbitmq:
     image: rabbitmq:3.13-management-alpine
@@ -108,4 +127,5 @@ services:
 volumes:
   datos-postgres:
   datos-mongo:
+  datos-redis:
   claves-jwt:

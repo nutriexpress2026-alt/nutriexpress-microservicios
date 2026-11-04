@@ -113,8 +113,8 @@ try {
   $marcoSis = Poner $d $raizSis 5 20 885 450  # con l=0 EA ignora la posicion y lo deja chico
   $marcoSis.Sequence = 100; $marcoSis.Update() | Out-Null
   $alcance = @(
-    @("ms-identidad", "PostgreSQL", @("Iniciar sesión", "Registrar cliente", "Gestionar usuarios", "Roles y permisos", "Recuperar contraseña", "Perfil propio")),
-    @("ms-catalogo", "PostgreSQL", @("Gestionar productos", "Gestionar recetas", "Órdenes de producción", "Catálogo y búsqueda")),
+    @("ms-identidad", "PostgreSQL + Redis", @("Iniciar sesión", "Registrar cliente", "Gestionar usuarios", "Roles y permisos", "Recuperar contraseña", "Perfil propio")),
+    @("ms-catalogo", "PostgreSQL + Redis", @("Gestionar productos", "Gestionar recetas", "Órdenes de producción", "Catálogo y búsqueda")),
     @("ms-inventario", "PostgreSQL", @("Gestionar insumos", "Gestionar almacenes", "Notas de ingreso", "Notas de egreso", "Stock y alertas", "Reservar stock")),
     @("ms-ventas", "PostgreSQL", @("Venta de mostrador", "Comprobante y anulación", "Gestionar clientes")),
     @("ms-pedidos", "PostgreSQL", @("Carrito y pedido", "Direcciones en mapa", "Tablero de pedidos", "Entregas del repartidor", "Seguimiento en vivo")),
@@ -303,8 +303,8 @@ try {
   Unir $usr $web "Dependency" "usa (HTTPS)" | Out-Null
   Unir $web $gw "Dependency" "REST / JSON" | Out-Null
   $servicios = @(
-    @("ms-identidad", "identidad_db", "PostgreSQL"),
-    @("ms-catalogo", "catalogo_db", "PostgreSQL"),
+    @("ms-identidad", "identidad_db", "PostgreSQL + Redis"),
+    @("ms-catalogo", "catalogo_db", "PostgreSQL + Redis"),
     @("ms-inventario", "inventario_db", "PostgreSQL"),
     @("ms-ventas", "ventas_db", "PostgreSQL"),
     @("ms-pedidos", "pedidos_db", "PostgreSQL"),

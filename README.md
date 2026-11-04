@@ -54,12 +54,14 @@ docker-compose.yml         Levanta todo el sistema (desde el Sprint 1)
 
 | Servicio | Responsabilidad | Base de datos |
 |---|---|---|
-| `ms-identidad` | Usuarios, roles, permisos, inicio de sesión | PostgreSQL |
-| `ms-catalogo` | Productos, recetas, órdenes de producción, información del negocio | PostgreSQL |
+| `ms-identidad` | Usuarios, roles, permisos, inicio de sesión | PostgreSQL (+ Redis) |
+| `ms-catalogo` | Productos, recetas, órdenes de producción, información del negocio | PostgreSQL (+ Redis) |
 | `ms-inventario` | Insumos, almacenes, notas de ingreso y egreso, stock, lotes | PostgreSQL |
 | `ms-ventas` | Ventas de mostrador y comprobantes | PostgreSQL |
 | `ms-pedidos` | Pedidos a domicilio, ubicaciones, reparto y seguimiento | PostgreSQL |
 | `ms-pagos` | Cobros en línea (Libélula y pasarela simulada) | PostgreSQL |
 | `ms-reportes` | Reportes parametrizados en PDF, envío por correo, contador de visitas | MongoDB |
 
-Detalle y justificación en [`docs/informe/capitulo-3-sprint-0.md`](docs/informe/capitulo-3-sprint-0.md).
+Redis es un complemento en memoria de los servicios marcados (+ Redis), para datos pequeños y
+temporales como los límites de intentos o una caché del catálogo. Detalle y justificación en
+[`docs/informe/capitulo-3-sprint-0.md`](docs/informe/capitulo-3-sprint-0.md).

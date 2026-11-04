@@ -177,7 +177,7 @@ Organizados por microservicio. Los códigos se citan en las historias de usuario
 |---|---|---|
 | RNF-ARQ-01 | Arquitectura | El sistema se compone de microservicios independientes, uno por dominio del negocio. |
 | RNF-ARQ-02 | Arquitectura | Cada microservicio tiene su propia base de datos; ningún servicio accede a la base de otro. |
-| RNF-ARQ-03 | Arquitectura | Se emplean al menos dos gestores de bases de datos: PostgreSQL (relacional) y MongoDB (documental). |
+| RNF-ARQ-03 | Arquitectura | Se emplean al menos dos gestores de bases de datos: PostgreSQL (relacional) y MongoDB (documental), con Redis (clave-valor en memoria) como complemento. |
 | RNF-ARQ-04 | Arquitectura | Todo acceso desde el navegador pasa por un API Gateway. |
 | RNF-ARQ-05 | Arquitectura | Los servicios se comunican por REST (síncrono) y por eventos en RabbitMQ (asíncrono). |
 | RNF-ARQ-06 | Arquitectura | Cada servicio se empaqueta en un contenedor Docker y el sistema se levanta con Docker Compose. |
@@ -361,11 +361,11 @@ terminado). Si la entrega se adelanta al 25 de noviembre, HU-07 y HU-30 quedan f
 |---|---|---|
 | **Lenguaje de programación** | TypeScript 5 | Tipado estático en todos los servicios y en el frontend; un solo lenguaje para todo el equipo. |
 | **Entorno de ejecución** | Node.js 22 LTS | Liviano, ideal para servicios pequeños de entrada y salida intensiva. |
-| **Framework de los microservicios** | Express 5, Zod (validación), Prisma 7 (PostgreSQL), driver oficial de MongoDB 6, amqplib (RabbitMQ) | Conocidos por el equipo y maduros. |
+| **Framework de los microservicios** | Express 5, Zod (validación), Prisma 7 (PostgreSQL), driver oficial de MongoDB 6, node-redis (Redis), amqplib (RabbitMQ) | Conocidos por el equipo y maduros. |
 | **Framework del frontend** | Next.js 16 con React 19 y Tailwind CSS 4 | Interfaz responsiva y temas por variables CSS. |
 | **API Gateway** | Nginx | Reparte las rutas `/api/*` a cada servicio y sirve de punto único de entrada. |
 | **Broker de mensajes** | RabbitMQ 3 | Entrega de eventos entre servicios con colas persistentes y reintentos. |
-| **SGBD** | PostgreSQL 16 y MongoDB 4.4 | Ver justificación abajo. MongoDB 4.4 porque desde la 5.0 exige un procesador con instrucciones AVX, que la computadora de desarrollo no tiene. |
+| **SGBD** | PostgreSQL 16 y MongoDB 4.4, con Redis 7.4 como complemento | Ver justificación abajo. Se descartó Elasticsearch: pide 16 GB de RAM y una de las computadoras de desarrollo tiene 8. MongoDB 4.4 porque desde la 5.0 exige un procesador con instrucciones AVX, que la computadora de desarrollo no tiene. |
 | **Modelado de arquitectura** | Modelo C4 (contexto, contenedores, componentes) | Describe la arquitectura de microservicios por niveles de detalle. |
 | **Diseño y modelado** | Enterprise Architect | Diagramas UML: actividades, clases, componentes y despliegue. |
 | **Entorno de desarrollo** | Visual Studio Code, Docker Desktop, Git, asistente de IA Claude Code | Mismo entorno en ambas computadoras. |
@@ -383,9 +383,11 @@ terminado). Si la entrega se adelanta al 25 de noviembre, HU-07 y HU-30 quedan f
 |---|---|---|
 | ms-identidad, ms-catalogo, ms-inventario, ms-ventas, ms-pedidos, ms-pagos | **PostgreSQL** | Manejan transacciones del negocio con reglas estrictas (stock que no puede quedar negativo, estados de pedido, montos). El modelo relacional ofrece restricciones `CHECK`, claves foráneas y transacciones ACID. |
 | ms-reportes | **MongoDB** | Recibe los eventos de todos los servicios y guarda cada venta, pedido o movimiento como un documento completo, ya armado para el reporte, sin uniones entre tablas. Los contadores de visitas se incrementan con una sola operación atómica (`$inc`). El modelo documental se adapta a datos que llegan de fuentes distintas y cambian de forma. |
+| ms-identidad y ms-catalogo | **Redis** (complemento) | Datos pequeños y temporales que conviene tener en memoria: en ms-identidad, los contadores de intentos por dirección IP y los tokens revocados al cerrar sesión; en ms-catalogo, una caché del catálogo público con vencimiento corto. Si Redis no responde, el servicio sigue funcionando con su gestor principal (RNF-DIS-01). |
 
 Cada servicio con PostgreSQL tiene **su propia base** dentro del mismo servidor de PostgreSQL
 (`identidad_db`, `catalogo_db`, etc.) y su propio usuario, sin permisos sobre las bases de los demás.
+En Redis, cada servicio usa un prefijo propio en todas sus claves (`identidad:`, `catalogo:`).
 
 #### Modelo de arquitectura (C4)
 
