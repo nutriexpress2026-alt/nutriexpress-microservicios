@@ -122,6 +122,15 @@ Pendiente, a confirmar con el equipo antes de programar:
   (gancho `alAutenticar`). En el Sprint 3 la de productos pasa a eventos de RabbitMQ.
 - **REST interno**: rutas `/interno/*` fuera de `/api`, que el gateway no expone, protegidas con
   `soloRedInterna` (rechaza lo que trae `X-Forwarded-For`).
+- **Eventos** (HT-03, RNF-DIS-03): `servicios/compartido/eventos.ts`, copiado idéntico en
+  `src/config/eventos.ts` de cada servicio que lo usa. Exchange topic `nutriexpress.eventos`, la
+  clave de ruteo es el tipo (`PermisosCambiados`). Al arrancar: `suscribir(tipo, manejador)` por cada
+  tipo que se consume y después `conectarEventos({ servicio, registro })`; publicar con
+  `publicar(tipo, datos)`. Cada servicio consumidor tiene su cola `<servicio>.eventos` y un
+  `RegistroDeEventos` en **su** base con los ids ya procesados (ms-reportes: colección
+  `eventos_procesados`). Se atiende de a uno; lo que falla dos veces va a `<servicio>.eventos.fallidos`.
+  Si RabbitMQ no responde, el servicio arranca igual y se reconecta solo. Pruebas: contra RabbitMQ en
+  `127.0.0.1:5673` (`ms-reportes/tests/eventos.test.ts`).
 - **Sesión**: ms-identidad firma el token con RS256 y publica la clave pública en
   `/api/auth/clave-publica`; los demás la verifican con `servicios/compartido/auth.middleware.ts`
   (copiado en cada servicio). El token trae nombre, apellido, rol, cargo y permisos.
