@@ -62,14 +62,16 @@ Pendiente, a confirmar con el equipo antes de programar:
 - **Búsqueda con errores de tipeo** («era» → «pera», RF del buscador): `CREATE EXTENSION pg_trgm` en
   la base del catálogo, un índice GIN `gin_trgm_ops` sobre `producto.nombre`, y buscar con
   `similarity()` o el operador `%` además del `ILIKE` actual (también `unaccent` para las tildes).
-- **Redis**: agregar `redis:7-alpine` a `docker-compose.yml` (gasta muy poca memoria). En ms-identidad,
-  los contadores de `express-rate-limit` (`src/middlewares/seguridad.middleware.ts`) pasan a Redis, así
+- **Redis**: ya está en `docker-compose.yml` (`redis:7.4-alpine`, puerto 6380 solo desde la PC,
+  contraseña `REDIS_CLAVE`, por defecto `nutriexpress`), pero ningún servicio lo usa todavía. Falta
+  confirmar y programar sus usos. En ms-identidad, los contadores de `express-rate-limit` (`src/middlewares/seguridad.middleware.ts`) pasan a Redis, así
   no se reinician al reiniciar el servicio, y también los tokens revocados al cerrar sesión. En
   ms-catalogo, caché del catálogo público con vencimiento corto, que se invalida al editar un producto.
   Si Redis no responde, el servicio sigue funcionando contra PostgreSQL (RNF-DIS-01).
-- Al aplicarlo: actualizar `herramientas/instalar.ps1`, RNF-ARQ-03 y la tabla de tecnologías en
-  `capitulo-3-sprint-0.md`, `README.md` y los diagramas C4 (`crear-diagramas.ps1`). Los sprints 1 y 2
-  no se reescriben: el cambio se documenta en el sprint en que se haga.
+- Ya se actualizaron `herramientas/instalar.ps1` (puerto y comprobación de Redis), RNF-ARQ-03, la
+  tabla de tecnologías y la justificación en `capitulo-3-sprint-0.md`, `capitulo-1-perfil.md`,
+  `README.md` y los datos de `crear-diagramas.ps1`; falta regenerar el `.eapx` y el Word. Los sprints
+  1 y 2 no se reescriben: el cambio se documenta en el sprint en que se haga.
 
 ## Patrones ya implementados (seguirlos)
 

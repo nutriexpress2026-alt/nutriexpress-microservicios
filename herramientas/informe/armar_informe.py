@@ -399,6 +399,7 @@ BIBLIOGRAFIA = [
     'Lewis, J. y Fowler, M. (2014). *Microservices: a definition of this new architectural term*. https://martinfowler.com/articles/microservices.html',
     'MongoDB Inc. (2026). *MongoDB Manual*. https://www.mongodb.com/docs/manual/',
     'Newman, S. (2021). *Building Microservices: Designing Fine-Grained Systems* (2.ª ed.). O\'Reilly Media.',
+    'Redis Ltd. (2026). *Redis Documentation*. https://redis.io/docs/latest/',
     'Richardson, C. (2018). *Microservices Patterns: With examples in Java*. Manning Publications.',
     'Schwaber, K. y Sutherland, J. (2020). *La Guía Scrum: la guía definitiva de Scrum, las reglas del juego*. https://scrumguides.org',
     'Sommerville, I. (2016). *Ingeniería de software* (10.ª ed.). Pearson.',

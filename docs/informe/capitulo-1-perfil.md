@@ -99,7 +99,8 @@ trabajo ágil Scrum.
 2. Diseñar la arquitectura de microservicios del sistema con el modelo C4, delimitando la
    responsabilidad y los datos de cada servicio.
 3. Diseñar las bases de datos de cada microservicio empleando al menos dos sistemas gestores de bases
-   de datos: uno relacional (PostgreSQL) y uno documental (MongoDB).
+   de datos: uno relacional (PostgreSQL) y uno documental (MongoDB), con Redis como complemento en
+   memoria.
 4. Implementar los microservicios de identidad, catálogo y producción, inventario, ventas, pedidos,
    pagos y reportes, comunicados mediante API REST y mensajería asíncrona.
 5. Implementar el portal web del cliente y el escritorio del personal, con temas visuales
@@ -119,7 +120,8 @@ y eventos. Esto aísla las fallas (si la pasarela de pagos no responde, la venta
 funcionando), permite escalar solo los servicios con más carga y facilita incorporar nuevas funciones
 sin modificar las existentes. El uso de dos gestores de bases de datos permite elegir el modelo de
 datos más adecuado para cada servicio: relacional para las transacciones del negocio y documental
-para los reportes y las estadísticas.
+para los reportes y las estadísticas; Redis los complementa con datos pequeños y temporales en
+memoria.
 
 ### 1.7.2 Justificación teórica
 
