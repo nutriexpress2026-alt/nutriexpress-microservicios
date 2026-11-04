@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import request from 'supertest';
 import { cabecera, cerrarServidorDeClave } from './sesion-de-prueba.js';
 const { app } = await import('../src/app.js');
+const { productoGuardado } = await import('../src/services/replica.service.js');
 
 afterAll(cerrarServidorDeClave);
 
@@ -20,11 +21,14 @@ let tomate: { id: number };
 const ID_PRODUCTO = 101;
 
 beforeAll(async () => {
-  // Réplica: ms-catalogo avisa que existe el producto 101.
-  await request(app)
-    .put(`/interno/productos/${ID_PRODUCTO}`)
-    .send({ nombre: 'Jugo verde detox', tipoConservacion: 'Refrigerado', activo: true })
-    .expect(204);
+  // Réplica: ms-catalogo avisa (evento ProductoGuardado) que existe el producto 101.
+  await productoGuardado({
+    id: crypto.randomUUID(),
+    tipo: 'ProductoGuardado',
+    origen: 'ms-catalogo',
+    fecha: new Date().toISOString(),
+    datos: { id: ID_PRODUCTO, nombre: 'Jugo verde detox', tipoConservacion: 'Refrigerado', activo: true },
+  });
   almacenes = (await request(app).get('/api/almacenes').set(almacenero).expect(200)).body;
   const insumos = (await request(app).get('/api/insumos').set(almacenero).expect(200)).body;
   tomate = insumos.find((i: { nombre: string }) => i.nombre === 'Tomate');

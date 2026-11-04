@@ -12,6 +12,7 @@ import { ErrorApp } from '../errors/error-app.js';
 import type { TipoConservacion } from '../config/dominio.js';
 import { tipoRealDeImagen } from '../utils/imagen.js';
 import * as inventario from '../clientes/inventario.js';
+import { avisar } from './aviso.service.js';
 
 /**
  * CU-PRO-01 — Gestionar Producto y Receta (parte de producto), y
@@ -98,9 +99,13 @@ async function conExistencias(producto: ProductoGestion): Promise<ProductoGestio
   return aDTO(producto, await inventario.existencias([producto.id_producto]));
 }
 
-/** Mantiene al día la réplica del producto en ms-inventario. */
+/**
+ * Mantiene al día la réplica del producto en ms-inventario (HT-03, T2.2): se le
+ * avisa con el evento ProductoGuardado. Si RabbitMQ no responde, inventario se
+ * pone al día igual al arrancar, con la lista completa de /interno/productos.
+ */
 async function replicar(producto: ProductoGestion): Promise<void> {
-  await inventario.sincronizarProducto({
+  await avisar('ProductoGuardado', {
     id: producto.id_producto,
     nombre: producto.nombre,
     tipoConservacion: producto.tipo_conservacion,
