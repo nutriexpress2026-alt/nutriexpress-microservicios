@@ -111,7 +111,7 @@ Pendiente, a confirmar con el equipo antes de programar:
   Si Redis no responde, el servicio sigue funcionando contra PostgreSQL (RNF-DIS-01).
 - Ya se actualizaron `herramientas/instalar.ps1` (puerto y comprobación de Redis), RNF-ARQ-03, la
   tabla de tecnologías y la justificación en `capitulo-3-sprint-0.md`, `capitulo-1-perfil.md`,
-  `README.md` y los datos de `crear-diagramas.ps1`; falta regenerar el `.eapx` y el Word. Los sprints
+  `README.md` y `crear-diagramas.ps1`; el `.eapx` y el Word ya están regenerados (3-nov). Los sprints
   1 y 2 no se reescriben: el cambio se documenta en el sprint en que se haga.
 
 ## Patrones ya implementados (seguirlos)
