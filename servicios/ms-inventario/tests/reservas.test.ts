@@ -130,6 +130,15 @@ describe('HU-17 · Reservar y liberar stock', () => {
     await request(app).post('/interno/reservas/no-existe/liberar').expect(404);
   });
 
+  it('una reserva liberada se puede volver a pedir con el mismo id', async () => {
+    const id = nuevaId();
+    await kilos(3, id).expect(201);
+    await request(app).post(`/interno/reservas/${id}/liberar`).expect(200);
+    const otraVez = await kilos(5, id).expect(201);
+    expect(otraVez.body).toMatchObject({ id, estado: 'Activa', costoInsumos: 30 });
+    await request(app).post(`/interno/reservas/${id}/liberar`).expect(200);
+  });
+
   it('dos reservas a la vez no se reparten más de lo que hay', async () => {
     const [a, b] = await Promise.all([kilos(6), kilos(6)]);
     expect([a.status, b.status].sort()).toEqual([201, 409]);

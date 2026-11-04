@@ -1,6 +1,7 @@
 import { suscribir } from './config/eventos.js';
 import { permisosCambiados } from './middlewares/sesiones-vigentes.js';
 import { productoGuardado } from './services/replica.service.js';
+import { ordenFinalizada } from './services/produccion.service.js';
 
 /**
  * Los eventos que consume ms-inventario y quién atiende cada uno (catálogo de
@@ -9,4 +10,5 @@ import { productoGuardado } from './services/replica.service.js';
 export function registrarSuscripciones(): void {
   suscribir('PermisosCambiados', permisosCambiados);
   suscribir('ProductoGuardado', productoGuardado);
+  suscribir('OrdenFinalizada', ordenFinalizada);
 }

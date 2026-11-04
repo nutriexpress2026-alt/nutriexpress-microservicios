@@ -121,6 +121,13 @@ export const crear = (
     },
   });
 
+/** Borra una reserva (liberada) para volver a crearla con el mismo id. */
+export async function quitar(tx: ClientePrisma, id: string): Promise<void> {
+  await tx.detalle_reserva_insumo.deleteMany({ where: { id_reserva: id } });
+  await tx.detalle_reserva_producto.deleteMany({ where: { id_reserva: id } });
+  await tx.reserva.delete({ where: { id_reserva: id } });
+}
+
 /** Cambia el estado solo si sigue en el esperado; devuelve si lo cambió. */
 export async function cerrar(tx: ClientePrisma, id: string, estado: 'Consumida' | 'Liberada'): Promise<boolean> {
   const r = await tx.reserva.updateMany({
@@ -128,6 +135,15 @@ export async function cerrar(tx: ClientePrisma, id: string, estado: 'Consumida' 
     data: { estado, cerrada_en: new Date() },
   });
   return r.count === 1;
+}
+
+/** Existencias de un insumo por almacén, del que más tiene al que menos (para consumir lo reservado). */
+export async function existenciasPorAlmacen(tx: ClientePrisma, idIngrediente: number) {
+  const filas = await tx.ingrediente_almacen.findMany({
+    where: { id_ingrediente: idIngrediente, stock_actual: { gt: 0 } },
+    orderBy: [{ stock_actual: 'desc' }, { id_almacen: 'asc' }],
+  });
+  return filas.map((f) => ({ idAlmacen: f.id_almacen, stock: Number(f.stock_actual) }));
 }
 
 /** Almacenes de un tipo de conservación, el preferido primero. */
