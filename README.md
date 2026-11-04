@@ -11,14 +11,14 @@ Docente: Ing. Edwin Calle Terrazas.
 
 | Sprint | Fechas (2026) | Objetivo | Estado |
 |---|---|---|---|
-| Sprint 0 | 20-oct – 25-oct | Planificación: perfil, organización, backlog, arquitectura | Terminado |
-| Sprint 1 | 26-oct – 01-nov | Infraestructura base + Identidad (inicio de sesión) | Terminado |
-| Sprint 2 | 02-nov – 08-nov | Catálogo de productos e inventario básico | Terminado |
-| Sprint 3 | 09-nov – 15-nov | Recetas, producción y eventos entre servicios | Pendiente |
-| Sprint 4 | 16-nov – 22-nov | Pedidos a domicilio y pago en línea (saga) | Pendiente |
-| Sprint 5 | 23-nov – 29-nov | Gestión de pedidos, reparto y ventas de mostrador | Pendiente |
-| Sprint 6 | 30-nov – 06-dic | Reportes, temas, despliegue y pruebas | Pendiente |
-| Sprint 7 | 07-dic – 13-dic | Reserva: ajustes y cierre del informe | Pendiente |
+| Sprint 0 | 14-oct – 16-oct | Planificación: perfil, organización, backlog, arquitectura | Terminado |
+| Sprint 1 | 17-oct – 21-oct | Infraestructura base + Identidad (inicio de sesión) | Terminado |
+| Sprint 2 | 22-oct – 28-oct | Catálogo de productos e inventario básico | Terminado |
+| Sprint 3 | 29-oct – 04-nov | Recetas, producción y eventos entre servicios | Pendiente |
+| Sprint 4 | 05-nov – 11-nov | Pedidos a domicilio y pago en línea (saga) | Pendiente |
+| Sprint 5 | 12-nov – 18-nov | Gestión de pedidos, reparto y ventas de mostrador | Pendiente |
+| Sprint 6 | 19-nov – 25-nov | Reportes, temas, despliegue y pruebas | Pendiente |
+| Sprint 7 | 26-nov – 02-dic | Reserva: ajustes y cierre del informe | Pendiente |
 
 ## Instalación
 

@@ -99,10 +99,14 @@ Pendiente, a confirmar con el equipo antes de programar:
 - **Informe**: se escribe en `docs/informe/*.md`; `herramientas/informe/armar_informe.py` arma
   `informe.docx` (ver su `LEEME.md`) y después Word actualiza los índices. Nilser a veces edita el Word
   a mano: **antes de regenerarlo, comparar** con `herramientas/informe/texto_docx.py` y pasar esos
-  cambios a los `.md`. Los textos de retroalimentación del PO y de la retrospectiva son borradores que
-  el equipo revisa.
+  cambios a los `.md` (los de formato se anotan con `<!-- anchos: 42 58 -->` antes de una tabla o
+  `<!-- alinear: izquierda -->` antes de un párrafo). Los textos de retroalimentación del PO y de la
+  retrospectiva son borradores que el equipo revisa.
 - **Seguimiento Scrum** (sin Jira, se descartó): `docs/scrum/seguimiento-scrum.xlsx`, generado por
-  `herramientas/scrum/excel_scrum.py` (openpyxl); las gráficas burndown/burnup se exportan desde Excel.
+  `herramientas/scrum/excel_scrum.py` (openpyxl), que lee de cada `capitulo-3-sprint-N.md` el Sprint
+  Backlog (responsable, horas y fecha de término de cada tarea) y la Daily; las gráficas burndown/burnup
+  se exportan desde Excel. Calendario: sprints de jueves a miércoles (S0 14–16 oct, S1 17–21 oct,
+  S2 22–28 oct, S3 29 oct–4 nov…); las tareas se reparten entre Joseph y Nilser.
 - **Diagramas**: Enterprise Architect 15.2. `herramientas/diagramas-ea/crear-diagramas.ps1` recrea el
   `.eapx` desde cero por COM y exporta los PNG a `docs/diagramasEA/imagenes/`. Mañas de EA por COM:
   ignora las rutas manuales de las líneas (alinear los elementos), agrega «()» a los mensajes (darles

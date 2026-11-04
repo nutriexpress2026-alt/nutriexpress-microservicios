@@ -3,13 +3,15 @@
 Uso (desde la raíz del repositorio; necesita `pip install openpyxl`):
     python herramientas/scrum/excel_scrum.py docs/informe/capitulo-3-sprint-0.md docs/scrum/seguimiento-scrum.xlsx
 
-Regenerar REESCRIBE el Excel: lo editado a mano (celdas amarillas) se pierde si no se pasó antes a
-este script. Al cerrar cada sprint: agregar sus tareas (S3, S4...) y su fecha en HECHO, sumar el
-sprint en SPRINTS, subir «Último sprint cerrado» y agregar las filas de la Daily.
+Las tareas (con responsable y fecha de término) y la Daily de cada sprint se leen de su capítulo
+`capitulo-3-sprint-N.md`. Regenerar REESCRIBE el Excel: lo editado a mano (celdas amarillas) se pierde
+si no se pasó antes al capítulo. Al cerrar cada sprint: sumarlo en SPRINTS y subir «Último sprint
+cerrado».
 
 Después hay que abrirlo con Excel para que calcule las fórmulas; las gráficas del informe se exportan
 desde Excel (Chart.Export por COM) a docs/informe/imagenes/sprintN/.
 """
+import os
 import re
 import sys
 from datetime import date, timedelta
@@ -76,54 +78,46 @@ md = open(MD, encoding='utf8').read()
 BACKLOG = re.findall(r'^\| (\d+) \| (H[TU]-\d+) \| (.+?) \| (.+?) \| (\d+) \| (\w+) \| (.+?) \|$', md, re.M)
 assert len(BACKLOG) == 39
 
-# Tareas del Sprint 1 (Sprint Planning). Estado y fecha reales: se completa al terminar cada una.
-S1 = [
-    ('T1.1', 'HT-01', 'Estructura del repositorio y docker-compose (PostgreSQL, MongoDB, RabbitMQ)', 'Nilser', 3),
-    ('T1.2', 'HT-01', 'Script que crea una base y un usuario por microservicio', 'Nilser', 1),
-    ('T1.3', 'HT-01', 'Dockerfile de ms-identidad y ms-reportes', 'Nilser', 2),
-    ('T2.1', 'HT-02', 'API Gateway en Nginx con una ruta por microservicio', 'Nilser', 2),
-    ('T2.2', 'HT-02', 'CORS en el gateway y respuesta 503 para módulos pendientes', 'Nilser', 1),
-    ('T3.1', 'HU-01', 'Esquema identidad_db (9 tablas) y esquema de Prisma', 'Nilser', 2),
-    ('T3.2', 'HU-01', 'Adaptar inicio de sesión y bloqueo escalonado del sistema anterior', 'Nilser', 2),
-    ('T3.3', 'HU-01', 'Token RS256 con rol, cargo y permisos; ruta de la clave pública', 'Nilser', 2),
-    ('T4.1', 'HU-02', 'Adaptar el autorregistro de cliente con la política de contraseñas', 'Nilser', 1),
-    ('T5.1', 'HU-03', 'Adaptar alta, edición, baja y reactivación de usuarios', 'Nilser', 2),
-    ('T6.1', 'HU-04', 'Adaptar roles y permisos y la carga inicial (seed)', 'Nilser', 2),
-    ('T7.1', 'HU-34', 'Reutilizar el frontend y apuntarlo al API Gateway', 'Nilser', 2),
-    ('T7.2', 'HU-34', 'Ocultar del menú los módulos de sprints futuros', 'Nilser', 1),
-    ('T8.1', 'HU-31', 'ms-reportes con MongoDB: contador de visitas por página', 'Nilser', 2),
-    ('T8.2', 'HU-31', 'Pie de página con el contador de su ruta', 'Nilser', 1),
-    ('T9.1', 'HT-05', 'Pruebas de integración de ms-identidad (adaptadas)', 'Nilser', 2),
-    ('T9.2', 'HT-05', 'Pruebas de integración de ms-reportes', 'Nilser', 1),
-    ('T10.1', 'Informe', 'Diagrama de clases de ms-identidad en Enterprise Architect', 'Nilser', 2),
-    ('T10.2', 'Informe', 'Documentar el Sprint 1 en el informe', 'Nilser', 2),
-]
+# Tareas y Daily de cada sprint documentado: se leen de su capítulo (capitulo-3-sprint-N.md), que es
+# la fuente. Sprint Backlog: | ID | Historia | Tarea | Responsable | Horas | Terminada (dd/mm) |.
+CARPETA = os.path.dirname(MD)
+ANIO = 2026
 
-# Tareas del Sprint 2 (propuesta del Sprint Planning; las ajusta el equipo).
-S2 = [
-    ('T1.1', 'HU-08', 'ms-catalogo: esquema catalogo_db (producto, categoría, valor nutricional)', 'Nilser', 2),
-    ('T1.2', 'HU-08', 'Adaptar alta, edición y foto de productos', 'Nilser', 3),
-    ('T2.1', 'HU-11', 'Catálogo público y búsqueda sin tildes ni mayúsculas', 'Nilser', 2),
-    ('T2.2', 'HU-11', 'Información del negocio (horario, contacto) y búsqueda en el encabezado', 'Nilser', 2),
-    ('T3.1', 'HU-12', 'ms-inventario: esquema inventario_db (insumo, unidad, almacén, stock)', 'Nilser', 2),
-    ('T3.2', 'HU-12', 'Adaptar alta y edición de insumos', 'Nilser', 2),
-    ('T4.1', 'HU-13', 'Adaptar almacenes por tipo de conservación', 'Nilser', 1),
-    ('T5.1', 'HU-14', 'Notas de ingreso con costo promedio y lotes', 'Nilser', 4),
-    ('T6.1', 'HU-15', 'Notas de egreso sin superar el stock', 'Nilser', 3),
-    ('T7.1', 'HU-16', 'Consulta de stock por almacén y alertas de mínimo', 'Nilser', 2),
-    ('T8.1', 'HT-02', 'Rutas de ms-catalogo y ms-inventario en el API Gateway', 'Nilser', 1),
-    ('T8.2', 'HU-34', 'Habilitar en el menú Producción e Inventario', 'Nilser', 1),
-    ('T9.1', 'HT-05', 'Pruebas de integración de ms-catalogo y ms-inventario', 'Nilser', 3),
-    ('T10.1', 'Informe', 'Diagramas de clases de ms-catalogo y ms-inventario en EA', 'Nilser', 2),
-    ('T10.2', 'Informe', 'Documentar el Sprint 2 en el informe', 'Nilser', 2),
-]
 
-# Fecha real de término de las tareas de cada sprint cerrado.
-HECHO = {1: date(2026, 11, 3), 2: date(2026, 11, 3)}
+def fecha_corta(texto):
+    dia, mes = texto.strip().split('/')
+    return date(ANIO, int(mes), int(dia))
+
+
+def seccion(texto, titulo):
+    """Texto desde el encabezado que contiene `titulo` hasta el siguiente encabezado ###."""
+    m = re.search(r'^### [\d.]+ ' + re.escape(titulo) + r'.*?$(.*?)(?=^### |\Z)', texto, re.M | re.S)
+    return m.group(1) if m else ''
+
+
+def tareas_de(texto):
+    filas = re.findall(r'^\| (T\d+\.\d+) \| (.+?) \| (.+?) \| (\w+) \| (\d+) \| (\d\d/\d\d)? ?\|$',
+                       seccion(texto, 'Sprint Backlog'), re.M)
+    return [(tid, hu, tarea, resp, int(h), fecha_corta(f) if f else None) for tid, hu, tarea, resp, h, f in filas]
+
+
+def daily_de(texto, n):
+    filas = re.findall(r'^\| (\d\d/\d\d) \| (\w+) \| (.+?) \| (.+?) \| (.+?) \|$',
+                       seccion(texto, 'Daily Meeting'), re.M)
+    return [(fecha_corta(f), n, quien, hice, hare, imp) for f, quien, hice, hare, imp in filas]
+
+
 SPRINTS = {
-    1: (date(2026, 10, 26), date(2026, 11, 1), 'Infraestructura, API Gateway e Identidad: se puede iniciar sesión en el sistema.', S1),
-    2: (date(2026, 11, 2), date(2026, 11, 8), 'Catálogo e inventario básico: se registran productos, insumos y stock.', S2),
+    1: (date(2026, 10, 17), date(2026, 10, 21), 'Infraestructura, API Gateway e Identidad: se puede iniciar sesión en el sistema.'),
+    2: (date(2026, 10, 22), date(2026, 10, 28), 'Catálogo e inventario básico: se registran productos, insumos y stock.'),
 }
+DAILY = []
+for n in list(SPRINTS):
+    texto = open(os.path.join(CARPETA, f'capitulo-3-sprint-{n}.md'), encoding='utf8').read()
+    tareas = tareas_de(texto)
+    assert tareas, f'Sprint {n}: no se encontró el Sprint Backlog'
+    SPRINTS[n] += (tareas,)
+    DAILY += daily_de(texto, n)
 
 wb = Workbook()
 
@@ -230,15 +224,14 @@ for n, (ini, fin, objetivo, tareas) in SPRINTS.items():
              [7, 9, 58, 13, 10, 10, 15])
     dv = DataValidation(type='list', formula1='"To Do,Doing,Done"', allow_blank=False)
     ws.add_data_validation(dv)
-    for i, (tid, hu, tarea, resp, horas) in enumerate(tareas, f0 + 1):
+    for i, (tid, hu, tarea, resp, horas, terminada) in enumerate(tareas, f0 + 1):
         celda(ws, i, 1, tid)
         celda(ws, i, 2, hu)
         celda(ws, i, 3, tarea, ajustar=True)
         celda(ws, i, 4, resp, editable=True)
         celda(ws, i, 5, horas, editable=True)
-        hecho = n in HECHO
-        dv.add(celda(ws, i, 6, 'Done' if hecho else 'To Do', editable=True))
-        celda(ws, i, 7, HECHO[n] if hecho else None, editable=True, formato='dd/mm/yyyy')
+        dv.add(celda(ws, i, 6, 'Done' if terminada else 'To Do', editable=True))
+        celda(ws, i, 7, terminada, editable=True, formato='dd/mm/yyyy')
     fu = f0 + len(tareas)
     rng = lambda col: f'${col}${f0 + 1}:${col}${fu}'
     # Colores del estado (como un tablero).
@@ -268,8 +261,8 @@ for n, (ini, fin, objetivo, tareas) in SPRINTS.items():
             celda(ws, f, j, f'=COUNTIFS({rng("B")},$B{f},{rng("F")},"{est}")')
         celda(ws, f, 6, f'=SUM(C{f}:E{f})')
 
-    # Serie diaria del burndown/burnup (horas). Se extiende hasta 7 días después
-    # del fin por si el sprint se atrasa: el atraso se ve en la gráfica.
+    # Serie diaria del burndown/burnup (horas). Si alguna tarea terminó después del fin,
+    # se extiende hasta esa fecha: el atraso se ve en la gráfica.
     d0 = 2
     col = 9  # I
     for j, h in enumerate(['Día', 'Ideal (h)', 'Restante real (h)', 'Completado (h)', 'Alcance (h)'], col):
@@ -277,7 +270,8 @@ for n, (ini, fin, objetivo, tareas) in SPRINTS.items():
         c.font, c.fill, c.border = CAB, NEGRO, BORDE
         ws.column_dimensions[get_column_letter(j)].width = 13
     duracion = (fin - ini).days
-    dias = duracion + 1 + 7
+    ultima_tarea = max((f for *_, f in tareas if f), default=fin)
+    dias = max(duracion, (ultima_tarea - ini).days) + 1
     hoy_fila = d0 + 5
     for k in range(dias):
         f = hoy_fila + k
@@ -287,7 +281,6 @@ for n, (ini, fin, objetivo, tareas) in SPRINTS.items():
         celda(ws, f, col + 2, f'=IF(I{f}>TODAY(),NA(),$E${t}-SUMIFS({rng("E")},{rng("F")},"Done",{rng("G")},"<="&I{f}))')
         celda(ws, f, col + 3, f'=IF(I{f}>TODAY(),NA(),SUMIFS({rng("E")},{rng("F")},"Done",{rng("G")},"<="&I{f}))')
         celda(ws, f, col + 4, f'=$E${t}')
-    ws.cell(row=hoy_fila + dias, column=col, value='Los 7 días después del fin muestran el atraso, si lo hay.').font = Font(name=F, size=8, italic=True)
     ultima = hoy_fila + dias - 1
 
     bd = LineChart()
@@ -318,16 +311,7 @@ for n, (ini, fin, objetivo, tareas) in SPRINTS.items():
 dl = wb.create_sheet('Daily')
 cabecera(dl, 1, ['Fecha', 'Sprint', 'Integrante', '¿Qué hice desde la última daily?', '¿Qué haré hoy?', 'Impedimentos'],
          [12, 8, 13, 45, 45, 35])
-filas = [
-    (date(2026, 11, 3), 1, 'Nilser',
-     'Sprint 0 cerrado: informe (cap. 1 a 3), diagramas en EA y backlog. Se descartó Jira y se pasó el seguimiento a Excel.',
-     'Sprint 1 completo: Docker Compose, API Gateway, ms-identidad, ms-reportes y frontend reutilizado.',
-     'El Sprint 1 empezó tarde (se perdió la semana con Jira). Docker Desktop no arrancaba: se resolvió borrando archivos trabados.'),
-    (date(2026, 11, 3), 2, 'Nilser',
-     'Sprint 1 cerrado y documentado; planificación del Sprint 2.',
-     'ms-catalogo y ms-inventario con sus pruebas, rutas en el gateway, menú del frontend, diagramas de clases en EA e informe.',
-     'Las tareas de Joseph se reasignaron a Nilser para cerrar el sprint en el día. Next.js en modo desarrollo es lento en la máquina y hacía fallar las pruebas E2E: se corren contra el frontend compilado.'),
-]
+filas = DAILY
 for i, fila in enumerate(filas, 2):
     for j, v in enumerate(fila, 1):
         celda(dl, i, j, v, editable=True, formato='dd/mm/yyyy' if j == 1 else None, ajustar=j >= 4)

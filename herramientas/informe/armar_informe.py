@@ -159,11 +159,15 @@ def anchos_de_columna(filas, cols, tam):
     return anchos
 
 
-def tabla(filas):
+def tabla(filas, porcentajes=None):
     cols = len(filas[0])
     chica = cols >= 4
     tam, linea = (18, 240) if chica else (22, 360)
-    anchos = anchos_de_columna(filas, cols, tam)
+    if porcentajes:  # fijados en el .md con <!-- anchos: 42 58 -->
+        anchos = [int(ANCHO_TABLA * p / 100) for p in porcentajes]
+        anchos[-1] += ANCHO_TABLA - sum(anchos)
+    else:
+        anchos = anchos_de_columna(filas, cols, tam)
     borde = '<w:{0} w:val="single" w:sz="6" w:space="0" w:color="000000"/>'
     bordes = ''.join(borde.format(b) for b in ('top', 'left', 'bottom', 'right', 'insideH', 'insideV'))
     xml = [f'<w:tbl><w:tblPr><w:tblW w:w="{ANCHO_TABLA}" w:type="dxa"/><w:jc w:val="center"/>'
@@ -253,10 +257,19 @@ def convertir(md, listas, figuras):
     out = []
     i = 0
     primer_h1 = True
+    # Ajustes de formato que el equipo hizo a mano en el Word, anotados en el .md para no perderlos:
+    # <!-- anchos: 42 58 --> (% de cada columna de la tabla siguiente) y
+    # <!-- alinear: izquierda --> (el párrafo siguiente sin justificar).
+    ajustes = {}
     while i < len(lineas):
         l = lineas[i]
         s = l.strip()
         if not s or s == '---':
+            i += 1
+            continue
+        ajuste = re.match(r'<!-- (anchos|alinear): (.*?) -->', s)
+        if ajuste:
+            ajustes[ajuste.group(1)] = ajuste.group(2).strip()
             i += 1
             continue
         if s.startswith('<!-- figura:'):
@@ -309,7 +322,8 @@ def convertir(md, listas, figuras):
                 if not all(re.fullmatch(r':?-+:?', c) for c in celdas):
                     filas.append(celdas)
                 i += 1
-            out.append(tabla(filas))
+            anchos = ajustes.pop('anchos', None)
+            out.append(tabla(filas, [float(x) for x in anchos.split()] if anchos else None))
             continue
         lm = re.match(r'( *)(- |\d+\. )(.*)', l)
         if lm:
@@ -339,7 +353,8 @@ def convertir(md, listas, figuras):
         elif texto.startswith('Pendiente:'):
             out.append(pendiente(texto))
         else:
-            out.append(parrafo(runs(texto)))
+            jc = 'left' if ajustes.pop('alinear', '') == 'izquierda' else 'both'
+            out.append(parrafo(runs(texto), jc=jc))
     return ''.join(out)
 
 
@@ -385,12 +400,12 @@ SUBSECCIONES_SPRINT = [
 ]
 
 SPRINTS = [
-    (1, '26 de octubre al 1 de noviembre de 2026', 'Infraestructura, API Gateway e Identidad: se puede iniciar sesión en el sistema.'),
-    (2, '2 al 8 de noviembre de 2026', 'Catálogo e inventario básico: se registran productos, insumos y stock.'),
-    (3, '9 al 15 de noviembre de 2026', 'Recetas y producción, con los servicios comunicados por eventos.'),
-    (4, '16 al 22 de noviembre de 2026', 'Pedido a domicilio con pago en línea (saga completa).'),
-    (5, '23 al 29 de noviembre de 2026', 'Despacho de pedidos, reparto y venta de mostrador.'),
-    (6, '30 de noviembre al 6 de diciembre de 2026', 'Reportes, temas, notificaciones y despliegue.'),
+    (1, '17 al 21 de octubre de 2026', 'Infraestructura, API Gateway e Identidad: se puede iniciar sesión en el sistema.'),
+    (2, '22 al 28 de octubre de 2026', 'Catálogo e inventario básico: se registran productos, insumos y stock.'),
+    (3, '29 de octubre al 4 de noviembre de 2026', 'Recetas y producción, con los servicios comunicados por eventos.'),
+    (4, '5 al 11 de noviembre de 2026', 'Pedido a domicilio con pago en línea (saga completa).'),
+    (5, '12 al 18 de noviembre de 2026', 'Despacho de pedidos, reparto y venta de mostrador.'),
+    (6, '19 al 25 de noviembre de 2026', 'Reportes, temas, notificaciones y despliegue.'),
 ]
 
 BIBLIOGRAFIA = [

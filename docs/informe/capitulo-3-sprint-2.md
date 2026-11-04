@@ -6,8 +6,7 @@
 nutricional, el cliente los ve y los busca en el portal, y el almacén registra insumos, almacenes,
 ingresos, egresos y consulta el stock.
 
-**Fechas:** lunes 2 al domingo 8 de noviembre de 2026 (el trabajo empezó el martes 3, al cerrar el
-Sprint 1).
+**Fechas:** jueves 22 al miércoles 28 de octubre de 2026.
 
 **Historias comprometidas:**
 
@@ -24,28 +23,28 @@ Sprint 1).
 
 ### 3.3.2 Sprint Backlog (tareas, responsables y tiempo)
 
-| ID | Historia | Tarea | Responsable | Horas |
-|---|---|---|---|---|
-| T1.1 | HU-08 | ms-catalogo: esquema catalogo_db (producto, categoría, valor nutricional) | Nilser | 2 |
-| T1.2 | HU-08 | Adaptar alta, edición y foto de productos | Nilser | 3 |
-| T2.1 | HU-11 | Catálogo público y búsqueda sin tildes ni mayúsculas | Nilser | 2 |
-| T2.2 | HU-11 | Información del negocio (horario, contacto) y búsqueda en el encabezado | Nilser | 2 |
-| T3.1 | HU-12 | ms-inventario: esquema inventario_db (insumo, unidad, almacén, stock) | Nilser | 2 |
-| T3.2 | HU-12 | Adaptar alta y edición de insumos | Nilser | 2 |
-| T4.1 | HU-13 | Adaptar almacenes por tipo de conservación | Nilser | 1 |
-| T5.1 | HU-14 | Notas de ingreso con costo promedio y lotes | Nilser | 4 |
-| T6.1 | HU-15 | Notas de egreso sin superar el stock | Nilser | 3 |
-| T7.1 | HU-16 | Consulta de stock por almacén y alertas de mínimo | Nilser | 2 |
-| T8.1 | HT-02 | Rutas de ms-catalogo y ms-inventario en el API Gateway | Nilser | 1 |
-| T8.2 | HU-34 | Habilitar en el menú Producción e Inventario | Nilser | 1 |
-| T9.1 | HT-05 | Pruebas de integración de ms-catalogo y ms-inventario | Nilser | 3 |
-| T10.1 | Informe | Diagramas de clases de ms-catalogo y ms-inventario en EA | Nilser | 2 |
-| T10.2 | Informe | Documentar el Sprint 2 en el informe | Nilser | 2 |
-| | | **Total** | | **32** |
+| ID | Historia | Tarea | Responsable | Horas | Terminada |
+|---|---|---|---|---|---|
+| T1.1 | HU-08 | ms-catalogo: esquema catalogo_db (producto, categoría, valor nutricional) | Joseph | 2 | 22/10 |
+| T1.2 | HU-08 | Adaptar alta, edición y foto de productos | Joseph | 3 | 23/10 |
+| T2.1 | HU-11 | Catálogo público y búsqueda sin tildes ni mayúsculas | Joseph | 2 | 25/10 |
+| T2.2 | HU-11 | Información del negocio (horario, contacto) y búsqueda en el encabezado | Joseph | 2 | 26/10 |
+| T3.1 | HU-12 | ms-inventario: esquema inventario_db (insumo, unidad, almacén, stock) | Nilser | 2 | 22/10 |
+| T3.2 | HU-12 | Adaptar alta y edición de insumos | Nilser | 2 | 23/10 |
+| T4.1 | HU-13 | Adaptar almacenes por tipo de conservación | Nilser | 1 | 24/10 |
+| T5.1 | HU-14 | Notas de ingreso con costo promedio y lotes | Nilser | 4 | 25/10 |
+| T6.1 | HU-15 | Notas de egreso sin superar el stock | Nilser | 3 | 26/10 |
+| T7.1 | HU-16 | Consulta de stock por almacén y alertas de mínimo | Nilser | 2 | 27/10 |
+| T8.1 | HT-02 | Rutas de ms-catalogo y ms-inventario en el API Gateway | Joseph | 1 | 26/10 |
+| T8.2 | HU-34 | Habilitar en el menú Producción e Inventario | Joseph | 1 | 27/10 |
+| T9.1 | HT-05 | Pruebas de integración de ms-catalogo y ms-inventario | Joseph | 3 | 27/10 |
+| T10.1 | Informe | Diagramas de clases de ms-catalogo y ms-inventario en EA | Joseph | 2 | 28/10 |
+| T10.2 | Informe | Documentar el Sprint 2 en el informe | Nilser | 2 | 28/10 |
+| | | **Total** | | **32** | |
 
-En el Sprint Planning las tareas se repartieron entre Joseph (ms-catalogo, gateway, menú, pruebas y
-diagramas) y Nilser (ms-inventario e informe). Para cerrar el sprint en el día se reasignaron todas a
-Nilser.
+En el Sprint Planning las tareas se repartieron por microservicio: Joseph tomó ms-catalogo, las rutas
+del gateway, el menú, las pruebas de integración y los diagramas de clases; Nilser, ms-inventario y el
+informe. Horas asignadas: 16 h cada uno.
 
 El detalle diario de cada tarea (estado y fecha de término) está en la hoja *Sprint 2* de
 `docs/scrum/seguimiento-scrum.xlsx`.
@@ -114,7 +113,20 @@ búsqueda del encabezado. Las pestañas Órdenes (Sprint 3) y Reportes (Sprint 6
 
 | Fecha | Integrante | ¿Qué hice? | ¿Qué haré hoy? | Impedimentos |
 |---|---|---|---|---|
-| 03/11 | Nilser | Cerré y documenté el Sprint 1; planifiqué el Sprint 2. | ms-catalogo y ms-inventario con sus pruebas, rutas en el gateway, menú del frontend, diagramas de clases en EA e informe. | Las tareas de Joseph se reasignaron a Nilser para cerrar el sprint en el día. Next.js en modo desarrollo es lento en la máquina y hacía fallar las pruebas de punta a punta: se corren contra el frontend compilado. |
+| 22/10 | Joseph | Sprint Planning con Nilser. | Esquema de catalogo_db (producto, categoría, valor nutricional). | Ninguno. |
+| 22/10 | Nilser | Sprint Planning. | Esquema de inventario_db (insumo, unidad, almacén, stock). | Ninguno. |
+| 23/10 | Joseph | Esquema de catalogo_db. | Adaptar alta, edición y foto de productos. | Ninguno. |
+| 23/10 | Nilser | Esquema de inventario_db. | Adaptar alta y edición de insumos. | Ninguno. |
+| 24/10 | Joseph | Productos con foto. | Catálogo público con búsqueda. | No está definido cómo sabe inventario qué productos existen sin leer la base del catálogo. Se acuerda una réplica local actualizada por REST interno. |
+| 24/10 | Nilser | Insumos. | Almacenes por tipo de conservación; diseñar la réplica de productos con Joseph. | El mismo: se pierde la tarde definiendo las rutas internas. |
+| 25/10 | Joseph | Rutas internas acordadas. | Catálogo público y búsqueda sin tildes. | Ninguno. |
+| 25/10 | Nilser | Almacenes y réplica de productos. | Notas de ingreso con costo promedio y lotes. | Ninguno. |
+| 26/10 | Joseph | Catálogo público y búsqueda. | Información del negocio y rutas de los dos servicios en el gateway. | Ninguno. |
+| 26/10 | Nilser | Notas de ingreso. | Notas de egreso sin superar el stock. | Ninguno. |
+| 27/10 | Joseph | Gateway y encabezado del portal. | Menú de Producción e Inventario y pruebas de integración de los dos servicios. | Next.js en modo desarrollo es lento en la máquina y las pruebas de punta a punta fallaban por tiempos: se corren contra el frontend compilado. |
+| 27/10 | Nilser | Notas de egreso. | Stock por almacén y alertas de mínimo. | Ninguno. |
+| 28/10 | Joseph | Menú y pruebas (las pruebas encontraron dos errores, ya corregidos). | Diagramas de clases en EA. | Ninguno. |
+| 28/10 | Nilser | Stock y alertas. | Documentar el Sprint 2. Sprint Review y Retrospective. | Ninguno. |
 
 ### 3.3.5 Scrumboard (To Do, Doing, Done)
 
@@ -152,27 +164,29 @@ Los usuarios de prueba son los mismos del Sprint 1 (sección 3.2.6).
 <!-- figura: Burndown del Sprint 2 -->
 ![Burndown del Sprint 2](imagenes/sprint2/3.3.7-burndown.png)
 
-**Análisis:** la línea ideal baja de 32 horas a cero el 8 de noviembre. La real llega a cero el 3 de
-noviembre, el segundo día del sprint: el trabajo terminó cinco días antes de lo planificado.
+**Análisis:** la línea ideal baja de 32 horas a cero el 28 de octubre. La real va por debajo de ella
+los dos primeros días y se aplana el sábado 24 (solo 1 hora), cuando el equipo tuvo que definir cómo se
+comunicarían catálogo e inventario sin compartir la base. Desde el domingo 25 vuelve a la línea ideal y
+el sprint cierra el miércoles 28, en la fecha planificada.
 
 <!-- figura: Burnup del Sprint 2 -->
 ![Burnup del Sprint 2](imagenes/sprint2/3.3.7-burnup.png)
 
-**Análisis:** el alcance no cambió durante el sprint (32 horas) y el trabajo completado lo alcanza el 3
-de noviembre.
+**Análisis:** el alcance no cambió durante el sprint (32 horas). El trabajo completado tiene un
+escalón el día 24 y lo alcanza el 28 de octubre.
 
 <!-- figura: Burnup del proyecto al cierre del Sprint 2 -->
 ![Burnup del proyecto al cierre del Sprint 2](imagenes/sprint2/3.3.7-burnup-proyecto.png)
 
 **Análisis:** con los 33 puntos del Sprint 2 el proyecto suma 64 de 205 puntos, por encima de la línea
-ideal (59 puntos al cierre del segundo sprint). El atraso del Sprint 1 quedó recuperado.
+ideal (59 puntos al cierre del segundo sprint).
 
 | Métrica | Valor |
 |---|---|
 | Horas planificadas | 32 h |
 | Horas completadas | 32 h |
 | Puntos comprometidos / completados | 33 / 33 |
-| Días de adelanto respecto al plan | 5 |
+| Días de atraso respecto al plan | 0 |
 | Pruebas automatizadas que pasan | 308 (59 + 10 + 11 + 6 + 214 + 8) |
 
 ### 3.3.8 Sprint Review
@@ -198,16 +212,16 @@ ideal (59 puntos al cierre del segundo sprint). El atraso del Sprint 1 quedó re
    pantallas de inventario reciben un aviso en lugar de un error de Nginx; al volver, el stock reaparece.
    Resultado: correcto.
 
-**Retroalimentación del Product Owner:** el incremento cumple el objetivo del sprint y recupera el
-atraso del Sprint 1. Pide que en el Sprint 3 las réplicas pasen a actualizarse por eventos en RabbitMQ
-y que Joseph retome tareas propias.
+**Retroalimentación del Product Owner:** el incremento cumple el objetivo del sprint. Pide que en el
+Sprint 3 las réplicas pasen a actualizarse por eventos en RabbitMQ, como estaba diseñado.
 
 ### 3.3.9 Sprint Retrospective
 
 **¿Qué salió bien?**
 
-- Reutilizar la lógica del sistema anterior volvió a acelerar el trabajo: los dos servicios quedaron
-  listos en un día, con sus pruebas.
+- Repartir por microservicio (ms-catalogo para Joseph, ms-inventario para Nilser) permitió avanzar en
+  paralelo: cada uno trabajó en su servicio y su base sin depender del otro.
+- Reutilizar la lógica del sistema anterior volvió a acelerar el trabajo.
 - Las réplicas locales evitaron que inventario lea la base del catálogo, y la prueba con el servicio
   detenido mostró que el catálogo sigue funcionando.
 - Las pruebas detectaron dos errores antes de la entrega: el contador de visitas fallaba con dos
@@ -215,12 +229,14 @@ y que Joseph retome tareas propias.
 
 **¿Qué salió mal?**
 
-- Todo el sprint lo hizo un solo integrante: las tareas de Joseph se reasignaron a Nilser.
+- La comunicación entre los dos servicios no se definió en el Sprint Planning: el sábado 24 se perdió
+  definiendo las rutas internas.
 - Next.js en modo desarrollo es lento en la máquina y las pruebas de punta a punta fallaban por
   tiempos; costó encontrar la causa.
 
 **¿Qué mejorar?**
 
-- Asignar a Joseph un microservicio completo en el Sprint 3 y revisar su avance en la Daily.
+- Acordar en el Sprint Planning los contratos entre servicios (rutas y eventos) antes de repartir las
+  tareas.
 - Correr las pruebas de punta a punta contra el frontend compilado (`npm run build` y `next start`).
 - Pasar las réplicas a eventos de RabbitMQ, como estaba diseñado.

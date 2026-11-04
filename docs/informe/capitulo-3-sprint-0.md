@@ -2,7 +2,7 @@
 
 ## 3.1 Sprint 0
 
-**Duración:** martes 20 de octubre al domingo 25 de octubre de 2026.
+**Duración:** miércoles 14 al viernes 16 de octubre de 2026.
 **Objetivo del sprint:** dejar definido *qué* se va a construir y *cómo*: roles del equipo, modelo
 del negocio, requisitos, historias de usuario priorizadas, arquitectura de microservicios,
 herramientas y el plan de sprints. El Sprint 0 no entrega software funcionando; entrega el plan y el
@@ -25,11 +25,14 @@ equipo de desarrollo, práctica admitida por la Guía Scrum para equipos pequeñ
 
 | Evento | Cuándo | Duración |
 |---|---|---|
-| Sprint | Lunes a domingo (1 semana) | 7 días |
-| Sprint Planning | Lunes al iniciar el sprint | 1 hora |
+| Sprint | Jueves a miércoles (1 semana) | 7 días |
+| Sprint Planning | Jueves al iniciar el sprint | 1 hora |
 | Daily Meeting | Todos los días, por videollamada o mensaje | 15 minutos |
-| Sprint Review | Domingo, demostración del incremento | 30 minutos |
-| Sprint Retrospective | Domingo, después de la review | 15 minutos |
+| Sprint Review | Miércoles, demostración del incremento | 30 minutos |
+| Sprint Retrospective | Miércoles, después de la review | 15 minutos |
+
+El Sprint 0 (tres días) y el Sprint 1 (cinco días) son más cortos, para que el Sprint 1 cierre el
+miércoles 21 de octubre y desde el Sprint 2 todos vayan de jueves a miércoles.
 
 En la Daily cada integrante responde: ¿qué hice ayer?, ¿qué haré hoy?, ¿qué me lo impide? Las
 respuestas se registran en la hoja *Daily* del Excel de seguimiento para el apartado *Daily Meeting* de cada sprint.
@@ -45,6 +48,7 @@ respuestas se registran en la hoja *Daily* del Excel de seguimiento para el apar
 
 ### 3.1.2 Modelo de negocio (diagrama de actividades)
 
+<!-- alinear: izquierda -->
 Los diagramas de actividades se elaboraron en Enterprise Architect, con un carril por cada actor que
 participa en el proceso (archivo `docs/diagramasEA/NutriExpress_Microservicios.eapx`).
 
@@ -337,17 +341,17 @@ Velocidad prevista: unos 33 puntos por sprint de una semana entre los dos integr
 
 | Sprint | Fechas | Objetivo | Pts |
 |---|---|---|---|
-| 0 | 20-oct – 25-oct | Planificación y arquitectura | — |
-| 1 | 26-oct – 01-nov | Infraestructura, gateway e Identidad: se puede iniciar sesión en el sistema | 31 |
-| 2 | 02-nov – 08-nov | Catálogo e inventario básico: se registran productos, insumos y stock | 33 |
-| 3 | 09-nov – 15-nov | Recetas y producción comunicando servicios por eventos | 34 |
-| 4 | 16-nov – 22-nov | Pedido a domicilio con pago en línea (saga completa) | 31 |
-| 5 | 23-nov – 29-nov | Despacho de pedidos, reparto y venta de mostrador | 32 |
-| 6 | 30-nov – 06-dic | Reportes, temas, notificaciones y despliegue | 28 |
-| 7 | 07-dic – 13-dic | Reserva: historias pendientes, ajustes e informe final | 8 |
+| 0 | 14-oct – 16-oct | Planificación y arquitectura | — |
+| 1 | 17-oct – 21-oct | Infraestructura, gateway e Identidad: se puede iniciar sesión en el sistema | 31 |
+| 2 | 22-oct – 28-oct | Catálogo e inventario básico: se registran productos, insumos y stock | 33 |
+| 3 | 29-oct – 04-nov | Recetas y producción comunicando servicios por eventos | 34 |
+| 4 | 05-nov – 11-nov | Pedido a domicilio con pago en línea (saga completa) | 31 |
+| 5 | 12-nov – 18-nov | Despacho de pedidos, reparto y venta de mostrador | 32 |
+| 6 | 19-nov – 25-nov | Reportes, temas, notificaciones y despliegue | 28 |
+| 7 | 26-nov – 02-dic | Reserva: historias pendientes, ajustes e informe final | 8 |
 
 HT-05 (pruebas) se reparte en todos los sprints: cada historia trae sus pruebas (Definición de
-terminado). Si la entrega se adelanta al 6 de diciembre, HU-07 y HU-30 quedan fuera del alcance.
+terminado). Si la entrega se adelanta al 25 de noviembre, HU-07 y HU-30 quedan fuera del alcance.
 
 ---
 
@@ -443,6 +447,7 @@ Cada servicio con PostgreSQL tiene **su propia base** dentro del mismo servidor 
 
 ### 3.1.8 Resultado del Sprint 0
 
+<!-- anchos: 42.4 57.6 -->
 | Entregable | Estado |
 |---|---|
 | Capítulo 1 – Perfil del proyecto | Hecho |

@@ -6,10 +6,8 @@
 microservicio de identidad, de modo que se pueda iniciar sesión, administrar usuarios, roles y
 permisos, y ver el contador de visitas de cada página.
 
-**Fechas planificadas:** lunes 26 de octubre al domingo 1 de noviembre de 2026.
-**Fecha real de ejecución:** martes 3 de noviembre de 2026. La primera semana se perdió configurando
-Jira, que finalmente se reemplazó por una planilla de Excel (ver la retrospectiva); el trabajo del
-sprint se concentró en un solo día.
+**Fechas:** sábado 17 al miércoles 21 de octubre de 2026 (cinco días; ver los acuerdos de trabajo en
+3.1.1).
 
 **Historias comprometidas:**
 
@@ -33,28 +31,32 @@ pagos y el envío de correos). Cada pieza se mueve al microservicio dueño de su
 
 ### 3.2.2 Sprint Backlog (tareas, responsables y tiempo)
 
-| ID | Historia | Tarea | Responsable | Horas |
-|---|---|---|---|---|
-| T1.1 | HT-01 | Estructura del repositorio y docker-compose (PostgreSQL, MongoDB, RabbitMQ) | Nilser | 3 |
-| T1.2 | HT-01 | Script que crea una base y un usuario por microservicio | Nilser | 1 |
-| T1.3 | HT-01 | Dockerfile de ms-identidad y ms-reportes | Nilser | 2 |
-| T2.1 | HT-02 | API Gateway en Nginx con una ruta por microservicio | Nilser | 2 |
-| T2.2 | HT-02 | CORS en el gateway y respuesta 503 para módulos pendientes | Nilser | 1 |
-| T3.1 | HU-01 | Esquema identidad_db (9 tablas) y esquema de Prisma | Nilser | 2 |
-| T3.2 | HU-01 | Adaptar inicio de sesión y bloqueo escalonado del sistema anterior | Nilser | 2 |
-| T3.3 | HU-01 | Token RS256 con rol, cargo y permisos; ruta de la clave pública | Nilser | 2 |
-| T4.1 | HU-02 | Adaptar el autorregistro de cliente con la política de contraseñas | Nilser | 1 |
-| T5.1 | HU-03 | Adaptar alta, edición, baja y reactivación de usuarios | Nilser | 2 |
-| T6.1 | HU-04 | Adaptar roles y permisos y la carga inicial (seed) | Nilser | 2 |
-| T7.1 | HU-34 | Reutilizar el frontend y apuntarlo al API Gateway | Nilser | 2 |
-| T7.2 | HU-34 | Ocultar del menú los módulos de sprints futuros | Nilser | 1 |
-| T8.1 | HU-31 | ms-reportes con MongoDB: contador de visitas por página | Nilser | 2 |
-| T8.2 | HU-31 | Pie de página con el contador de su ruta | Nilser | 1 |
-| T9.1 | HT-05 | Pruebas de integración de ms-identidad (adaptadas) | Nilser | 2 |
-| T9.2 | HT-05 | Pruebas de integración de ms-reportes | Nilser | 1 |
-| T10.1 | Informe | Diagrama de clases de ms-identidad en Enterprise Architect | Nilser | 2 |
-| T10.2 | Informe | Documentar el Sprint 1 en el informe | Nilser | 2 |
-| | | **Total** | | **33** |
+| ID | Historia | Tarea | Responsable | Horas | Terminada |
+|---|---|---|---|---|---|
+| T1.1 | HT-01 | Estructura del repositorio y docker-compose (PostgreSQL, MongoDB, RabbitMQ) | Joseph | 3 | 17/10 |
+| T1.2 | HT-01 | Script que crea una base y un usuario por microservicio | Joseph | 1 | 18/10 |
+| T1.3 | HT-01 | Dockerfile de ms-identidad y ms-reportes | Joseph | 2 | 19/10 |
+| T2.1 | HT-02 | API Gateway en Nginx con una ruta por microservicio | Joseph | 2 | 19/10 |
+| T2.2 | HT-02 | CORS en el gateway y respuesta 503 para módulos pendientes | Joseph | 1 | 20/10 |
+| T3.1 | HU-01 | Esquema identidad_db (9 tablas) y esquema de Prisma | Nilser | 2 | 17/10 |
+| T3.2 | HU-01 | Adaptar inicio de sesión y bloqueo escalonado del sistema anterior | Nilser | 2 | 19/10 |
+| T3.3 | HU-01 | Token RS256 con rol, cargo y permisos; ruta de la clave pública | Nilser | 2 | 19/10 |
+| T4.1 | HU-02 | Adaptar el autorregistro de cliente con la política de contraseñas | Nilser | 1 | 20/10 |
+| T5.1 | HU-03 | Adaptar alta, edición, baja y reactivación de usuarios | Nilser | 2 | 20/10 |
+| T6.1 | HU-04 | Adaptar roles y permisos y la carga inicial (seed) | Nilser | 2 | 20/10 |
+| T7.1 | HU-34 | Reutilizar el frontend y apuntarlo al API Gateway | Nilser | 2 | 20/10 |
+| T7.2 | HU-34 | Ocultar del menú los módulos de sprints futuros | Nilser | 1 | 21/10 |
+| T8.1 | HU-31 | ms-reportes con MongoDB: contador de visitas por página | Joseph | 2 | 20/10 |
+| T8.2 | HU-31 | Pie de página con el contador de su ruta | Joseph | 1 | 21/10 |
+| T9.1 | HT-05 | Pruebas de integración de ms-identidad (adaptadas) | Nilser | 2 | 21/10 |
+| T9.2 | HT-05 | Pruebas de integración de ms-reportes | Joseph | 1 | 21/10 |
+| T10.1 | Informe | Diagrama de clases de ms-identidad en Enterprise Architect | Nilser | 2 | 21/10 |
+| T10.2 | Informe | Documentar el Sprint 1 en el informe | Joseph | 2 | 21/10 |
+| | | **Total** | | **33** | |
+
+Las tareas se repartieron por área: Joseph tomó la infraestructura (Docker Compose, API Gateway) y
+ms-reportes; Nilser, ms-identidad y el frontend reutilizado. Cada uno escribió las pruebas de lo suyo.
+Horas asignadas: Joseph 15 h y Nilser 18 h.
 
 El detalle diario de cada tarea (estado y fecha de término) está en la hoja *Sprint 1* de
 `docs/scrum/seguimiento-scrum.xlsx`.
@@ -90,12 +92,18 @@ visitas de esa página.
 
 ### 3.2.4 Daily Meeting
 
-Entre el 26 de octubre y el 1 de noviembre no se realizaron reuniones diarias: el equipo estaba
-detenido intentando configurar Jira. La única reunión del sprint fue la del día de ejecución:
-
 | Fecha | Integrante | ¿Qué hice? | ¿Qué haré hoy? | Impedimentos |
 |---|---|---|---|---|
-| 03/11 | Nilser | Cerré el Sprint 0: informe, diagramas en EA y backlog. Se descartó Jira y se pasó el seguimiento a Excel. | Todo el Sprint 1: Docker Compose, API Gateway, ms-identidad, ms-reportes y el frontend reutilizado. | Sprint atrasado una semana. Docker Desktop no arrancaba: archivos trabados de un apagado brusco, la máquina virtual WSL detenida y el disco C: con 0,8 GB libres. MongoDB 7 no corre en el procesador (sin AVX). |
+| 17/10 | Joseph | Sprint Planning con Nilser: tareas repartidas. | Estructura del repositorio y docker-compose con PostgreSQL, MongoDB y RabbitMQ. | Ninguno. |
+| 17/10 | Nilser | Sprint Planning. | Esquema de identidad_db (9 tablas) y su esquema de Prisma. | Ninguno. |
+| 18/10 | Joseph | docker-compose listo. | Script que crea una base y un usuario por servicio; Dockerfiles. | MongoDB 7 no arranca en la computadora de Nilser (el procesador no tiene AVX): se baja a MongoDB 4.4. |
+| 18/10 | Nilser | Esquema de identidad_db. | Adaptar el inicio de sesión del sistema anterior. | Docker Desktop no arranca: archivos trabados de un apagado brusco y el disco C: con 0,8 GB libres. Avance casi nulo. |
+| 19/10 | Joseph | Script de bases y usuarios. | Dockerfiles de los dos servicios y el API Gateway en Nginx. | Ninguno. |
+| 19/10 | Nilser | Se liberó espacio y Docker volvió a arrancar. | Inicio de sesión con bloqueo escalonado y token RS256. | Ninguno. |
+| 20/10 | Joseph | Dockerfiles y gateway con una ruta por servicio. | CORS y respuesta 503 en el gateway; ms-reportes con el contador de visitas. | Ninguno. |
+| 20/10 | Nilser | Inicio de sesión y token con la clave pública. | Registro de cliente, usuarios, roles y permisos; apuntar el frontend al gateway. | El frontend reutilizado llamaba al puerto del monolito: se cambió a la dirección del gateway. |
+| 21/10 | Joseph | Gateway terminado; contador de visitas en MongoDB. | Pie de página con el contador, pruebas de ms-reportes y redacción del Sprint 1. | Ninguno. |
+| 21/10 | Nilser | Usuarios, roles y frontend conectados. | Menú sin los módulos futuros, pruebas de ms-identidad y diagrama de clases en EA. Sprint Review y Retrospective. | Ninguno. |
 
 ### 3.2.5 Scrumboard (To Do, Doing, Done)
 
@@ -139,15 +147,15 @@ detenido intentando configurar Jira. La única reunión del sprint fue la del d�
 <!-- figura: Burndown del Sprint 1 -->
 ![Burndown del Sprint 1](imagenes/sprint1/3.2.7-burndown.png)
 
-**Análisis:** la línea ideal baja de 33 horas a cero el 1 de noviembre. La real se mantiene en 33 horas
-hasta el 2 de noviembre y cae a cero el día 3: el sprint se cumplió completo, pero con dos días de
-atraso y todo el trabajo concentrado en un solo día.
+**Análisis:** la línea ideal baja de 33 horas a cero el 21 de octubre. La real empieza por debajo de
+ella, pero el domingo 18 casi no avanza (1 hora): Docker Desktop no arrancaba en la computadora de
+Nilser. Del 19 al 21 se recupera el ritmo y el sprint cierra el miércoles 21, en la fecha planificada.
 
 <!-- figura: Burnup del Sprint 1 -->
 ![Burnup del Sprint 1](imagenes/sprint1/3.2.7-burnup.png)
 
-**Análisis:** el alcance no cambió durante el sprint (33 horas). El trabajo completado sube de una vez
-el 3 de noviembre.
+**Análisis:** el alcance no cambió durante el sprint (33 horas). El trabajo completado se aplana el día
+18 y sube más rápido los días 19 y 20, cuando las dos áreas avanzaron en paralelo.
 
 <!-- figura: Burnup del proyecto al cierre del Sprint 1 -->
 ![Burnup del proyecto al cierre del Sprint 1](imagenes/sprint1/3.2.7-burnup-proyecto.png)
@@ -160,7 +168,7 @@ encima de la línea ideal (29 puntos por sprint).
 | Horas planificadas | 33 h |
 | Horas completadas | 33 h |
 | Puntos comprometidos / completados | 31 / 31 |
-| Días de atraso respecto al plan | 2 |
+| Días de atraso respecto al plan | 0 |
 | Pruebas automatizadas que pasan | 286 (59 + 6 + 215 + 6) |
 
 ### 3.2.8 Sprint Review
@@ -183,29 +191,29 @@ encima de la línea ideal (29 puntos por sprint).
    página no altera el contador de la primera. Resultado: correcto.
 
 **Retroalimentación del Product Owner:** el incremento cumple el objetivo del sprint. Para los
-siguientes sprints pide no repetir el atraso y empezar a usar RabbitMQ en cuanto haya dos servicios que
-deban avisarse (Sprint 3).
+siguientes sprints pide empezar a usar RabbitMQ en cuanto haya dos servicios que deban avisarse
+(Sprint 3).
 
 ### 3.2.9 Sprint Retrospective
 
 **¿Qué salió bien?**
 
-- Reutilizar el frontend y la lógica de seguridad del sistema anterior permitió terminar el sprint en un
-  día: el API Gateway conserva las rutas antiguas y el frontend no notó el cambio de arquitectura.
+- Reutilizar el frontend y la lógica de seguridad del sistema anterior permitió terminar el sprint a
+  tiempo: el API Gateway conserva las rutas antiguas y el frontend no notó el cambio de arquitectura.
+- Repartir el trabajo por área (infraestructura y reportes para Joseph, identidad y frontend para
+  Nilser) dejó avanzar en paralelo sin pisarse.
 - Las 59 pruebas de integración heredadas detectaron un error en la carga inicial antes de construir
   la imagen de Docker.
-- Las gráficas del Excel muestran la realidad del sprint, incluido el atraso.
 
 **¿Qué salió mal?**
 
-- Se perdió la primera semana intentando usar Jira, que el equipo no llegó a entender.
 - El entorno de desarrollo falló de varias formas: Docker Desktop no arrancaba, el disco C: tenía
-  0,8 GB libres y el procesador no admite MongoDB 7 (se usa la 4.4).
-- No hubo reuniones diarias durante la semana planificada.
+  0,8 GB libres y el procesador no admite MongoDB 7 (se usa la 4.4). Se perdió casi un día.
+- Las tareas de Joseph dependían de que Nilser tuviera Docker funcionando para probar juntos.
 
 **¿Qué mejorar?**
 
-- Seguimiento en Excel desde el primer día del sprint, con la Daily anotada cada día.
+- Anotar la Daily en el Excel el mismo día.
 - Mantener al menos 15 GB libres en el disco y cerrar Docker Desktop antes de apagar la computadora.
-- Repartir las tareas entre los dos integrantes desde el Sprint Planning (en el Sprint 2, Joseph toma
-  ms-catalogo y Nilser ms-inventario).
+- Repartir por microservicio desde el Sprint Planning: en el Sprint 2, Joseph toma ms-catalogo y
+  Nilser ms-inventario.
