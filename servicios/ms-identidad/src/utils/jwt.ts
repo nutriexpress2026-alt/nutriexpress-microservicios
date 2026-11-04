@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import { generateKeyPairSync } from 'node:crypto';
+import { createHash, generateKeyPairSync } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { env } from '../config/env.js';
@@ -48,6 +48,19 @@ function cargarClaves(): { privada: string; publica: string } {
 const claves = cargarClaves();
 export const clavePublica = claves.publica;
 const EMISOR = 'ms-identidad';
+
+/**
+ * Un secreto propio para cada `proposito`, derivado de la clave privada.
+ *
+ * Lo usa, por ejemplo, la huella de los códigos de recuperación: sin un secreto
+ * que no esté en la base, quien obtuviera una copia de la base probaría el
+ * millón de códigos posibles en un segundo. La clave privada ya cumple esa
+ * condición (vive en su volumen, no en la base), así que no hace falta otra
+ * variable de entorno.
+ */
+export function secretoPara(proposito: string): Buffer {
+  return createHash('sha256').update(claves.privada).update(`\u0000${proposito}`).digest();
+}
 
 export function firmarToken(payload: PayloadToken): string {
   return jwt.sign(payload, claves.privada, {
