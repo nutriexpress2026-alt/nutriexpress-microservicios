@@ -102,18 +102,26 @@ services:
     environment:
       DATABASE_URL: postgresql://catalogo:${CATALOGO_CLAVE_BD:-catalogo}@postgres:5432/catalogo_db
       PORT: 4002
+      RABBITMQ_URL: amqp://${RABBITMQ_USUARIO:-nutriexpress}:${RABBITMQ_CLAVE:-nutriexpress}@rabbitmq:5672
     depends_on:
       postgres:
         condition: service_healthy
+      # Solo el orden de arranque: si RabbitMQ cae, el servicio sigue y se reconecta solo.
+      rabbitmq:
+        condition: service_started
 
   ms-inventario:
     build: ./servicios/ms-inventario
     environment:
       DATABASE_URL: postgresql://inventario:${INVENTARIO_CLAVE_BD:-inventario}@postgres:5432/inventario_db
       PORT: 4003
+      RABBITMQ_URL: amqp://${RABBITMQ_USUARIO:-nutriexpress}:${RABBITMQ_CLAVE:-nutriexpress}@rabbitmq:5672
     depends_on:
       postgres:
         condition: service_healthy
+      # Solo el orden de arranque: si RabbitMQ cae, el servicio sigue y se reconecta solo.
+      rabbitmq:
+        condition: service_started
 
   ms-reportes:
     build: ./servicios/ms-reportes

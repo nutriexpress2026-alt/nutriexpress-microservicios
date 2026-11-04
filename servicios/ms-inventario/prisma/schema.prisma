@@ -203,3 +203,14 @@ model lote_almacen {
   @@id([id_lote, id_almacen])
   @@index([id_almacen], map: "ix_lotealm_almacen")
 }
+
+model evento_procesado {
+  id_evento    String   @id @db.Uuid
+  tipo         String   @db.VarChar(60)
+  procesado_en DateTime @default(now()) @db.Timestamp(6)
+}
+
+model sesion_vigente {
+  clave String   @id @db.VarChar(30)
+  desde DateTime @db.Timestamp(6)
+}

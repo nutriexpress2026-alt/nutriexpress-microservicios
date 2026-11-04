@@ -24,11 +24,16 @@ async function esperarBase(intentos = 30) {
 }
 
 await esperarBase();
+const sql = readFileSync(fileURLToPath(new URL('./esquema.sql', import.meta.url)), 'utf8');
 const { rows } = await cliente.query(`select to_regclass('public.almacen') is not null as existe`);
 if (!rows[0].existe) {
-  const sql = readFileSync(fileURLToPath(new URL('./esquema.sql', import.meta.url)), 'utf8');
   await cliente.query(sql);
   console.log('ms-inventario: tablas creadas');
+} else {
+  // Base que ya existía: solo lo agregado después de la primera versión, que es
+  // idempotente (IF NOT EXISTS). Así las tablas nuevas llegan sin borrar datos.
+  const marca = sql.indexOf('-- >>> Posteriores a la primera versión');
+  if (marca >= 0) await cliente.query(sql.slice(marca));
 }
 await cliente.end();
 

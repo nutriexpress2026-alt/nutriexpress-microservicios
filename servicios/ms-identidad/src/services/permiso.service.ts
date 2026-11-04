@@ -2,6 +2,7 @@ import * as permisoModel from '../models/permiso.model.js';
 import * as usuarioModel from '../models/usuario.model.js';
 import { ErrorApp } from '../errors/error-app.js';
 import { exigirCuentaAjena } from './actor.service.js';
+import { avisarPermisosCambiados } from './aviso.service.js';
 import type { PermisoUsuarioDTO } from '../dtos/rol.dto.js';
 
 /** CU-SEG-04 Asignar Permisos a Usuario */
@@ -31,5 +32,7 @@ export async function asignarPermisos(
   }
 
   await permisoModel.reemplazarPermisosDeUsuario(idUsuario, validos);
+  // HU-05: que el cambio rija también en los demás servicios.
+  await avisarPermisosCambiados({ idUsuario });
   return permisoModel.permisosDisponiblesParaUsuario(idUsuario, u.id_rol);
 }

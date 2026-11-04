@@ -3,6 +3,7 @@ import helmet from 'helmet';
 import rutas from './routes/index.js';
 import interno from './routes/interno.routes.js';
 import { alAutenticar } from './middlewares/auth.middleware.js';
+import { exigirSesionVigente } from './middlewares/sesiones-vigentes.js';
 import * as empleadoModel from './models/empleado.model.js';
 import { manejadorErrores, rutaNoEncontrada } from './middlewares/error.middleware.js';
 
@@ -11,6 +12,10 @@ export const app = express();
 app.set('trust proxy', 1);
 app.use(helmet({ contentSecurityPolicy: false, crossOriginResourcePolicy: false }));
 app.use(express.json({ limit: '256kb' }));
+
+// HU-05: un token anterior a un cambio de permisos de su usuario o rol ya no
+// sirve. Va primero: una sesión rechazada no actualiza la réplica.
+alAutenticar.unshift(exigirSesionVigente);
 
 // Réplica del empleado: con cada sesión de alguien con cargo se guarda su id y
 // su nombre, para mostrar quién registró cada nota (RNF-ARQ-02).

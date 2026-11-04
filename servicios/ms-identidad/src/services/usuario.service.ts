@@ -9,6 +9,7 @@ import { exigirCuentaAjena } from './actor.service.js';
 import { esPersonalInterno } from '../config/dominio.js';
 import type { Subtipo } from '../models/usuario.model.js';
 import type { UsuarioListaDTO, UsuarioDetalleDTO } from '../dtos/usuario.dto.js';
+import { avisarPermisosCambiados } from './aviso.service.js';
 
 /** CU-SEG-02 Gestionar Usuario */
 
@@ -165,6 +166,8 @@ export async function actualizar(
    */
   if (idRol && cambiaDeRol) {
     await usuarioModel.cambiarRol(id, idRol);
+    // HU-05: con otro rol tiene otros permisos, también en los demás servicios.
+    await avisarPermisosCambiados({ idUsuario: id });
   }
 
   return obtener(id);
@@ -194,6 +197,9 @@ export async function darDeBaja(id: number, idActor: number): Promise<void> {
   const usuario = await usuarioModel.buscarPorId(id);
   if (!usuario) throw new ErrorApp(404, 'Usuario no encontrado');
   await usuarioModel.darDeBaja(id);
+  // Aquí la sesión ya se corta (auth.middleware mira la cuenta); en los demás
+  // servicios, que solo ven el token, la corta este aviso.
+  await avisarPermisosCambiados({ idUsuario: id });
 }
 
 /**

@@ -21,6 +21,8 @@ export interface Sesion {
   rol: string;
   cargo: string | null;
   permisos: string[];
+  /** Cuándo se emitió el token (segundos): con él se rechazan los anteriores a un cambio de permisos. */
+  iat?: number;
 }
 
 declare global {
