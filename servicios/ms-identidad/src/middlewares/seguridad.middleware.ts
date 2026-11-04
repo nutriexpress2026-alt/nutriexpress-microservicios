@@ -1,5 +1,11 @@
 import rateLimit from 'express-rate-limit';
 import { env } from '../config/env.js';
+import { AlmacenConRespaldo } from './almacen-limites.js';
+
+/*
+ * Los tres límites cuentan en Redis, cada uno con su prefijo (T7.3): así no se
+ * reinician al reiniciar el servicio. Si Redis no responde, cuentan en memoria.
+ */
 
 /**
  * Límite de intentos por dirección IP en el inicio de sesión (RNF-SEG-01).
@@ -19,6 +25,7 @@ import { env } from '../config/env.js';
  * queda sin turnos por trabajar normalmente.
  */
 export const limiteDeIntentos = rateLimit({
+  store: new AlmacenConRespaldo('identidad:limite:intentos:'),
   windowMs: env.seguridad.ventanaIntentosMs,
   limit: env.seguridad.maxIntentosPorIp,
   skipSuccessfulRequests: true,
@@ -42,6 +49,7 @@ export const limiteDeIntentos = rateLimit({
  * avisos. Cinco cada quince minutos alcanzan para cualquier uso razonable.
  */
 export const limiteDeEnvios = rateLimit({
+  store: new AlmacenConRespaldo('identidad:limite:envios:'),
   windowMs: 15 * 60_000,
   limit: 5,
   // Por cuenta y no por IP: varios clientes pueden compartir una conexión.
@@ -62,6 +70,7 @@ export const limiteDeEnvios = rateLimit({
  * código por minuto (`recuperacion.service`).
  */
 export const limiteDeSolicitudes = rateLimit({
+  store: new AlmacenConRespaldo('identidad:limite:solicitudes:'),
   windowMs: 15 * 60_000,
   limit: 20,
   standardHeaders: true,
