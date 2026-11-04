@@ -44,33 +44,32 @@ rutas del monolito (`/api/auth`, `/api/usuarios`…) para que el frontend reutil
 Desde el 3-nov el trabajo sigue en la computadora de Joseph (`INSTALACION.md`); los dos suben con la
 cuenta compartida `nutriexpress2026-alt`, cada uno con su `git config user.name`.
 
-## Decisión pendiente de aplicar: PostgreSQL + Redis + Elasticsearch (3-nov)
+## Gestores de bases de datos (decisión del 3-nov)
 
-El equipo decidió usar **tres gestores: PostgreSQL, Redis y Elasticsearch**, en lugar de PostgreSQL y
-MongoDB. No se aplicó en la computadora de Nilser porque no tiene memoria para Elasticsearch. Hay que
-hacerlo **antes del Sprint 3**, en una rama `ht-gestores-redis-elasticsearch`. Propuesta (confirmarla con
-el equipo antes de programar):
+**PostgreSQL + MongoDB, con Redis como complemento. Sin Elasticsearch**: se evaluó para la búsqueda
+con errores de tipeo, pero pide 16 GB de RAM y la computadora de Nilser tiene 8. Eso lo resuelve
+PostgreSQL con la extensión `pg_trgm`. *(Esto reemplaza la idea anterior de cambiar MongoDB por Redis
+y Elasticsearch: MongoDB se queda.)*
 
-| Gestor | Dueño | Para qué | Por qué ese gestor |
-|---|---|---|---|
-| PostgreSQL 16 | ms-identidad, ms-catalogo, ms-inventario, ms-ventas, ms-pedidos, ms-pagos (una base y un usuario cada uno, como ahora) | Datos transaccionales | Transacciones, claves foráneas y `CHECK` |
-| Redis 7 | ms-identidad (base 0) y ms-reportes (base 1), con prefijo de clave por servicio | Identidad: intentos fallidos por IP, códigos de recuperación con vencimiento (TTL) y tokens revocados al cerrar sesión. Reportes: contador de visitas (`INCR`, atómico como el `$inc` de Mongo) | Datos pequeños, efímeros y con vencimiento, en memoria |
-| Elasticsearch 8 | ms-reportes | Reemplaza a MongoDB como vista de lectura: indexa los eventos de ventas, pedidos y movimientos; los reportes son agregaciones (por fecha, producto, repartidor) y el buscador general consulta ese índice | Búsqueda de texto (sin tildes, con errores de tipeo) y agregaciones |
+| Gestor | Dueño | Para qué |
+|---|---|---|
+| PostgreSQL 16 | ms-identidad, ms-catalogo, ms-inventario, ms-ventas, ms-pedidos, ms-pagos (una base y un usuario cada uno) | Datos transaccionales: transacciones, claves foráneas, `CHECK` |
+| MongoDB 4.4 | ms-reportes | Visitas (`$inc`) y, desde el Sprint 6, los eventos guardados como documentos listos para los reportes |
+| Redis 7 (complemento) | ms-identidad y ms-catalogo, con prefijo de clave por servicio | Datos pequeños, temporales y en memoria. No guarda nada que no exista también en su gestor principal |
 
-Qué tocar al aplicarlo:
+Pendiente, a confirmar con el equipo antes de programar:
 
-- `docker-compose.yml`: quitar `mongo`; agregar `redis:7-alpine` y `elasticsearch:8.x` con
-  `discovery.type=single-node`, `xpack.security.enabled=false`, `xpack.ml.enabled=false` y
-  `ES_JAVA_OPTS=-Xms512m -Xmx512m`. Elasticsearch necesita una computadora con 16 GB de RAM (8 GB
-  como mínimo) y Docker Desktop con al menos 4 GB asignados.
-- `servicios/ms-reportes`: `src/config/mongo.ts` → Redis; `src/models/visita.model.ts` con
-  `INCR` y la fecha de la primera visita con `SET NX`; mismas rutas `/api/visitas`, para que
-  `frontend/src/components/ui/PieVisitas.tsx` no cambie. Adaptar `tests/visitas.test.ts`.
-- `herramientas/instalar.ps1`: comprobar la memoria de Docker y que Redis y Elasticsearch respondan.
-- Informe: RNF-ARQ-03 y la tabla de tecnologías en `capitulo-3-sprint-0.md` (y la justificación de
-  cada gestor), la línea de los gestores en `capitulo-1-perfil.md`, `README.md`, y los diagramas C4 de
-  `herramientas/diagramas-ea/crear-diagramas.ps1`. Los sprints 1 y 2 **no se reescriben**: cuentan lo
-  que pasó (MongoDB); el cambio se documenta en el sprint en que se haga.
+- **Búsqueda con errores de tipeo** («era» → «pera», RF del buscador): `CREATE EXTENSION pg_trgm` en
+  la base del catálogo, un índice GIN `gin_trgm_ops` sobre `producto.nombre`, y buscar con
+  `similarity()` o el operador `%` además del `ILIKE` actual (también `unaccent` para las tildes).
+- **Redis**: agregar `redis:7-alpine` a `docker-compose.yml` (gasta muy poca memoria). En ms-identidad,
+  los contadores de `express-rate-limit` (`src/middlewares/seguridad.middleware.ts`) pasan a Redis, así
+  no se reinician al reiniciar el servicio, y también los tokens revocados al cerrar sesión. En
+  ms-catalogo, caché del catálogo público con vencimiento corto, que se invalida al editar un producto.
+  Si Redis no responde, el servicio sigue funcionando contra PostgreSQL (RNF-DIS-01).
+- Al aplicarlo: actualizar `herramientas/instalar.ps1`, RNF-ARQ-03 y la tabla de tecnologías en
+  `capitulo-3-sprint-0.md`, `README.md` y los diagramas C4 (`crear-diagramas.ps1`). Los sprints 1 y 2
+  no se reescriben: el cambio se documenta en el sprint en que se haga.
 
 ## Patrones ya implementados (seguirlos)
 

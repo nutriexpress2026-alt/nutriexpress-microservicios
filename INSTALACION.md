@@ -21,9 +21,7 @@ Antes de seguir:
 
 - Abrir **Docker Desktop** y esperar a que abajo a la izquierda diga **Engine running**.
 - Tener **al menos 10 GB libres** en el disco C: (con menos, Docker falla de formas raras).
-- Memoria: con 8 GB de RAM alcanza para lo que hay hoy. Cuando se agregue Elasticsearch (ver
-  `CLAUDE.md`, «Decisión pendiente de aplicar») hacen falta 16 GB, y en Docker Desktop › Settings ›
-  Resources darle al menos 4 GB.
+- Memoria: con 8 GB de RAM alcanza (el proyecto no usa Elasticsearch, justamente por eso).
 
 ## 2. Descargar el repositorio
 
