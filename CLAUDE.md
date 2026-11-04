@@ -32,19 +32,22 @@ rutas del monolito (`/api/auth`, `/api/usuarios`…) para que el frontend reutil
   aceptación cumplidos, pruebas que pasan y funcionando con `docker compose up`.
 - Ramas: `main` es estable; cada historia en su rama `hu-XX-descripcion` y entra por *pull request*.
 
-## Estado (al 3-nov-2026)
+## Estado (al 4-nov-2026)
 
 | Sprint | Estado | Qué quedó |
 |---|---|---|
 | 0 | Terminado | Perfil, organización, backlog, arquitectura (capítulos 1, 2 y 3.1 del informe) |
 | 1 | Terminado | Docker Compose, API Gateway, ms-identidad, ms-reportes (visitas), frontend reutilizado |
 | 2 | Terminado | ms-catalogo y ms-inventario, con réplicas entre servicios |
-| 3 | En curso | Recetas y órdenes de producción; eventos por RabbitMQ. Tareas en `capitulo-3-sprint-3.md`. **Hechas** (3-nov, en ramas apiladas sin unir a `main`): T1.1, T2.1 módulo de eventos (`ht-03-modulo-eventos`), T7.1–T7.3 HU-06 (`hu-06-recuperar-contrasena`), T6.1 HU-05 (`hu-05-permisos-en-servicios`). **Faltan**: T2.2, HU-09, HU-17, HU-10 (Nilser; el módulo de eventos ya está en ms-catalogo y ms-inventario), el punta a punta de Órdenes de T8.2 (cuando exista HU-10), T9.1 y T9.2 |
+| 3 | Terminado (29-oct al 4-nov) | Eventos por RabbitMQ (HT-03), recetas (HU-09), reservas de stock (HU-17), órdenes de producción (HU-10), permisos en todos los servicios (HU-05) y recuperar la contraseña (HU-06). Las 17 tareas de `capitulo-3-sprint-3.md`, en ramas apiladas que entran a `main` por PR. **Falta**, en la computadora de Nilser: correr `crear-diagramas.ps1` (el EA de la de Joseph crea el modelo pero se cuelga al exportar las imágenes) y después regenerar el Word |
 
 Desde el 3-nov el trabajo sigue en la computadora de Joseph (`INSTALACION.md`); los dos suben con la
 cuenta compartida `nutriexpress2026-alt`, cada uno con su `git config user.name`.
 
-## Siguiente: Sprint 3 (29 de octubre al miércoles 4 de noviembre de 2026)
+## Sprint 3 (29 de octubre al miércoles 4 de noviembre de 2026)
+
+**Terminado.** De los pasos de abajo solo queda, del 4 y el 5, exportar los diagramas de EA y
+regenerar `informe.docx` (en la computadora de Nilser).
 
 Lo programa y documenta Joseph. **Objetivo:** recetas y producción, comunicando los servicios por
 eventos. Historias (34 pts, del Product Backlog en `capitulo-3-sprint-0.md`): HT-03 Eventos en RabbitMQ
@@ -112,15 +115,27 @@ Pendiente, a confirmar con el equipo antes de programar:
   editar un producto. Si Redis no responde, el servicio sigue funcionando contra PostgreSQL (RNF-DIS-01).
 - Ya se actualizaron `herramientas/instalar.ps1` (puerto y comprobación de Redis), RNF-ARQ-03, la
   tabla de tecnologías y la justificación en `capitulo-3-sprint-0.md`, `capitulo-1-perfil.md`,
-  `README.md` y `crear-diagramas.ps1`; el `.eapx` y el Word ya están regenerados (3-nov). Los sprints
-  1 y 2 no se reescriben: el cambio se documenta en el sprint en que se haga.
+  `README.md` y `crear-diagramas.ps1`; el `.eapx` y el Word se regeneraron con Redis el 3-nov. Los
+  diagramas del Sprint 3 ya están en el script: falta exportarlos (en la computadora de Nilser) y
+  regenerar el Word. Los sprints 1 y 2 no se reescriben: el cambio se documenta en el sprint en que se
+  haga.
 
 ## Patrones ya implementados (seguirlos)
 
 - **Réplica local en vez de leer otra base** (RNF-ARQ-02): ms-inventario guarda `producto` (id,
-  nombre, conservación, activo) y `empleado` (id, nombre, apellido). La de productos la mantiene
-  ms-catalogo por REST interno (y la lista completa al arrancar); la de empleados sale del token
-  (gancho `alAutenticar`). En el Sprint 3 la de productos pasa a eventos de RabbitMQ.
+  nombre, conservación, activo) y `empleado` (id, nombre, apellido); ms-catalogo guarda `insumo` (id,
+  nombre, unidad, costo, activo) para las recetas. Se mantienen por eventos (`ProductoGuardado`,
+  `InsumoGuardado`, `InsumoEliminado`) y con la lista completa al arrancar; la de empleados sale del
+  token (gancho `alAutenticar`). Eliminar va por REST interno, porque el otro servicio puede negarse
+  (409): inventario si el producto tuvo movimientos, catálogo si una receta usa el insumo.
+- **Reservas de stock** (HU-17, ms-inventario): otro servicio pide `POST /interno/reservas` con un id
+  propio (repetirlo no descuenta dos veces); disponible = stock − reservas activas, con bloqueo
+  `FOR UPDATE`. `consumirEnTransaccion` la pasa a Consumida dentro de la transacción que registra los
+  movimientos. Los pedidos del Sprint 4 la usan igual (reserva de productos terminados).
+- **Saga de finalizar una orden** (HU-10): ms-catalogo reserva por REST (`orden-<id>`), deja la orden
+  Finalizada y publica `OrdenFinalizada`; si no puede publicar, compensa (vuelve a En proceso y libera
+  la reserva, 503). ms-inventario registra egreso + ingreso en una transacción y responde
+  `ProduccionRegistrada` con los números de nota.
 - **REST interno**: rutas `/interno/*` fuera de `/api`, que el gateway no expone, protegidas con
   `soloRedInterna` (rechaza lo que trae `X-Forwarded-For`).
 - **Eventos** (HT-03, RNF-DIS-03): `servicios/compartido/eventos.ts`, copiado idéntico en
