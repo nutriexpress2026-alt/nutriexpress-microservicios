@@ -137,7 +137,30 @@ export const contarExistencias = (id: number) =>
  * preguntar, y el insumo no está en ninguna. En el Sprint 3 esto pasa a ser
  * una consulta REST a ms-catalogo.
  */
-export const contarUsoEnRecetas = async (_id: number) => 0;
+/**
+ * Lo que la réplica de insumos de ms-catalogo necesita (HU-09): todos los
+ * insumos, o solo los indicados. La unidad va por su abreviatura (kg, L, u).
+ */
+export async function paraReplica(ids?: number[]) {
+  const filas = await prisma.ingrediente.findMany({
+    where: ids ? { id_ingrediente: { in: ids } } : undefined,
+    select: {
+      id_ingrediente: true,
+      nombre: true,
+      costo_unitario: true,
+      activo: true,
+      unidad_medida: { select: { abreviatura: true } },
+    },
+    orderBy: { id_ingrediente: 'asc' },
+  });
+  return filas.map((i) => ({
+    id: i.id_ingrediente,
+    nombre: i.nombre,
+    unidad: i.unidad_medida.abreviatura,
+    costoUnitario: Number(i.costo_unitario),
+    activo: i.activo,
+  }));
+}
 
 /** Movimientos históricos: notas de ingreso y de egreso que tocaron el insumo. */
 export async function contarMovimientos(id: number): Promise<number> {

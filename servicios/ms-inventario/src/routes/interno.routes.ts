@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import * as productoModel from '../models/producto.model.js';
+import * as insumoModel from '../models/insumo.model.js';
 import { soloRedInterna } from '../middlewares/auth.middleware.js';
 import { ErrorApp } from '../errors/error-app.js';
 
@@ -43,6 +44,11 @@ router.get('/productos/existencias', async (req, res) => {
       };
     }),
   );
+});
+
+/** HU-09 · Todos los insumos, para que ms-catalogo reconstruya su réplica al arrancar. */
+router.get('/insumos', async (_req, res) => {
+  res.json(await insumoModel.paraReplica());
 });
 
 export default router;

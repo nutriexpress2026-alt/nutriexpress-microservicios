@@ -82,3 +82,50 @@ CREATE TABLE IF NOT EXISTS sesion_vigente (
     clave  VARCHAR(30) PRIMARY KEY,  -- 'usuario:5' o 'rol:2'
     desde  TIMESTAMP NOT NULL
 );
+
+-- HU-09 · Réplica de los insumos de ms-inventario (RNF-ARQ-02): lo justo para
+-- armar recetas y calcular su costo. La mantiene el evento InsumoGuardado y,
+-- al arrancar, la lista completa de /interno/insumos de inventario.
+CREATE TABLE IF NOT EXISTS insumo (
+    id_ingrediente  INT PRIMARY KEY,           -- el mismo id que en ms-inventario
+    nombre          VARCHAR(100) NOT NULL,
+    unidad          VARCHAR(10) NOT NULL,      -- abreviatura: kg, L, u
+    costo_unitario  NUMERIC(10,2) NOT NULL DEFAULT 0,
+    activo          BOOLEAN NOT NULL DEFAULT TRUE
+);
+
+-- HU-09 · Recetas (RF-PRO-04): varias versiones por producto y una sola activa,
+-- que es la que se usa para producir. Una versión nueva nace inactiva.
+CREATE TABLE IF NOT EXISTS receta (
+    id_receta                   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id_producto                 INT NOT NULL,
+    nombre                      VARCHAR(100) NOT NULL,
+    -- Cuántas porciones salen de una corrida.
+    rendimiento                 INT NOT NULL,
+    tiempo_preparacion_minutos  INT NOT NULL DEFAULT 0,
+    instrucciones               VARCHAR(2000),
+    -- Una bebida escala de forma continua; una bandeja de horno se prepara en
+    -- corridas completas.
+    divisible                   BOOLEAN NOT NULL DEFAULT TRUE,
+    activa                      BOOLEAN NOT NULL DEFAULT FALSE,
+    creada_en                   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_receta_producto FOREIGN KEY (id_producto) REFERENCES producto(id_producto),
+    CONSTRAINT ck_receta_rendimiento CHECK (rendimiento > 0),
+    CONSTRAINT ck_receta_tiempo CHECK (tiempo_preparacion_minutos >= 0)
+);
+
+CREATE TABLE IF NOT EXISTS detalle_receta (
+    id_receta           INT NOT NULL,
+    id_ingrediente      INT NOT NULL,
+    -- Tres decimales, como en inventario: 125 g se anotan 0,125 kg.
+    cantidad_requerida  NUMERIC(12,3) NOT NULL,
+    PRIMARY KEY (id_receta, id_ingrediente),
+    CONSTRAINT fk_detreceta_receta  FOREIGN KEY (id_receta)      REFERENCES receta(id_receta) ON DELETE CASCADE,
+    CONSTRAINT fk_detreceta_insumo  FOREIGN KEY (id_ingrediente) REFERENCES insumo(id_ingrediente),
+    CONSTRAINT ck_detreceta_cantidad CHECK (cantidad_requerida > 0)
+);
+
+-- Una sola receta activa por producto (RF-PRO-04).
+CREATE UNIQUE INDEX IF NOT EXISTS ux_receta_activa ON receta(id_producto) WHERE activa;
+CREATE INDEX IF NOT EXISTS ix_receta_producto      ON receta(id_producto);
+CREATE INDEX IF NOT EXISTS ix_detreceta_insumo     ON detalle_receta(id_ingrediente);

@@ -1,5 +1,7 @@
 import { Router } from 'express';
 import * as ctrl from '../controllers/producto.controller.js';
+import * as recetaCtrl from '../controllers/receta.controller.js';
+import { esquemaReceta } from '../dtos/receta.dto.js';
 import {
   requiereAlgunPermiso,
   requiereAutenticacion,
@@ -54,7 +56,10 @@ router.put(
 router.post('/:id/imagen', gestiona, validarIdParam, subirImagenProducto, ctrl.subirImagen);
 router.delete('/:id/imagen', gestiona, validarIdParam, ctrl.eliminarImagen);
 
-// Versiones de receta del producto (RF-PRO-04)
-// Recetas (HU-09): Sprint 3.
+// HU-09 · Versiones de receta del producto (RF-PRO-04). Las lee también quien
+// produce (elige la receta activa en CU-PRO-02); crearlas es gestionar productos.
+const LEEN_RECETAS = ['PRODUCTO_GESTIONAR', 'ORDEN_PRODUCCION_GESTIONAR'];
+router.get('/:id/recetas', requiereAlgunPermiso(...LEEN_RECETAS), validarIdParam, recetaCtrl.listarDeProducto);
+router.post('/:id/recetas', gestiona, validarIdParam, validarCuerpo(esquemaReceta), recetaCtrl.crear);
 
 export default router;

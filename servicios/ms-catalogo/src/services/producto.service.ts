@@ -13,6 +13,7 @@ import type { TipoConservacion } from '../config/dominio.js';
 import { tipoRealDeImagen } from '../utils/imagen.js';
 import * as inventario from '../clientes/inventario.js';
 import { avisar } from './aviso.service.js';
+import * as recetaModel from '../models/receta.model.js';
 
 /**
  * CU-PRO-01 — Gestionar Producto y Receta (parte de producto), y
@@ -147,10 +148,18 @@ export async function actualizar(
  * HU-08 (CU-PRO-01, excepciones): un producto con existencias o movimientos de
  * inventario no se elimina; se ofrece darlo de baja. Lo decide ms-inventario,
  * dueño de esos datos: si acepta, quita su réplica y aquí se borra el producto.
- * (Las ventas, los pedidos y las recetas se suman cuando existan sus servicios.)
+ * Las recetas son de este servicio y se miran aquí (HU-09). (Las ventas y los
+ * pedidos se suman cuando existan sus servicios.)
  */
 export async function eliminar(id: number): Promise<void> {
   await exigirProducto(id);
+  const recetas = await recetaModel.contarDeProducto(id);
+  if (recetas > 0) {
+    throw new ErrorApp(
+      409,
+      `No se puede eliminar el producto porque tiene ${recetas} versión(es) de receta. Puede darlo de baja en su lugar.`,
+    );
+  }
   await inventario.quitarProducto(id);
   await productoModel.eliminar(id);
 }
