@@ -1,8 +1,9 @@
-﻿# Crea en Enterprise Architect los diagramas del informe (1.8, 2.4, 2.5, 3.1.2, 3.1.7, 3.2.3 y 3.3.3)
-# y exporta cada uno como PNG a docs/diagramasEA/imagenes.
+﻿# Crea en Enterprise Architect los diagramas del informe (1.8, 2.4, 2.5, 3.1.2, 3.1.7, 3.2.3, 3.3.3
+# y 3.4.3) y exporta cada uno como PNG a docs/diagramasEA/imagenes.
 #
 # Uso (PowerShell, con EA instalado):
-#   Invoke-Expression (Get-Content -Raw -Encoding UTF8 .\crear-diagramas-sprint0.ps1)
+#   Invoke-Expression (Get-Content -Raw -Encoding UTF8 .\crear-diagramas.ps1)
+# EA de 32 bits: desde la PowerShell de 32 bits (C:\Windows\SysWOW64\WindowsPowerShell\v1.0).
 #
 # OJO: vuelve a crear NutriExpress_Microservicios.eapx desde cero. Si ya se editaron diagramas a
 # mano en EA, guardar una copia antes.
@@ -324,12 +325,15 @@ try {
     $ms[$s[0]] = $e
     $x += 120
   }
-  foreach ($n in @("ms-catalogo", "ms-ventas", "ms-pagos")) { Unir $ms[$n] $mq "Dependency" | Out-Null }
-  foreach ($n in @("ms-inventario", "ms-pedidos")) { Unir $ms[$n] $mq "Dependency" -direccion "Bi-Directional" | Out-Null }
+  # Sprint 3: identidad publica (PermisosCambiados, CodigoRecuperacionGenerado) y catálogo también
+  # consume (InsumoGuardado, ProduccionRegistrada, PermisosCambiados).
+  foreach ($n in @("ms-identidad", "ms-ventas", "ms-pagos")) { Unir $ms[$n] $mq "Dependency" | Out-Null }
+  foreach ($n in @("ms-catalogo", "ms-inventario", "ms-pedidos")) { Unir $ms[$n] $mq "Dependency" -direccion "Bi-Directional" | Out-Null }
   Unir $mq $ms["ms-reportes"] "Dependency" | Out-Null
-  $nota = Nuevo $p "" "Note" -notas ("Líneas hacia RabbitMQ: eventos asíncronos. Publican catálogo, ventas y pagos; " +
-    "inventario y pedidos publican y consumen; reportes solo consume. Cada microservicio tiene su propia base de datos.")
-  Poner $d $nota 560 30 270 100 | Out-Null
+  $nota = Nuevo $p "" "Note" -notas ("Líneas hacia RabbitMQ: eventos asíncronos. Publican identidad, ventas y pagos; " +
+    "catálogo, inventario y pedidos publican y consumen; reportes solo consume. Cada microservicio tiene su propia " +
+    "base de datos; Redis complementa a identidad y catálogo.")
+  Poner $d $nota 560 20 300 115 | Out-Null
   $diagramas += ,@($d, "3.1.7-c4-nivel-2-contenedores.png")
 
   # ------------------------------------------------------------ Saga del pedido (secuencia)
@@ -513,6 +517,116 @@ try {
     "Un perecedero entra por lotes con vencimiento; la reposición indica su devolución y la devolución su compra.")
   Poner $d $nota 20 700 680 60 | Out-Null
   $diagramas += ,@($d, "3.3.3-clases-ms-inventario.png")
+
+  # ============================================================ Sprint 3
+  $sprint3 = $modelo.Packages.AddNew("Sprint 3", ""); $sprint3.Update() | Out-Null
+
+  # --- 3.4.3 ms-catalogo: recetas y órdenes de producción (solo lo nuevo; el resto está en 3.3.3)
+  $p = $sprint3.Packages.AddNew("3.4.3 Clases de ms-catalogo", ""); $p.Update() | Out-Null
+  $d = $p.Diagrams.AddNew("Clases de ms-catalogo (Sprint 3)", "Logical"); $d.Update() | Out-Null
+  $producto = Clase "Producto" @("idProducto: int", "nombre: string", "activo: bool", "tipoConservacion: string") 20 40 180
+  $receta = Clase "Receta" @("idReceta: int", "nombre: string", "rendimiento: int", "tiempoPreparacionMinutos: int",
+    "instrucciones: string", "divisible: bool", "activa: bool", "creadaEn: datetime") 280 40 230
+  $detReceta = Clase "DetalleReceta" @("cantidadRequerida: decimal") 590 70 190
+  $insumoRep = Clase "Insumo" @("idIngrediente: int", "nombre: string", "unidad: string", "costoUnitario: decimal",
+    "activo: bool") 860 40 180
+  Replica $insumoRep
+  $orden = Clase "OrdenProduccion" @("idOrdenProduccion: int", "fecha: datetime", "estado: string", "cantidad: int",
+    "idEmpleado: int", "empleadoNombre: string", "fechaFinalizacion: datetime", "cantidadObtenida: int",
+    "costoTotal: decimal", "idAlmacenDestino: int", "almacenDestino: string", "idNotaEgreso: int",
+    "idNotaIngreso: int") 280 280 230
+  $detOrden = Clase "DetalleOrdenInsumo" @("idIngrediente: int", "nombre: string", "unidad: string",
+    "cantidad: decimal", "costoUnitario: decimal") 590 300 190
+  $eventoCat = Clase "EventoProcesado" @("idEvento: uuid", "tipo: string", "procesadoEn: datetime") 860 280 180
+  $sesionCat = Clase "SesionVigente" @("clave: string", "desde: datetime") 860 420 180
+  Asociar $receta $producto "0..*" "1" "versión de"
+  Asociar $detReceta $receta "1..*" "1"
+  Asociar $detReceta $insumoRep "0..*" "1"
+  Asociar $orden $receta "0..*" "1" "se produce con"
+  Asociar $detOrden $orden "0..*" "1" "consumió"
+  $nota = Nuevo $p "" "Note" -notas ("Base catalogo_db (PostgreSQL), tablas del Sprint 3; Producto resumido (completo en " +
+    "3.3.3). Una sola receta activa por producto. Insumo «réplica»: la mantiene ms-inventario con InsumoGuardado e " +
+    "InsumoEliminado. DetalleOrdenInsumo guarda lo consumido al finalizar: cambiar la receta después no cambia la " +
+    "orden. Las notas de egreso e ingreso llegan de ms-inventario con ProduccionRegistrada. EventoProcesado: los " +
+    "eventos ya atendidos (RNF-DIS-03); SesionVigente: desde cuándo valen los tokens tras un cambio de permisos (HU-05).")
+  Poner $d $nota 20 560 1020 60 | Out-Null
+  $diagramas += ,@($d, "3.4.3-clases-ms-catalogo.png")
+
+  # --- 3.4.3 ms-inventario: reservas de stock
+  $p = $sprint3.Packages.AddNew("3.4.3 Clases de ms-inventario", ""); $p.Update() | Out-Null
+  $d = $p.Diagrams.AddNew("Clases de ms-inventario (Sprint 3)", "Logical"); $d.Update() | Out-Null
+  $ingr = Clase "Ingrediente" @("idIngrediente: int", "nombre: string", "costoUnitario: decimal", "activo: bool") 20 40 180
+  $reserva = Clase "Reserva" @("idReserva: string", "origen: string", "estado: string", "creadaEn: datetime",
+    "cerradaEn: datetime") 300 40 190
+  $almRes = Clase "Almacen" @("idAlmacen: int", "nombre: string", "tipoConservacion: string", "preferido: bool") 600 40 190
+  $detResIns = Clase "DetalleReservaInsumo" @("cantidad: decimal") 20 250 200
+  $detResProd = Clase "DetalleReservaProducto" @("cantidad: int") 300 250 200
+  $prodRes = Clase "Producto" @("idProducto: int", "nombre: string", "tipoConservacion: string", "activo: bool") 600 230 190
+  Replica $prodRes
+  $eventoInv = Clase "EventoProcesado" @("idEvento: uuid", "tipo: string", "procesadoEn: datetime") 870 40 180
+  $sesionInv = Clase "SesionVigente" @("clave: string", "desde: datetime") 870 180 180
+  Asociar $detResIns $reserva "0..*" "1"
+  Asociar $detResIns $ingr "0..*" "1"
+  Asociar $detResProd $reserva "0..*" "1"
+  Asociar $detResProd $prodRes "0..*" "1"
+  Asociar $reserva $almRes "0..*" "0..1" "destino de lo producido"
+  $nota = Nuevo $p "" "Note" -notas ("Base inventario_db (PostgreSQL), tablas del Sprint 3; Ingrediente, Almacen y Producto " +
+    "resumidos (completos en 3.3.3). Otro servicio pide la reserva por REST interno con su propio id: repetirla no " +
+    "descuenta dos veces. Estado Activa, Liberada o Consumida; lo disponible es el stock menos lo reservado activo. " +
+    "Al consumirse para una orden, en la misma transacción se registran la nota de egreso y la de ingreso.")
+  Poner $d $nota 20 380 1030 60 | Out-Null
+  $diagramas += ,@($d, "3.4.3-clases-ms-inventario.png")
+
+  # --- 3.4.3 Finalizar una orden de producción (secuencia)
+  $p = $sprint3.Packages.AddNew("3.4.3 Finalizar una orden de producción", ""); $p.Update() | Out-Null
+  $d = $p.Diagrams.AddNew("Finalizar una orden de producción", "Sequence"); $d.Update() | Out-Null
+  $L = @{}
+  $x = 60
+  foreach ($v in @(@("Cocinero", "Actor"), @("ms-catalogo", "Sequence"), @("ms-inventario", "Sequence"))) {
+    $e = Nuevo $p $v[0] $v[1]
+    Poner $d $e $x 40 110 640 | Out-Null
+    $L[$v[0]] = $e
+    $x += 300
+  }
+  $mensajes = @(
+    @("Cocinero", "ms-catalogo", "finalizar(idOrden, cantidadObtenida)", "llamada"),
+    @("ms-catalogo", "ms-inventario", "reservar(orden-id, insumos, destino) [REST]", "llamada"),
+    @("ms-inventario", "ms-inventario", "bloquear existencias y crear reserva Activa", "interna"),
+    @("ms-inventario", "ms-catalogo", "reserva(costo, almacén de destino)", "retorno"),
+    @("ms-catalogo", "ms-catalogo", "cambiarEstado(Finalizada) y guardar lo consumido", "interna"),
+    @("ms-catalogo", "ms-inventario", "OrdenFinalizada(idOrden, idReserva, cantidadObtenida)", "evento"),
+    @("ms-catalogo", "Cocinero", "orden Finalizada (merma, costo)", "retorno"),
+    @("ms-inventario", "ms-inventario", "consumir reserva + nota de egreso + nota de ingreso", "interna"),
+    @("ms-inventario", "ms-catalogo", "ProduccionRegistrada(idOrden, notas, costo real)", "evento"),
+    @("ms-catalogo", "ms-catalogo", "guardar números de nota y costo real", "interna"),
+    @("ms-catalogo", "ms-catalogo", "volver a En proceso", "interna"),
+    @("ms-catalogo", "ms-inventario", "liberar(orden-id) [REST]", "llamada"),
+    @("ms-catalogo", "Cocinero", "503: intente de nuevo", "retorno")
+  )
+  $n = 1
+  foreach ($m in $mensajes) {
+    $c = $L[$m[0]].Connectors.AddNew($m[2], "Sequence")
+    $c.SupplierID = $L[$m[1]].ElementID
+    $c.SequenceNo = $n
+    $c.Update() | Out-Null
+    $tipo = $m[3]
+    if ($tipo -ne "llamada") { $c.Properties.Item("Kind").Value = "Signal" }
+    $c.Properties.Item("IsAsync").Value = ($tipo -eq "evento")
+    $c.Properties.Item("IsReturn").Value = ($tipo -eq "retorno")
+    $c.Update() | Out-Null
+    $n++
+  }
+  $alt = Nuevo $p "" "InteractionFragment" 0
+  $op1 = $alt.Partitions.AddNew("el aviso sale", "")
+  $op1.Size = 190
+  $op2 = $alt.Partitions.AddNew("el aviso no sale (RabbitMQ no responde)", "")
+  $alt.Update() | Out-Null
+  Poner $d $alt 20 290 700 300 | Out-Null
+  $nota = Nuevo $p "" "Note" -notas ("Saga de HU-10: si OrdenFinalizada no se puede publicar, la compensación deshace la " +
+    "finalización y libera la reserva. Si el evento llega dos veces, ms-inventario no registra la producción de nuevo. " +
+    "Flechas abiertas: eventos por RabbitMQ; llenas: llamadas REST.")
+  Poner $d $nota 160 700 480 60 | Out-Null
+  $diagramas += ,@($d, "3.4.3-finalizar-orden.png")
 
   $proyecto = $r.GetProjectInterface()
   foreach ($par in $diagramas) {
