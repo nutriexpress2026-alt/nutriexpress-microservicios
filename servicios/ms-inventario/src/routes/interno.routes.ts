@@ -1,6 +1,9 @@
 import { Router } from 'express';
 import * as productoModel from '../models/producto.model.js';
 import * as insumoModel from '../models/insumo.model.js';
+import * as reservaService from '../services/reserva.service.js';
+import { validarCuerpo } from '../middlewares/validate.middleware.js';
+import { esquemaReserva, esquemaVerificar } from '../dtos/reserva.dto.js';
 import { soloRedInterna } from '../middlewares/auth.middleware.js';
 import { ErrorApp } from '../errors/error-app.js';
 
@@ -44,6 +47,28 @@ router.get('/productos/existencias', async (req, res) => {
       };
     }),
   );
+});
+
+/*
+ * HU-17 · Reservas de stock para otros servicios (ms-catalogo al producir; ms-pedidos
+ * desde el Sprint 4). Verificar no reserva. Repetir una reserva con el mismo id
+ * devuelve la que ya existía (200) en vez de descontar otra vez (201).
+ */
+router.post('/reservas/verificar', validarCuerpo(esquemaVerificar), async (req, res) => {
+  res.json(await reservaService.verificar(req.body));
+});
+
+router.post('/reservas', validarCuerpo(esquemaReserva), async (req, res) => {
+  const { reserva, nueva } = await reservaService.reservar(req.body);
+  res.status(nueva ? 201 : 200).json(reserva);
+});
+
+router.get('/reservas/:id', async (req, res) => {
+  res.json(await reservaService.obtener(String(req.params.id)));
+});
+
+router.post('/reservas/:id/liberar', async (req, res) => {
+  res.json(await reservaService.liberar(String(req.params.id)));
 });
 
 /** HU-09 · Todos los insumos, para que ms-catalogo reconstruya su réplica al arrancar. */

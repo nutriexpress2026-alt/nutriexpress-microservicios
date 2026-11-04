@@ -252,3 +252,45 @@ BEGIN
     CREATE UNIQUE INDEX ux_almacen_preferido ON almacen(tipo_conservacion) WHERE preferido;
   END IF;
 END $$;
+
+-- HU-17 · Reservas de stock que piden otros servicios: ms-catalogo al finalizar
+-- una orden de producción y, desde el Sprint 4, ms-pedidos. Lo reservado no se
+-- puede usar para otra cosa (disponible = stock - reservado) hasta que se
+-- consume o se libera.
+CREATE TABLE IF NOT EXISTS reserva (
+    -- La pone quien reserva ('orden-12', 'pedido-40'): repetir la misma reserva
+    -- no descuenta dos veces.
+    id_reserva          VARCHAR(60) PRIMARY KEY,
+    origen              VARCHAR(30) NOT NULL,
+    estado              VARCHAR(12) NOT NULL DEFAULT 'Activa',
+    creada_en           TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    cerrada_en          TIMESTAMP,
+    -- Producción: el almacén al que entra el producto terminado al consumirse.
+    id_almacen_destino  INT,
+    CONSTRAINT fk_reserva_almacen FOREIGN KEY (id_almacen_destino) REFERENCES almacen(id_almacen),
+    CONSTRAINT ck_reserva_estado CHECK (estado IN ('Activa','Consumida','Liberada'))
+);
+
+CREATE TABLE IF NOT EXISTS detalle_reserva_insumo (
+    id_reserva      VARCHAR(60) NOT NULL,
+    id_ingrediente  INT NOT NULL,
+    cantidad        NUMERIC(12,3) NOT NULL,
+    PRIMARY KEY (id_reserva, id_ingrediente),
+    CONSTRAINT fk_detresins_reserva FOREIGN KEY (id_reserva)     REFERENCES reserva(id_reserva),
+    CONSTRAINT fk_detresins_insumo  FOREIGN KEY (id_ingrediente) REFERENCES ingrediente(id_ingrediente),
+    CONSTRAINT ck_detresins_cant CHECK (cantidad > 0)
+);
+
+CREATE TABLE IF NOT EXISTS detalle_reserva_producto (
+    id_reserva   VARCHAR(60) NOT NULL,
+    id_producto  INT NOT NULL,
+    cantidad     INT NOT NULL,
+    PRIMARY KEY (id_reserva, id_producto),
+    CONSTRAINT fk_detresprod_reserva  FOREIGN KEY (id_reserva)  REFERENCES reserva(id_reserva),
+    CONSTRAINT fk_detresprod_producto FOREIGN KEY (id_producto) REFERENCES producto(id_producto),
+    CONSTRAINT ck_detresprod_cant CHECK (cantidad > 0)
+);
+
+CREATE INDEX IF NOT EXISTS ix_reserva_estado      ON reserva(estado);
+CREATE INDEX IF NOT EXISTS ix_detresins_insumo    ON detalle_reserva_insumo(id_ingrediente);
+CREATE INDEX IF NOT EXISTS ix_detresprod_producto ON detalle_reserva_producto(id_producto);

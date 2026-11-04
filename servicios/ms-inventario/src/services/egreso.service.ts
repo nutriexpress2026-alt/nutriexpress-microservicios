@@ -17,6 +17,7 @@ import { exigirEmpleado } from './actor.service.js';
 import * as insumoModel from '../models/insumo.model.js';
 import * as loteService from './lote.service.js';
 import * as devolucionService from './devolucion.service.js';
+import * as reservaService from './reserva.service.js';
 import { ErrorApp } from '../errors/error-app.js';
 
 /**
@@ -189,6 +190,9 @@ export async function crear(
   );
 
   const idNota = await prisma.$transaction(async (tx: ClientePrisma) => {
+    // HU-17: lo reservado para otra operación (una orden, un pedido) no se saca a mano.
+    await reservaService.exigirNoTocarReservado(tx, insumos, productos);
+
     // Una devolución al proveedor solo saca lo que entró en su compra.
     const lotes = datos.idNotaIngreso
       ? await devolucionService.validarDevolucion(tx, datos.idNotaIngreso, { insumos, productos })
