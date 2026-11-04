@@ -591,12 +591,12 @@ try {
   $mensajes = @(
     @("Cocinero", "ms-catalogo", "finalizar(idOrden, cantidadObtenida)", "llamada"),
     @("ms-catalogo", "ms-inventario", "reservar(orden-id, insumos, destino) [REST]", "llamada"),
-    @("ms-inventario", "ms-inventario", "bloquear existencias y crear reserva Activa", "interna"),
+    @("ms-inventario", "ms-inventario", "crear reserva Activa", "interna"),
     @("ms-inventario", "ms-catalogo", "reserva(costo, almacén de destino)", "retorno"),
     @("ms-catalogo", "ms-catalogo", "cambiarEstado(Finalizada) y guardar lo consumido", "interna"),
     @("ms-catalogo", "ms-inventario", "OrdenFinalizada(idOrden, idReserva, cantidadObtenida)", "evento"),
     @("ms-catalogo", "Cocinero", "orden Finalizada (merma, costo)", "retorno"),
-    @("ms-inventario", "ms-inventario", "consumir reserva + nota de egreso + nota de ingreso", "interna"),
+    @("ms-inventario", "ms-inventario", "consumir reserva y registrar notas", "interna"),
     @("ms-inventario", "ms-catalogo", "ProduccionRegistrada(idOrden, notas, costo real)", "evento"),
     @("ms-catalogo", "ms-catalogo", "guardar números de nota y costo real", "interna"),
     @("ms-catalogo", "ms-catalogo", "volver a En proceso", "interna"),
@@ -619,11 +619,11 @@ try {
   $alt = Nuevo $p "" "InteractionFragment" 0
   $op1 = $alt.Partitions.AddNew("el aviso sale", "")
   $op1.Size = 190
-  $op2 = $alt.Partitions.AddNew("el aviso no sale (RabbitMQ no responde)", "")
+  $op2 = $alt.Partitions.AddNew("el aviso no sale", "")
   $alt.Update() | Out-Null
-  Poner $d $alt 20 290 700 300 | Out-Null
+  Poner $d $alt 20 290 860 300 | Out-Null
   $nota = Nuevo $p "" "Note" -notas ("Saga de HU-10: si OrdenFinalizada no se puede publicar, la compensación deshace la " +
-    "finalización y libera la reserva. Si el evento llega dos veces, ms-inventario no registra la producción de nuevo. " +
+    "finalización y libera la reserva (por ejemplo, si RabbitMQ no responde). Si el evento llega dos veces, ms-inventario no registra la producción de nuevo. " +
     "Flechas abiertas: eventos por RabbitMQ; llenas: llamadas REST.")
   Poner $d $nota 160 700 480 60 | Out-Null
   $diagramas += ,@($d, "3.4.3-finalizar-orden.png")

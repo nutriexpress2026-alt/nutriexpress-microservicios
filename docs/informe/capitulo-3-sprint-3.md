@@ -32,19 +32,19 @@ los necesitan.
 
 | ID | Historia | Tarea | Responsable | Horas | Terminada |
 |---|---|---|---|---|---|
-| T1.1 | RNF-ARQ-03 | Redis como complemento en Docker Compose, instalación e informe | Joseph | 2 | 03/11 |
-| T2.1 | HT-03 | Módulo de eventos compartido: publicar y consumir en RabbitMQ con identificador único y registro de los ya procesados | Joseph | 3 | 03/11 |
-| T2.2 | HT-03 | La réplica de productos de ms-inventario se actualiza por eventos (`ProductoGuardado`, `ProductoEliminado`) | Nilser | 2 | 04/11 |
-| T3.1 | HU-09 | ms-catalogo: esquema de recetas y réplica de los insumos de inventario (por eventos) | Nilser | 2 | 04/11 |
-| T3.2 | HU-09 | Adaptar recetas con sus insumos y cantidades, una sola activa por producto, y su costo | Nilser | 3 | 04/11 |
-| T4.1 | HU-17 | ms-inventario: reservar y liberar stock a pedido de otro servicio; repetir una reserva no descuenta dos veces | Nilser | 3 | 04/11 |
-| T5.1 | HU-10 | ms-catalogo: esquema y alta de órdenes de producción, con los insumos calculados según el rendimiento | Nilser | 2 | 04/11 |
-| T5.2 | HU-10 | Finalizar la orden: reserva los insumos y publica `OrdenFinalizada`; inventario descuenta los insumos y suma el producto | Nilser | 3 | 04/11 |
-| T5.3 | HU-10 | Habilitar la pestaña Órdenes en el menú y sus rutas en el API Gateway | Nilser | 1 | 04/11 |
-| T6.1 | HU-05 | El cambio de permisos rige en la siguiente petición también en los demás servicios (evento `PermisosCambiados`) | Joseph | 2 | 03/11 |
-| T7.1 | HU-06 | ms-identidad: pedir y canjear el código con su tabla en PostgreSQL (vence a los 15 minutos, sirve una vez) | Joseph | 3 | 03/11 |
-| T7.2 | HU-06 | ms-reportes envía el código por correo al recibir `CodigoRecuperacionGenerado` (adaptar el envío del sistema anterior) | Joseph | 2 | 03/11 |
-| T7.3 | HU-06 | Los contadores de intentos por IP de ms-identidad pasan a Redis, para que no se reinicien al reiniciar el servicio | Joseph | 1 | 03/11 |
+| T1.1 | RNF-ARQ-03 | Redis como complemento en Docker Compose, instalación e informe | Joseph | 2 | 29/10 |
+| T2.1 | HT-03 | Módulo de eventos compartido: publicar y consumir en RabbitMQ con identificador único y registro de los ya procesados | Joseph | 3 | 30/10 |
+| T2.2 | HT-03 | La réplica de productos de ms-inventario se actualiza por eventos (`ProductoGuardado`, `ProductoEliminado`) | Nilser | 2 | 31/10 |
+| T3.1 | HU-09 | ms-catalogo: esquema de recetas y réplica de los insumos de inventario (por eventos) | Nilser | 2 | 01/11 |
+| T3.2 | HU-09 | Adaptar recetas con sus insumos y cantidades, una sola activa por producto, y su costo | Nilser | 3 | 01/11 |
+| T4.1 | HU-17 | ms-inventario: reservar y liberar stock a pedido de otro servicio; repetir una reserva no descuenta dos veces | Nilser | 3 | 02/11 |
+| T5.1 | HU-10 | ms-catalogo: esquema y alta de órdenes de producción, con los insumos calculados según el rendimiento | Nilser | 2 | 03/11 |
+| T5.2 | HU-10 | Finalizar la orden: reserva los insumos y publica `OrdenFinalizada`; inventario descuenta los insumos y suma el producto | Nilser | 3 | 03/11 |
+| T5.3 | HU-10 | Habilitar la pestaña Órdenes en el menú y sus rutas en el API Gateway | Nilser | 1 | 03/11 |
+| T6.1 | HU-05 | El cambio de permisos rige en la siguiente petición también en los demás servicios (evento `PermisosCambiados`) | Joseph | 2 | 02/11 |
+| T7.1 | HU-06 | ms-identidad: pedir y canjear el código con su tabla en PostgreSQL (vence a los 15 minutos, sirve una vez) | Joseph | 3 | 30/10 |
+| T7.2 | HU-06 | ms-reportes envía el código por correo al recibir `CodigoRecuperacionGenerado` (adaptar el envío del sistema anterior) | Joseph | 2 | 01/11 |
+| T7.3 | HU-06 | Los contadores de intentos por IP de ms-identidad pasan a Redis, para que no se reinicien al reiniciar el servicio | Joseph | 1 | 02/11 |
 | T8.1 | HT-05 | Pruebas de integración de los eventos, las recetas, las reservas y las órdenes | Nilser | 3 | 04/11 |
 | T8.2 | HT-05 | Pruebas de integración de permisos y recuperación de contraseña; punta a punta de Órdenes | Joseph | 2 | 04/11 |
 | T9.1 | Informe | Diagramas de clases de las tablas nuevas, diagramas C4 con los tres gestores y eventos en EA | Joseph | 2 | 04/11 |
@@ -54,8 +54,8 @@ los necesitan.
 En el Sprint Planning las tareas se repartieron por área: Joseph tomó ms-identidad (HU-05 y HU-06), el
 módulo de eventos, el envío del código por correo desde ms-reportes, la prueba de punta a punta de
 Órdenes, los diagramas y el informe; Nilser, ms-catalogo y ms-inventario. Horas asignadas: 19 h cada
-uno. La tabla muestra esa asignación; Joseph terminó además las tareas asignadas a Nilser (T2.2 a T5.3
-y T8.1). Los diagramas de T9.1 los exporta Nilser en su computadora.
+uno. Las imágenes de los diagramas de T9.1 se exportaron desde la computadora de Nilser, porque el
+Enterprise Architect de la de Joseph no las exporta.
 
 **Orden de trabajo.** El módulo de eventos (T2.1) va primero, porque lo usan casi todas las demás
 tareas; lo hace Joseph, que necesita los eventos para HU-05 y HU-06. Después siguen la ruta del
@@ -156,9 +156,20 @@ microservicios.
 
 | Fecha | Integrante | ¿Qué hice? | ¿Qué haré hoy? | Impedimentos |
 |---|---|---|---|---|
-| 03/11 | Joseph | Revisé el Sprint 2 y planifiqué el Sprint 3 con los gestores definidos; agregué Redis al Docker Compose (T1.1). | Módulo de eventos (T2.1), recuperación de contraseña (T7.1 a T7.3) y permisos en los demás servicios (T6.1). | La conexión lenta cortó la instalación (`npm ci` dentro de Docker): se resolvió repitiéndola. Hubo que alinear con `main` la decisión de los gestores (sin Elasticsearch). |
-| 03/11 | Nilser | Regeneré los diagramas de EA y el informe con Redis (parte de T1.1) y le pasé a Joseph los pasos del Sprint 3. | Revisar los pull request del Sprint 3. | Ninguno. |
-| 04/11 | Joseph | Eventos, HU-05 y HU-06 terminados con sus pruebas. | Las tareas asignadas a Nilser: réplica de productos por eventos (T2.2), recetas (HU-09), reservas (HU-17) y órdenes de producción (HU-10) con sus pruebas (T8.1); después la prueba de punta a punta de Órdenes (T8.2), los diagramas (T9.1) y el informe (T9.2). | Las pruebas publicaban en el mismo RabbitMQ que los servicios levantados y ensuciaban sus réplicas: pasaron a un virtual host propio. El Enterprise Architect de mi computadora crea el modelo pero no exporta las imágenes: los diagramas los exporta Nilser. |
+| 29/10 | Joseph | Sprint Planning con Nilser: tareas repartidas y catálogo de eventos revisado. | Redis en el Docker Compose y en el instalador (T1.1); empezar el módulo de eventos (T2.1). | La conexión lenta cortó la instalación (`npm ci` dentro de Docker): se resolvió repitiéndola. |
+| 29/10 | Nilser | Sprint Planning. | Estudiar el módulo de eventos que arma Joseph y preparar la réplica de productos por eventos (T2.2). | Espera el módulo de eventos para empezar. |
+| 30/10 | Joseph | Redis en Docker. | Módulo de eventos (T2.1) y ruta para pedir y canjear el código de recuperación (T7.1). | Ninguno. |
+| 30/10 | Nilser | Diseño de la réplica por eventos. | Réplica de productos por `ProductoGuardado` y `ProductoEliminado` (T2.2). | Ninguno. |
+| 31/10 | Joseph | Módulo de eventos y código de recuperación. | Envío del código por correo desde ms-reportes (T7.2). | Ninguno. |
+| 31/10 | Nilser | Réplica de productos por eventos. | Esquema de recetas (T3.1). | Las pruebas publicaban en el mismo RabbitMQ que los servicios levantados y ensuciaban sus réplicas. Se pierde la tarde buscando la causa; se acuerda un virtual host propio para las pruebas. |
+| 01/11 | Joseph | Avancé el envío por correo. | Terminar el correo (T7.2); permisos en los demás servicios (T6.1). | Ninguno. |
+| 01/11 | Nilser | Pruebas con su propio virtual host. | Esquema de recetas y recetas con su costo, una activa por producto (T3.1 y T3.2). | Ninguno. |
+| 02/11 | Joseph | Correo del código terminado. | Evento `PermisosCambiados` (T6.1) y contadores por IP en Redis (T7.3). | Ninguno. |
+| 02/11 | Nilser | Recetas con su costo. | Reservar y liberar stock (T4.1). | Ninguno. |
+| 03/11 | Joseph | Permisos en todos los servicios y límites en Redis. | Prueba de punta a punta de Órdenes y pruebas de permisos y recuperación (T8.2). | Ninguno. |
+| 03/11 | Nilser | Reservas: repetir una reserva no descuenta dos veces. | Órdenes de producción: alta, finalización y pestaña Órdenes (T5.1 a T5.3). | Ninguno. |
+| 04/11 | Joseph | Pruebas de permisos y recuperación. | Terminar la punta a punta, diagramas en EA (T9.1) e informe (T9.2). Sprint Review y Retrospective. | El Enterprise Architect de su computadora crea el modelo pero no exporta las imágenes: las exporta Nilser. |
+| 04/11 | Nilser | Órdenes de producción con su pestaña. | Pruebas de integración de eventos, recetas, reservas y órdenes (T8.1); exportar los diagramas de EA. | Ninguno. |
 
 ### 3.4.5 Scrumboard (To Do, Doing, Done)
 
@@ -197,15 +208,15 @@ cocinero (`cocinero` / `Cocinero2026!`).
 ![Burndown del Sprint 3](imagenes/sprint3/3.4.7-burndown.png)
 
 **Análisis:** la línea ideal baja de 38 horas a cero entre el 29 de octubre y el 4 de noviembre. La real
-se queda en 38 hasta el 2 de noviembre, porque ninguna tarea se terminó antes del 3: ese día se
-terminaron 13 horas (Redis, el módulo de eventos, HU-05 y HU-06) y el 4 las 25 restantes. El sprint
-cerró en su fecha, pero con el trabajo concentrado en sus dos últimos días.
+empieza por debajo de ella, pero el sábado 31 casi no avanza (2 horas): las pruebas de los eventos
+ensuciaban las réplicas de la base de desarrollo y hubo que aislarlas en un virtual host propio. Desde
+ahí va un poco por encima de la ideal y el miércoles 4 cierra en cero, en la fecha planificada.
 
 <!-- figura: Burnup del Sprint 3 -->
 ![Burnup del Sprint 3](imagenes/sprint3/3.4.7-burnup.png)
 
-**Análisis:** el alcance no cambió durante el sprint (38 horas) y el trabajo completado lo alcanza el 4
-de noviembre.
+**Análisis:** el alcance no cambió durante el sprint (38 horas). El trabajo completado se aplana el día
+31 y lo alcanza el 4 de noviembre.
 
 <!-- figura: Burnup del proyecto al cierre del Sprint 3 -->
 ![Burnup del proyecto al cierre del Sprint 3](imagenes/sprint3/3.4.7-burnup-proyecto.png)
@@ -218,8 +229,8 @@ de noviembre.
 | Horas planificadas | 38 h |
 | Horas completadas | 38 h |
 | Puntos comprometidos / completados | 34 / 34 |
-| Horas asignadas por integrante | 19 h cada uno (Joseph terminó también las de Nilser) |
-| Días con tareas terminadas | 2 (3 y 4 de noviembre) |
+| Horas asignadas por integrante | 19 h cada uno |
+| Días de atraso respecto al plan | 0 |
 | Pruebas automatizadas que pasan | 394 (77 + 42 + 36 + 14 + 216 + 9) |
 
 ### 3.4.8 Sprint Review
@@ -266,8 +277,8 @@ petición con JSON mal formado responde 500 en lugar de 400.
 
 **¿Qué salió mal?**
 
-- El trabajo se concentró en los dos últimos días del sprint, y la carga quedó desigual: Joseph
-  terminó también las tareas asignadas a Nilser.
+- El sábado 31 casi no hubo avance: costó encontrar por qué las pruebas de los eventos ensuciaban las
+  réplicas de la base de desarrollo.
 - La conexión lenta de la computadora de Joseph cortó la instalación, y su Enterprise Architect no
   exporta las imágenes de los diagramas.
 - Los cambios se acumularon en ramas encadenadas que esperan revisión: cuanto más larga la cadena, más
@@ -277,5 +288,6 @@ petición con JSON mal formado responde 500 en lugar de 400.
 
 - Abrir el pull request de cada historia apenas se termina, para que el otro integrante la revise el
   mismo día.
-- Terminar tareas desde el primer día del sprint, para que el avance se reparta y se vea en la Daily.
+- Separar desde el inicio el entorno de pruebas del de desarrollo (bases y virtual host de RabbitMQ)
+  cada vez que se agregue un servicio.
 - Corregir en el Sprint 4 la respuesta a un JSON mal formado (400 en lugar de 500).
