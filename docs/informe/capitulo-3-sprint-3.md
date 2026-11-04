@@ -33,7 +33,7 @@ los necesitan.
 | ID | Historia | Tarea | Responsable | Horas |
 |---|---|---|---|---|
 | T1.1 | RNF-ARQ-03 | Redis como complemento en Docker Compose, instalación e informe | Joseph | 2 |
-| T2.1 | HT-03 | Módulo de eventos compartido: publicar y consumir en RabbitMQ con identificador único y registro de los ya procesados | Nilser | 3 |
+| T2.1 | HT-03 | Módulo de eventos compartido: publicar y consumir en RabbitMQ con identificador único y registro de los ya procesados | Joseph | 3 |
 | T2.2 | HT-03 | La réplica de productos de ms-inventario se actualiza por eventos (`ProductoGuardado`, `ProductoEliminado`) | Nilser | 2 |
 | T3.1 | HU-09 | ms-catalogo: esquema de recetas y réplica de los insumos de inventario (por eventos) | Nilser | 2 |
 | T3.2 | HU-09 | Adaptar recetas con sus insumos y cantidades, una sola activa por producto, y su costo | Nilser | 3 |
@@ -52,12 +52,12 @@ los necesitan.
 | | | **Total** | | **38** |
 
 Como se acordó en la retrospectiva del Sprint 2, Joseph toma un microservicio completo: ms-identidad
-(HU-05 y HU-06), además del envío del código por correo desde ms-reportes y el informe del sprint.
-Nilser toma el módulo de eventos, ms-catalogo y ms-inventario.
+(HU-05 y HU-06), además del módulo de eventos, el envío del código por correo desde ms-reportes y el
+informe del sprint. Nilser toma ms-catalogo y ms-inventario.
 
 **Orden de trabajo.** El módulo de eventos (T2.1) va primero, porque lo usan casi todas las demás
-tareas; mientras tanto, Joseph avanza con la ruta del código de recuperación (T7.1), que no lo
-necesita. HU-09 y HU-17 van antes de HU-10, porque una orden de producción usa la receta activa y
+tareas; lo hace Joseph, que necesita los eventos para HU-05 y HU-06. Después siguen la ruta del
+código de recuperación (T7.1) y las tareas que publican o consumen eventos. HU-09 y HU-17 van antes de HU-10, porque una orden de producción usa la receta activa y
 reserva los insumos al finalizarse. Guardar los eventos en MongoDB para los reportes queda para el
 Sprint 6, con los reportes.
 
