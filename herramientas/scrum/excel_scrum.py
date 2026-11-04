@@ -5,8 +5,8 @@ Uso (desde la raíz del repositorio; necesita `pip install openpyxl`):
 
 Las tareas (con responsable y fecha de término) y la Daily de cada sprint se leen de su capítulo
 `capitulo-3-sprint-N.md`. Regenerar REESCRIBE el Excel: lo editado a mano (celdas amarillas) se pierde
-si no se pasó antes al capítulo. Al cerrar cada sprint: sumarlo en SPRINTS y subir «Último sprint
-cerrado».
+si no se pasó antes al capítulo. Al cerrar cada sprint basta con sumarlo en SPRINTS (fechas y objetivo): sus
+historias pasan a Hecho y «Último sprint cerrado» se actualiza solo.
 
 Después hay que abrirlo con Excel para que calcule las fórmulas; las gráficas del informe se exportan
 desde Excel (Chart.Export por COM) a docs/informe/imagenes/sprintN/.
@@ -164,7 +164,7 @@ for i, (orden, id_, elem, ms, pts, prio, spr) in enumerate(BACKLOG, 2):
     celda(pb, i, 5, int(pts))
     celda(pb, i, 6, prio)
     celda(pb, i, 7, int(spr) if spr.isdigit() else spr)
-    estado = 'Hecho' if spr in ('1', '2') else ('En curso' if id_ == 'HT-05' else 'Pendiente')
+    estado = 'Hecho' if spr in {str(n) for n in SPRINTS} else ('En curso' if id_ == 'HT-05' else 'Pendiente')
     c = celda(pb, i, 8, estado, editable=True)
     dv_pb.add(c)
 ult = len(BACKLOG) + 1
@@ -178,7 +178,7 @@ pb.freeze_panes = 'A2'
 pb_fila = ult + 6
 pb.cell(row=pb_fila - 1, column=1, value='Burnup del proyecto (puntos)').font = NEGRITA
 pb.cell(row=pb_fila - 2, column=1, value='Último sprint cerrado').font = NEGRITA
-cerrado = celda(pb, pb_fila - 2, 3, 2, editable=True)
+cerrado = celda(pb, pb_fila - 2, 3, max(SPRINTS), editable=True)
 cerrado.comment = Comment('Al cerrar cada sprint, sumar 1. La línea de puntos hechos llega hasta aquí.', 'Equipo')
 CERRADO = f'$C${pb_fila - 2}'
 cabecera_fila = pb_fila

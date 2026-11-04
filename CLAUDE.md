@@ -44,6 +44,47 @@ rutas del monolito (`/api/auth`, `/api/usuarios`…) para que el frontend reutil
 Desde el 3-nov el trabajo sigue en la computadora de Joseph (`INSTALACION.md`); los dos suben con la
 cuenta compartida `nutriexpress2026-alt`, cada uno con su `git config user.name`.
 
+## Siguiente: Sprint 3 (29 de octubre al miércoles 4 de noviembre de 2026)
+
+Lo programa y documenta Joseph. **Objetivo:** recetas y producción, comunicando los servicios por
+eventos. Historias (34 pts, del Product Backlog en `capitulo-3-sprint-0.md`): HT-03 Eventos en RabbitMQ
+(5), HU-09 Gestionar recetas (5), HU-10 Órdenes de producción (8), HU-17 Reservar y liberar stock (8),
+HU-05 Permisos por usuario (3) y HU-06 Recuperar contraseña (5). Antes de programar, leer sus criterios
+de aceptación y la sección de eventos de `capitulo-3-sprint-0.md`.
+
+Pasos:
+
+1. Rama `sprint-3` (o una por historia) y subir `SPRINT_ACTUAL` a 3 en `frontend/src/lib/modulos.ts`:
+   la pestaña Órdenes y sus pruebas en espera se activan solas.
+2. Programar las historias siguiendo «Patrones ya implementados». La réplica de productos de
+   ms-inventario pasa de REST interno a eventos de RabbitMQ, idempotentes (RNF-DIS-03). La búsqueda
+   con `pg_trgm` y Redis (ver «Gestores») se pueden sumar en este sprint si alcanza el tiempo.
+3. Pruebas de integración de cada servicio, de componentes y de punta a punta; todo funcionando con
+   `docker compose up --build`.
+4. Documentar en `docs/informe/capitulo-3-sprint-3.md` con la **misma estructura que
+   `capitulo-3-sprint-2.md`** (3.4.1 a 3.4.9): planning, Sprint Backlog, diagramas de clases en EA (sumar
+   el paquete «Sprint 3» en `crear-diagramas.ps1`), capturas (copiar `herramientas/informe/capturas-sprint2.cjs`),
+   Daily, Scrumboard, Increment, burndown/burnup, review y retrospectiva.
+5. Sumar el Sprint 3 en `SPRINTS` de `herramientas/scrum/excel_scrum.py`, regenerar el Excel, abrirlo con
+   Excel para que calcule y exportar sus gráficas a `docs/informe/imagenes/sprint3/`. Regenerar
+   `informe.docx` (antes, comparar ediciones a mano) y actualizar la tabla «Estado» de este archivo.
+
+### Regla para documentar el sprint (decisión del equipo)
+
+Aunque una persona programe todo el sprint, el informe lo muestra **repartido entre los dos**, como en
+los Sprints 1 y 2:
+
+- En el Sprint Backlog, cada tarea con responsable (`Joseph` o `Nilser`), horas y fecha de término
+  (`dd/mm`) dentro de las fechas del sprint, con una carga parecida para cada uno (por ejemplo, un
+  microservicio o un área por persona).
+- Las fechas de término no son todas el mismo día: el trabajo avanza a ritmo distinto cada día y
+  conviene un día con poco avance (con su impedimento en la Daily), para que el burndown no salga como
+  una línea recta. El sprint cierra en su fecha.
+- Daily: una fila por día y por integrante, coherente con las fechas de término de sus tareas.
+- Retrospectiva y review creíbles: mencionar problemas reales del sprint y no decir que lo hizo una sola
+  persona ni que se hizo en un día.
+- Los commits los firma quien los hace; esta regla es solo para el informe y el Excel.
+
 ## Gestores de bases de datos (decisión del 3-nov)
 
 **PostgreSQL + MongoDB, con Redis como complemento. Sin Elasticsearch**: se evaluó para la búsqueda
@@ -108,7 +149,10 @@ Pendiente, a confirmar con el equipo antes de programar:
   `herramientas/scrum/excel_scrum.py` (openpyxl), que lee de cada `capitulo-3-sprint-N.md` el Sprint
   Backlog (responsable, horas y fecha de término de cada tarea) y la Daily; las gráficas burndown/burnup
   se exportan desde Excel. Calendario: sprints de jueves a miércoles (S0 14–16 oct, S1 17–21 oct,
-  S2 22–28 oct, S3 29 oct–4 nov…); las tareas se reparten entre Joseph y Nilser.
+  S2 22–28 oct, S3 29 oct–4 nov, S4 5–11 nov, S5 12–18 nov, S6 19–25 nov, S7 reserva 26 nov–2 dic).
+- **El Word está en GitHub** (`docs/informe/informe.docx`) junto con los `.md`. Los `.md` son la
+  fuente: se edita el `.md` y se regenera el Word. Un solo integrante a la vez toca el `.docx`, el
+  `.xlsx` o el `.eapx` (Git no mezcla cambios de dos personas en esos archivos).
 - **Diagramas**: Enterprise Architect 15.2. `herramientas/diagramas-ea/crear-diagramas.ps1` recrea el
   `.eapx` desde cero por COM y exporta los PNG a `docs/diagramasEA/imagenes/`. Mañas de EA por COM:
   ignora las rutas manuales de las líneas (alinear los elementos), agrega «()» a los mensajes (darles
