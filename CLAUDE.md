@@ -39,15 +39,17 @@ rutas del monolito (`/api/auth`, `/api/usuarios`…) para que el frontend reutil
 | 0 | Terminado | Perfil, organización, backlog, arquitectura (capítulos 1, 2 y 3.1 del informe) |
 | 1 | Terminado | Docker Compose, API Gateway, ms-identidad, ms-reportes (visitas), frontend reutilizado |
 | 2 | Terminado | ms-catalogo y ms-inventario, con réplicas entre servicios |
-| 3 | Terminado (29-oct al 4-nov) | Eventos por RabbitMQ (HT-03), recetas (HU-09), reservas de stock (HU-17), órdenes de producción (HU-10), permisos en todos los servicios (HU-05) y recuperar la contraseña (HU-06). Las 17 tareas de `capitulo-3-sprint-3.md`, en ramas apiladas que entran a `main` por PR. **Falta**, en la computadora de Nilser: correr `crear-diagramas.ps1` (el EA de la de Joseph crea el modelo pero se cuelga al exportar las imágenes) y después regenerar el Word |
+| 3 | Terminado (29-oct al 4-nov) | Eventos por RabbitMQ (HT-03), recetas (HU-09), reservas de stock (HU-17), órdenes de producción (HU-10), permisos en todos los servicios (HU-05) y recuperar la contraseña (HU-06). Las 17 tareas de `capitulo-3-sprint-3.md`, en ramas apiladas que entran a `main` por PR. `informe.docx` ya incluye el Sprint 3, con 3 figuras de EA marcadas como pendientes. **Falta**, en la computadora de Nilser: correr `crear-diagramas.ps1` (el EA de la de Joseph crea el modelo pero se cuelga al exportar PNG y EMF) y después regenerar el Word |
 
 Desde el 3-nov el trabajo sigue en la computadora de Joseph (`INSTALACION.md`); los dos suben con la
 cuenta compartida `nutriexpress2026-alt`, cada uno con su `git config user.name`.
 
 ## Sprint 3 (29 de octubre al miércoles 4 de noviembre de 2026)
 
-**Terminado.** De los pasos de abajo solo queda, del 4 y el 5, exportar los diagramas de EA y
-regenerar `informe.docx` (en la computadora de Nilser).
+**Terminado.** De los pasos de abajo solo queda exportar los diagramas de EA del Sprint 3 y volver a
+armar `informe.docx` (en la computadora de Nilser): `armar_informe.py` deja un aviso en lugar de cada
+imagen que todavía no existe. El Word del 4-nov se guardó con Word 2007, que numera los estilos
+(`texto_docx.py` ya no filtra los índices al comparar).
 
 Lo programa y documenta Joseph. **Objetivo:** recetas y producción, comunicando los servicios por
 eventos. Historias (34 pts, del Product Backlog en `capitulo-3-sprint-0.md`): HT-03 Eventos en RabbitMQ

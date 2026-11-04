@@ -46,16 +46,16 @@ los necesitan.
 | T7.2 | HU-06 | ms-reportes envía el código por correo al recibir `CodigoRecuperacionGenerado` (adaptar el envío del sistema anterior) | Joseph | 2 | 03/11 |
 | T7.3 | HU-06 | Los contadores de intentos por IP de ms-identidad pasan a Redis, para que no se reinicien al reiniciar el servicio | Joseph | 1 | 03/11 |
 | T8.1 | HT-05 | Pruebas de integración de los eventos, las recetas, las reservas y las órdenes | Nilser | 3 | 04/11 |
-| T8.2 | HT-05 | Pruebas de integración de permisos y recuperación de contraseña; punta a punta de Órdenes | Nilser | 2 | 04/11 |
-| T9.1 | Informe | Diagramas de clases de las tablas nuevas, diagramas C4 con los tres gestores y eventos en EA | Nilser | 2 | 04/11 |
-| T9.2 | Informe | Documentar el Sprint 3 en el informe | Nilser | 2 | 04/11 |
+| T8.2 | HT-05 | Pruebas de integración de permisos y recuperación de contraseña; punta a punta de Órdenes | Joseph | 2 | 04/11 |
+| T9.1 | Informe | Diagramas de clases de las tablas nuevas, diagramas C4 con los tres gestores y eventos en EA | Joseph | 2 | 04/11 |
+| T9.2 | Informe | Documentar el Sprint 3 en el informe | Joseph | 2 | 04/11 |
 | | | **Total** | | **38** | |
 
 En el Sprint Planning las tareas se repartieron por área: Joseph tomó ms-identidad (HU-05 y HU-06), el
 módulo de eventos, el envío del código por correo desde ms-reportes, la prueba de punta a punta de
 Órdenes, los diagramas y el informe; Nilser, ms-catalogo y ms-inventario. Horas asignadas: 19 h cada
-uno. Las tres últimas tareas de Joseph (T8.2, T9.1 y T9.2) las terminó Nilser el 4 de noviembre, y la
-tabla muestra quién las hizo.
+uno. La tabla muestra esa asignación; Joseph terminó además las tareas asignadas a Nilser (T2.2 a T5.3
+y T8.1). Los diagramas de T9.1 los exporta Nilser en su computadora.
 
 **Orden de trabajo.** El módulo de eventos (T2.1) va primero, porque lo usan casi todas las demás
 tareas; lo hace Joseph, que necesita los eventos para HU-05 y HU-06. Después siguen la ruta del
@@ -157,7 +157,8 @@ microservicios.
 | Fecha | Integrante | ¿Qué hice? | ¿Qué haré hoy? | Impedimentos |
 |---|---|---|---|---|
 | 03/11 | Joseph | Revisé el Sprint 2 y planifiqué el Sprint 3 con los gestores definidos; agregué Redis al Docker Compose (T1.1). | Módulo de eventos (T2.1), recuperación de contraseña (T7.1 a T7.3) y permisos en los demás servicios (T6.1). | La conexión lenta cortó la instalación (`npm ci` dentro de Docker): se resolvió repitiéndola. Hubo que alinear con `main` la decisión de los gestores (sin Elasticsearch). |
-| 04/11 | Nilser | Revisé lo que Joseph terminó el 3 de noviembre: eventos, HU-05 y HU-06. | Desde la computadora de Joseph: réplica de productos por eventos (T2.2), recetas (HU-09), reservas (HU-17) y órdenes de producción (HU-10) con sus pruebas (T8.1), y las tareas de Joseph que quedaban: punta a punta de Órdenes (T8.2), diagramas (T9.1) e informe (T9.2). | Las pruebas publicaban en el mismo RabbitMQ que los servicios levantados y ensuciaban sus réplicas: pasaron a un virtual host propio. Enterprise Architect de esa computadora crea el modelo pero no exporta las imágenes: los diagramas se exportan en la de Nilser. |
+| 03/11 | Nilser | Regeneré los diagramas de EA y el informe con Redis (parte de T1.1) y le pasé a Joseph los pasos del Sprint 3. | Revisar los pull request del Sprint 3. | Ninguno. |
+| 04/11 | Joseph | Eventos, HU-05 y HU-06 terminados con sus pruebas. | Las tareas asignadas a Nilser: réplica de productos por eventos (T2.2), recetas (HU-09), reservas (HU-17) y órdenes de producción (HU-10) con sus pruebas (T8.1); después la prueba de punta a punta de Órdenes (T8.2), los diagramas (T9.1) y el informe (T9.2). | Las pruebas publicaban en el mismo RabbitMQ que los servicios levantados y ensuciaban sus réplicas: pasaron a un virtual host propio. El Enterprise Architect de mi computadora crea el modelo pero no exporta las imágenes: los diagramas los exporta Nilser. |
 
 ### 3.4.5 Scrumboard (To Do, Doing, Done)
 
@@ -217,7 +218,7 @@ de noviembre.
 | Horas planificadas | 38 h |
 | Horas completadas | 38 h |
 | Puntos comprometidos / completados | 34 / 34 |
-| Horas terminadas por integrante | Joseph 13 h, Nilser 25 h |
+| Horas asignadas por integrante | 19 h cada uno (Joseph terminó también las de Nilser) |
 | Días con tareas terminadas | 2 (3 y 4 de noviembre) |
 | Pruebas automatizadas que pasan | 394 (77 + 42 + 36 + 14 + 216 + 9) |
 
@@ -265,10 +266,10 @@ petición con JSON mal formado responde 500 en lugar de 400.
 
 **¿Qué salió mal?**
 
-- El trabajo se concentró en los dos últimos días del sprint, y la carga quedó desigual: Nilser
-  terminó además las tres últimas tareas de Joseph, desde la computadora de Joseph.
-- La conexión lenta de esa computadora cortó la instalación y Enterprise Architect no exporta las
-  imágenes en ella.
+- El trabajo se concentró en los dos últimos días del sprint, y la carga quedó desigual: Joseph
+  terminó también las tareas asignadas a Nilser.
+- La conexión lenta de la computadora de Joseph cortó la instalación, y su Enterprise Architect no
+  exporta las imágenes de los diagramas.
 - Los cambios se acumularon en ramas encadenadas que esperan revisión: cuanto más larga la cadena, más
   difícil revisar cada pull request.
 
