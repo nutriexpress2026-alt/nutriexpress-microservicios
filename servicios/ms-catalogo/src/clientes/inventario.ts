@@ -10,7 +10,75 @@ import * as insumoModel from '../models/insumo.model.js';
  * avisa con el evento ProductoGuardado (HT-03, `producto.service.ts`); aquí
  * queda solo lo que necesita respuesta en el momento.
  */
-const URL = process.env.INVENTARIO_URL ?? 'http://ms-inventario:4003';
+/** Se lee en cada llamada (no al cargar el módulo): las pruebas pueden apuntarla a un inventario falso. */
+const url = () => process.env.INVENTARIO_URL ?? 'http://ms-inventario:4003';
+
+/* HU-10 · Reservas de insumos para producir (HU-17, rutas /interno/reservas de inventario). */
+
+export interface LineaPrevision {
+  idIngrediente: number;
+  nombre: string;
+  unidad: string;
+  cantidad: number;
+  costoUnitario: number;
+}
+
+export interface PrevisionInventario {
+  insumos: LineaPrevision[];
+  costoInsumos: number;
+  almacenDestino: { id: number; nombre: string } | null;
+}
+
+export interface ReservaInventario extends PrevisionInventario {
+  id: string;
+  estado: string;
+}
+
+/**
+ * Llama a una ruta interna de inventario que necesita respuesta en el momento.
+ * Los rechazos de inventario (409 sin stock, 404) llegan con su mensaje; si no
+ * responde, 503.
+ */
+async function pedir<T>(ruta: string, cuerpo: unknown): Promise<T> {
+  let r: Response;
+  try {
+    r = await fetch(`${url()}${ruta}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(cuerpo),
+      signal: AbortSignal.timeout(5000),
+    });
+  } catch {
+    throw new ErrorApp(503, 'El servicio de inventario no responde: no se puede confirmar el stock de los insumos. Intente de nuevo.');
+  }
+  const datos = (await r.json().catch(() => ({}))) as T & { error?: string };
+  if (!r.ok) throw new ErrorApp(r.status >= 500 ? 503 : r.status, datos.error ?? `Inventario respondió ${r.status}`);
+  return datos;
+}
+
+/** ¿Alcanzan los insumos? Sin reservar (para registrar una orden). */
+export const verificarInsumos = (insumos: { idIngrediente: number; cantidad: number }[]) =>
+  pedir<PrevisionInventario>('/interno/reservas/verificar', { insumos });
+
+/** Reserva los insumos de una orden (y resuelve adónde entra el producto terminado). */
+export const reservar = (pedido: {
+  id: string;
+  origen: string;
+  insumos: { idIngrediente: number; cantidad: number }[];
+  destino: { idProducto: number; idAlmacen: number | null } | null;
+}) => pedir<ReservaInventario>('/interno/reservas', pedido);
+
+/** Devuelve lo reservado al disponible. Sin respuesta, no hace nada: es una limpieza. */
+export async function liberar(id: string): Promise<void> {
+  try {
+    await fetch(`${url()}/interno/reservas/${encodeURIComponent(id)}/liberar`, {
+      method: 'POST',
+      signal: AbortSignal.timeout(3000),
+    });
+  } catch {
+    console.error(`ms-catalogo: no se pudo liberar la reserva ${id} en inventario`);
+  }
+}
 
 export interface ExistenciasProducto {
   idProducto: number;
@@ -26,7 +94,7 @@ export interface ExistenciasProducto {
 export async function existencias(ids: number[]): Promise<Map<number, ExistenciasProducto> | null> {
   if (ids.length === 0) return new Map();
   try {
-    const r = await fetch(`${URL}/interno/productos/existencias?ids=${ids.join(',')}`, {
+    const r = await fetch(`${url()}/interno/productos/existencias?ids=${ids.join(',')}`, {
       signal: AbortSignal.timeout(3000),
     });
     if (!r.ok) return null;
@@ -44,7 +112,7 @@ export async function existencias(ids: number[]): Promise<Map<number, Existencia
 export async function quitarProducto(id: number): Promise<void> {
   let r: Response;
   try {
-    r = await fetch(`${URL}/interno/productos/${id}`, { method: 'DELETE', signal: AbortSignal.timeout(3000) });
+    r = await fetch(`${url()}/interno/productos/${id}`, { method: 'DELETE', signal: AbortSignal.timeout(3000) });
   } catch {
     throw new ErrorApp(503, 'No se puede eliminar ahora: el servicio de inventario no responde');
   }
@@ -64,7 +132,7 @@ export async function quitarProducto(id: number): Promise<void> {
 export async function sincronizarInsumos(intentos = 20): Promise<void> {
   for (let i = 1; i <= intentos; i++) {
     try {
-      const r = await fetch(`${URL}/interno/insumos`, { signal: AbortSignal.timeout(5000) });
+      const r = await fetch(`${url()}/interno/insumos`, { signal: AbortSignal.timeout(5000) });
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       const insumos = (await r.json()) as insumoModel.DatosReplicaInsumo[];
       for (const insumo of insumos) await insumoModel.guardarReplica(insumo);

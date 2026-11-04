@@ -1,6 +1,7 @@
 import * as recetaModel from '../models/receta.model.js';
 import * as insumoModel from '../models/insumo.model.js';
 import * as productoModel from '../models/producto.model.js';
+import * as ordenModel from '../models/orden.model.js';
 import type { RecetaCompleta } from '../models/receta.model.js';
 import { ErrorApp } from '../errors/error-app.js';
 import { dosDecimales } from '../utils/dinero.js';
@@ -109,6 +110,11 @@ export async function eliminar(id: number): Promise<void> {
   const receta = await exigirReceta(id);
   if (receta.activa) {
     throw new ErrorApp(409, 'No se puede eliminar la versión activa: active otra versión antes.');
+  }
+  // HU-10: las órdenes registradas con esta versión son la historia de lo producido.
+  const ordenes = await ordenModel.contarDeReceta(id);
+  if (ordenes > 0) {
+    throw new ErrorApp(409, `No se puede eliminar la versión porque tiene ${ordenes} orden(es) de producción registrada(s).`);
   }
   await recetaModel.eliminar(id);
 }
