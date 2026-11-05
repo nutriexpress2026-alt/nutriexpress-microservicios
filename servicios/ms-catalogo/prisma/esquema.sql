@@ -61,3 +61,24 @@ CREATE TABLE configuracion (
 CREATE INDEX ix_producto_categoria       ON producto(id_categoria);
 CREATE INDEX ix_producto_nombre          ON producto(lower(nombre));
 CREATE INDEX ix_config_usuario          ON configuracion(id_usuario);
+
+-- ============================================================================
+-- >>> Posteriores a la primera versión
+-- Todo lo que sigue es idempotente (IF NOT EXISTS) y prisma/inicializar.ts lo
+-- aplica en cada arranque también a las bases que ya existían: así una tabla
+-- nueva llega a todas las computadoras sin borrar datos. Agregar al final.
+-- ============================================================================
+
+-- HT-03 · Eventos ya procesados: un evento repetido no se procesa dos veces (RNF-DIS-03).
+CREATE TABLE IF NOT EXISTS evento_procesado (
+    id_evento     UUID PRIMARY KEY,
+    tipo          VARCHAR(60) NOT NULL,
+    procesado_en  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- HU-05 · Desde cuándo valen las sesiones de un usuario o de un rol, tras un
+-- cambio de permisos (evento PermisosCambiados de ms-identidad).
+CREATE TABLE IF NOT EXISTS sesion_vigente (
+    clave  VARCHAR(30) PRIMARY KEY,  -- 'usuario:5' o 'rol:2'
+    desde  TIMESTAMP NOT NULL
+);

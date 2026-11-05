@@ -29,9 +29,12 @@ export interface DatosToken {
   idUsuario?: number;
   nombre?: string;
   apellido?: string;
+  idRol?: number;
   rol?: string;
   cargo?: string | null;
   permisos: string[];
+  /** Cuántos segundos atrás se emitió (para probar tokens anteriores a un cambio de permisos). */
+  emitidoHace?: number;
 }
 
 export function token(d: DatosToken): string {
@@ -41,10 +44,11 @@ export function token(d: DatosToken): string {
       nombreUsuario: 'prueba',
       nombre: d.nombre ?? 'Ana',
       apellido: d.apellido ?? 'Prueba',
-      idRol: 1,
+      idRol: d.idRol ?? 1,
       rol: d.rol ?? 'Administrador',
       cargo: d.cargo === undefined ? 'Administrador' : d.cargo,
       permisos: d.permisos,
+      iat: Math.floor(Date.now() / 1000) - (d.emitidoHace ?? 0),
     },
     par.privateKey,
     { algorithm: 'RS256', issuer: 'ms-identidad', expiresIn: '1h' },

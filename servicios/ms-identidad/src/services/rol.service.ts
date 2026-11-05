@@ -3,6 +3,7 @@ import * as permisoModel from '../models/permiso.model.js';
 import { ErrorApp } from '../errors/error-app.js';
 import { ROL_CLIENTE } from '../config/dominio.js';
 import type { RolDTO, PermisoDTO } from '../dtos/rol.dto.js';
+import { avisarPermisosCambiados } from './aviso.service.js';
 
 /** CU-SEG-03 Gestionar Rol y Permisos */
 
@@ -75,6 +76,8 @@ export async function actualizar(
 
   await rolModel.renombrar(id, nombre);
   await rolModel.reemplazarPermisos(id, idsPermiso);
+  // HU-05: los tokens de quienes tienen este rol traen los permisos de antes.
+  await avisarPermisosCambiados({ idRol: id });
   return obtener(id);
 }
 

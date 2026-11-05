@@ -39,7 +39,7 @@ rutas del monolito (`/api/auth`, `/api/usuarios`…) para que el frontend reutil
 | 0 | Terminado | Perfil, organización, backlog, arquitectura (capítulos 1, 2 y 3.1 del informe) |
 | 1 | Terminado | Docker Compose, API Gateway, ms-identidad, ms-reportes (visitas), frontend reutilizado |
 | 2 | Terminado | ms-catalogo y ms-inventario, con réplicas entre servicios |
-| 3 | Planificado | Recetas y órdenes de producción; eventos por RabbitMQ (las réplicas pasan a eventos). Tareas, responsables y orden de trabajo en `capitulo-3-sprint-3.md` |
+| 3 | En curso | Recetas y órdenes de producción; eventos por RabbitMQ. Tareas en `capitulo-3-sprint-3.md`. **Hechas** (3-nov, en ramas apiladas sin unir a `main`): T1.1, T2.1 módulo de eventos (`ht-03-modulo-eventos`), T7.1–T7.3 HU-06 (`hu-06-recuperar-contrasena`), T6.1 HU-05 (`hu-05-permisos-en-servicios`). **Faltan**: T2.2, HU-09, HU-17, HU-10 (Nilser; el módulo de eventos ya está en ms-catalogo y ms-inventario), el punta a punta de Órdenes de T8.2 (cuando exista HU-10), T9.1 y T9.2 |
 
 Desde el 3-nov el trabajo sigue en la computadora de Joseph (`INSTALACION.md`); los dos suben con la
 cuenta compartida `nutriexpress2026-alt`, cada uno con su `git config user.name`.
@@ -135,6 +135,11 @@ Pendiente, a confirmar con el equipo antes de programar:
 - **Sesión**: ms-identidad firma el token con RS256 y publica la clave pública en
   `/api/auth/clave-publica`; los demás la verifican con `servicios/compartido/auth.middleware.ts`
   (copiado en cada servicio). El token trae nombre, apellido, rol, cargo y permisos.
+- **Sesiones vigentes** (HU-05): cuando cambian los permisos de un usuario o rol (o se da de baja),
+  ms-identidad publica `PermisosCambiados { idUsuario | idRol, desde }`. ms-catalogo y ms-inventario
+  lo anotan en su tabla `sesion_vigente` y rechazan con 401 los tokens con `iat` anterior
+  (`servicios/compartido/sesiones-vigentes.ts`, gancho `alAutenticar`); el frontend lleva al login y
+  el token nuevo trae los permisos de ahora. Un servicio nuevo que verifique tokens debe sumarlo.
 - **Tolerancia a fallos** (RNF-DIS-01): si ms-inventario no responde, el catálogo se muestra sin
   stock; el gateway responde 503 en JSON cuando un servicio está caído.
 - **Funciones de sprints futuros**: el gateway responde 503 a lo que no tiene servicio, y el frontend
@@ -142,7 +147,11 @@ Pendiente, a confirmar con el equipo antes de programar:
   Al empezar un sprint, subir `SPRINT_ACTUAL`: las pruebas en espera (`it.runIf`, `test.skip` con
   `SPRINT_ACTUAL`) se activan solas.
 - **Esquema**: `prisma/esquema.sql` es la fuente; `schema.prisma` se deriva de él. Cada servicio crea
-  sus tablas y su carga inicial al arrancar si su base está vacía (`prisma/inicializar.ts`).
+  sus tablas y su carga inicial al arrancar si su base está vacía (`prisma/inicializar.ts`). Una tabla
+  nueva va **al final de `esquema.sql`, debajo de `-- >>> Posteriores a la primera versión`**, con
+  `IF NOT EXISTS`: `inicializar.ts` aplica esa parte en cada arranque también a las bases que ya
+  existían (ms-catalogo y ms-inventario). En `schema.prisma` se agrega solo el modelo nuevo: `db pull`
+  reordena columnas y borra el encabezado.
 - **Pruebas**: integración contra la base real con `servicios/compartido/sesion-de-prueba.ts` (firma
   tokens de prueba); las de punta a punta, contra el frontend compilado (`npm run build` y
   `npx next start`): en modo desarrollo la página tarda en estar lista y fallan por tiempos.

@@ -216,4 +216,39 @@ CREATE INDEX ix_lote_ingrediente          ON lote(id_ingrediente);
 CREATE INDEX ix_lote_vencimiento          ON lote(fecha_vencimiento);
 CREATE INDEX ix_lotealm_almacen           ON lote_almacen(id_almacen);
 CREATE INDEX ix_detingins_lote            ON detalle_ingreso_insumo(id_lote);
-CREATE UNIQUE INDEX ux_almacen_preferido  ON almacen(tipo_conservacion)
+CREATE UNIQUE INDEX ux_almacen_preferido  ON almacen(tipo_conservacion) WHERE preferido;
+
+-- ============================================================================
+-- >>> Posteriores a la primera versión
+-- Todo lo que sigue es idempotente (IF NOT EXISTS) y prisma/inicializar.ts lo
+-- aplica en cada arranque también a las bases que ya existían: así una tabla
+-- nueva llega a todas las computadoras sin borrar datos. Agregar al final.
+-- ============================================================================
+
+-- HT-03 · Eventos ya procesados: un evento repetido no se procesa dos veces (RNF-DIS-03).
+CREATE TABLE IF NOT EXISTS evento_procesado (
+    id_evento     UUID PRIMARY KEY,
+    tipo          VARCHAR(60) NOT NULL,
+    procesado_en  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- HU-05 · Desde cuándo valen las sesiones de un usuario o de un rol, tras un
+-- cambio de permisos (evento PermisosCambiados de ms-identidad).
+CREATE TABLE IF NOT EXISTS sesion_vigente (
+    clave  VARCHAR(30) PRIMARY KEY,  -- 'usuario:5' o 'rol:2'
+    desde  TIMESTAMP NOT NULL
+);
+
+-- HU-13 · Un solo almacén *preferido* por tipo de conservación, no un solo almacén
+-- por tipo. La primera versión de este archivo perdió el WHERE preferido (el
+-- schema.prisma sí lo tenía): las bases creadas con ella no dejaban registrar un
+-- segundo almacén del mismo tipo. Esto las corrige, y no hace nada si el índice ya
+-- está bien.
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_indexes
+             WHERE indexname = 'ux_almacen_preferido' AND indexdef NOT LIKE '%WHERE%') THEN
+    DROP INDEX ux_almacen_preferido;
+    CREATE UNIQUE INDEX ux_almacen_preferido ON almacen(tipo_conservacion) WHERE preferido;
+  END IF;
+END $$;
