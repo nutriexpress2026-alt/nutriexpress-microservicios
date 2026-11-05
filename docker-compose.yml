@@ -123,6 +123,41 @@ services:
       rabbitmq:
         condition: service_started
 
+  ms-pedidos:
+    build: ./servicios/ms-pedidos
+    environment:
+      DATABASE_URL: postgresql://pedidos:${PEDIDOS_CLAVE_BD:-pedidos}@postgres:5432/pedidos_db
+      PORT: 4004
+      RABBITMQ_URL: amqp://${RABBITMQ_USUARIO:-nutriexpress}:${RABBITMQ_CLAVE:-nutriexpress}@rabbitmq:5672
+    depends_on:
+      postgres:
+        condition: service_healthy
+      # Solo el orden de arranque: si RabbitMQ cae, el servicio sigue y se reconecta solo.
+      rabbitmq:
+        condition: service_started
+
+  ms-pagos:
+    build: ./servicios/ms-pagos
+    environment:
+      DATABASE_URL: postgresql://pagos:${PAGOS_CLAVE_BD:-pagos}@postgres:5432/pagos_db
+      PORT: 4005
+      RABBITMQ_URL: amqp://${RABBITMQ_USUARIO:-nutriexpress}:${RABBITMQ_CLAVE:-nutriexpress}@rabbitmq:5672
+      # HU-27: el sistema nace en modo simulado. Para el modo real (Libélula), en .env:
+      # LIBELULA_URL_BASE, LIBELULA_API_KEY, LIBELULA_EMAIL_COMERCIO y PAGO_URL_PUBLICA
+      # (la dirección pública por la que Libélula avisa del pago).
+      LIBELULA_URL_BASE: ${LIBELULA_URL_BASE:-}
+      LIBELULA_API_KEY: ${LIBELULA_API_KEY:-}
+      LIBELULA_EMAIL_COMERCIO: ${LIBELULA_EMAIL_COMERCIO:-}
+      PAGO_URL_PUBLICA: ${PAGO_URL_PUBLICA:-}
+      PAGO_SECRETO_AVISOS: ${PAGO_SECRETO_AVISOS:-nutriexpress-desarrollo}
+      PAGO_MINUTOS_EXPIRACION: ${PAGO_MINUTOS_EXPIRACION:-15}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      # Solo el orden de arranque: si RabbitMQ cae, el servicio sigue y se reconecta solo.
+      rabbitmq:
+        condition: service_started
+
   ms-reportes:
     build: ./servicios/ms-reportes
     environment:
@@ -151,6 +186,8 @@ services:
       - ms-identidad
       - ms-catalogo
       - ms-inventario
+      - ms-pedidos
+      - ms-pagos
       - ms-reportes
 
 volumes:
