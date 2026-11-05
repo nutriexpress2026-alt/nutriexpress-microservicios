@@ -104,11 +104,12 @@ Pendiente, a confirmar con el equipo antes de programar:
   la base del catálogo, un índice GIN `gin_trgm_ops` sobre `producto.nombre`, y buscar con
   `similarity()` o el operador `%` además del `ILIKE` actual (también `unaccent` para las tildes).
 - **Redis**: ya está en `docker-compose.yml` (`redis:7.4-alpine`, puerto 6380 solo desde la PC,
-  contraseña `REDIS_CLAVE`, por defecto `nutriexpress`), pero ningún servicio lo usa todavía. Falta
-  confirmar y programar sus usos. En ms-identidad, los contadores de `express-rate-limit` (`src/middlewares/seguridad.middleware.ts`) pasan a Redis, así
-  no se reinician al reiniciar el servicio, y también los tokens revocados al cerrar sesión. En
-  ms-catalogo, caché del catálogo público con vencimiento corto, que se invalida al editar un producto.
-  Si Redis no responde, el servicio sigue funcionando contra PostgreSQL (RNF-DIS-01).
+  contraseña `REDIS_CLAVE`, por defecto `nutriexpress`). **ms-identidad** ya guarda ahí los contadores
+  de los límites por IP (T7.3, base 0, claves `identidad:limite:*`; `src/middlewares/almacen-limites.ts`):
+  no se reinician al reiniciar el servicio, y si Redis no responde cuentan en memoria (el límite nunca
+  queda abierto). Falta confirmar y programar los demás usos: en ms-identidad, los tokens revocados al
+  cerrar sesión; en ms-catalogo, caché del catálogo público con vencimiento corto, que se invalida al
+  editar un producto. Si Redis no responde, el servicio sigue funcionando contra PostgreSQL (RNF-DIS-01).
 - Ya se actualizaron `herramientas/instalar.ps1` (puerto y comprobación de Redis), RNF-ARQ-03, la
   tabla de tecnologías y la justificación en `capitulo-3-sprint-0.md`, `capitulo-1-perfil.md`,
   `README.md` y `crear-diagramas.ps1`; el `.eapx` y el Word ya están regenerados (3-nov). Los sprints

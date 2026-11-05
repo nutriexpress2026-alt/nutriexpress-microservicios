@@ -21,6 +21,8 @@ export const env = {
   jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? '8h',
   bcryptRounds: Number(process.env.BCRYPT_ROUNDS ?? 10),
   maxIntentosFallidos: Number(process.env.MAX_INTENTOS_FALLIDOS ?? 3),
+  /** Redis, complemento en memoria (RNF-ARQ-03). Sin él (las pruebas), los límites cuentan en memoria. */
+  redisUrl: process.env.REDIS_URL ?? null,
 
   seguridad: {
     maxIntentosPorIp: Number(process.env.MAX_INTENTOS_POR_IP ?? 10),

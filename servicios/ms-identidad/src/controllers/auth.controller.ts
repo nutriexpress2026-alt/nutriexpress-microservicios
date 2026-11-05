@@ -2,6 +2,8 @@ import type { Request, Response } from 'express';
 import { z } from 'zod';
 import { esquemaContrasena } from '../dtos/contrasena.dto.js';
 import * as authService from '../services/auth.service.js';
+import * as recuperacionService from '../services/recuperacion.service.js';
+import type { DatosRestablecerContrasena, DatosVerificarCodigo } from '../dtos/auth.dto.js';
 import { clavePublica as pem } from '../utils/jwt.js';
 import { ErrorApp } from '../errors/error-app.js';
 
@@ -40,6 +42,22 @@ export async function registro(req: Request, res: Response) {
 export async function perfil(req: Request, res: Response) {
   if (!req.sesion) throw new ErrorApp(401, 'Sesión no iniciada');
   res.json(await authService.sesionActual(req.sesion.idUsuario));
+}
+
+/** HU-06 · POST /api/auth/recuperar { identificador } — siempre la misma respuesta. */
+export async function solicitarCodigo(req: Request, res: Response) {
+  const { identificador } = req.body as { identificador: string };
+  res.json(await recuperacionService.solicitarCodigo(identificador));
+}
+
+/** HU-06 · POST /api/auth/recuperar/verificar { identificador, codigo } */
+export async function verificarCodigo(req: Request, res: Response) {
+  res.json(await recuperacionService.verificarCodigo(req.body as DatosVerificarCodigo));
+}
+
+/** HU-06 · POST /api/auth/recuperar/restablecer { identificador, codigo, contrasena } */
+export async function restablecerContrasena(req: Request, res: Response) {
+  res.json(await recuperacionService.restablecerContrasena(req.body as DatosRestablecerContrasena));
 }
 
 /** El cierre de sesión se resuelve en el cliente descartando el token. */

@@ -149,6 +149,7 @@ Quien programe con Claude Code: el asistente lee `CLAUDE.md` solo y sigue sus co
 | Errores de «read-only file system» o «no space left» | Disco C: casi lleno. Liberar espacio (al menos 10 GB) y repetir. |
 | «El puerto 5433 / 5673 / 6380 / 8080 / 27018 / 3000 lo usa otro programa» | Otra base de datos u otro proyecto está usando ese puerto. Cerrarlo y repetir. |
 | `npm ci` falla con `ECONNRESET` al construir los contenedores | Se cortó la conexión mientras descargaba paquetes. Repetir el script: lo ya descargado no se vuelve a bajar. |
+| «Olvidé mi contraseña» no manda ningún correo | Sin servidor de correo configurado, los correos no se envían: el código aparece en `docker compose logs ms-reportes`. Para enviarlos de verdad, crear un archivo `.env` en la carpeta del repositorio con `SMTP_HOST`, `SMTP_PUERTO`, `SMTP_USUARIO` y `SMTP_CLAVE` (con Gmail: `smtp.gmail.com`, `587` y una contraseña de aplicación) y ejecutar `docker compose up -d`. |
 | `npm run build` falla al descargar las fuentes de Google | Conexión inestable: repetir el script. |
 | Con `npm run dev`, el inicio de sesión vuelve a la misma página | En modo desarrollo la página tarda en estar lista: esperar a que termine de cargar antes de pulsar Entrar, o usar `npx next start`. |
 | Una pantalla dice «Este módulo todavía no está disponible» | Es normal: ese módulo llega en un sprint posterior. |

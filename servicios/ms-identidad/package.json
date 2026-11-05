@@ -20,6 +20,7 @@
   "dependencies": {
     "@prisma/adapter-pg": "7.10.0",
     "@prisma/client": "7.10.0",
+    "amqplib": "2.2.1",
     "bcrypt": "6.0.0",
     "dotenv": "17.4.2",
     "express": "5.2.1",
@@ -28,6 +29,8 @@
     "jsonwebtoken": "9.0.3",
     "pg": "8.23.0",
     "prisma": "7.10.0",
+    "rate-limit-redis": "6.0.2",
+    "redis": "6.3.1",
     "tsx": "4.23.13",
     "zod": "4.5.4"
   },

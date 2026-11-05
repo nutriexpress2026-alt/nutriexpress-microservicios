@@ -2,7 +2,12 @@ import { Router } from 'express';
 import * as ctrl from '../controllers/auth.controller.js';
 import { validarCuerpo } from '../middlewares/validate.middleware.js';
 import { requiereAutenticacion } from '../middlewares/auth.middleware.js';
-import { limiteDeIntentos } from '../middlewares/seguridad.middleware.js';
+import { limiteDeIntentos, limiteDeSolicitudes } from '../middlewares/seguridad.middleware.js';
+import {
+  esquemaRestablecerContrasena,
+  esquemaSolicitarCodigo,
+  esquemaVerificarCodigo,
+} from '../dtos/auth.dto.js';
 
 const router = Router();
 
@@ -35,7 +40,20 @@ router.post('/login', validarCuerpo(ctrl.esquemaLogin), ctrl.login);
  */
 router.post('/registro', limiteDeIntentos, validarCuerpo(ctrl.esquemaRegistro), ctrl.registro);
 
-// «Olvidé mi contraseña» (HU-06) se agrega en el Sprint 3.
+/**
+ * HU-06 «Olvidé mi contraseña». Pedir códigos tiene su propio límite por IP
+ * (la respuesta es siempre la misma, así que el de intentos fallidos no lo
+ * vería); verificar y restablecer llevan el de intentos fallidos, además de
+ * los cinco intentos de cada código.
+ */
+router.post('/recuperar', limiteDeSolicitudes, validarCuerpo(esquemaSolicitarCodigo), ctrl.solicitarCodigo);
+router.post('/recuperar/verificar', limiteDeIntentos, validarCuerpo(esquemaVerificarCodigo), ctrl.verificarCodigo);
+router.post(
+  '/recuperar/restablecer',
+  limiteDeIntentos,
+  validarCuerpo(esquemaRestablecerContrasena),
+  ctrl.restablecerContrasena,
+);
 
 /**
  * Clave pública con que los demás microservicios verifican los tokens

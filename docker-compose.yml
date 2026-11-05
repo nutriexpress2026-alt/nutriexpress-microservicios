@@ -81,6 +81,9 @@ services:
       PORT: 4001
       CLAVES_DIR: /claves
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-8h}
+      RABBITMQ_URL: amqp://${RABBITMQ_USUARIO:-nutriexpress}:${RABBITMQ_CLAVE:-nutriexpress}@rabbitmq:5672
+      # Complemento: los contadores de los límites por IP (claves identidad:limite:*).
+      REDIS_URL: redis://:${REDIS_CLAVE:-nutriexpress}@redis:6379/0
     volumes:
       # Par de claves con que se firman los tokens (RS256). Se crea solo la
       # primera vez y sobrevive a los reinicios.
@@ -88,6 +91,11 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      # Solo el orden de arranque: si RabbitMQ o Redis caen, el servicio sigue y se reconecta solo.
+      rabbitmq:
+        condition: service_started
+      redis:
+        condition: service_started
 
   ms-catalogo:
     build: ./servicios/ms-catalogo
@@ -112,8 +120,18 @@ services:
     environment:
       MONGO_URL: mongodb://mongo:27017/reportes
       PORT: 4007
+      RABBITMQ_URL: amqp://${RABBITMQ_USUARIO:-nutriexpress}:${RABBITMQ_CLAVE:-nutriexpress}@rabbitmq:5672
+      # Correo saliente. Sin SMTP_HOST (en .env), los correos no se envían: se ven
+      # en `docker compose logs ms-reportes` (por ejemplo, el código de recuperación).
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PUERTO: ${SMTP_PUERTO:-587}
+      SMTP_USUARIO: ${SMTP_USUARIO:-}
+      SMTP_CLAVE: ${SMTP_CLAVE:-}
+      CORREO_REMITENTE: ${CORREO_REMITENTE:-NutriExpress <no-responder@nutriexpress.bo>}
     depends_on:
       - mongo
+      # Solo el orden de arranque: si RabbitMQ cae, el servicio sigue y se reconecta solo.
+      - rabbitmq
 
   gateway:
     image: nginx:1.27-alpine
