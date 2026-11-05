@@ -111,6 +111,7 @@ SPRINTS = {
     1: (date(2026, 10, 17), date(2026, 10, 21), 'Infraestructura, API Gateway e Identidad: se puede iniciar sesión en el sistema.'),
     2: (date(2026, 10, 22), date(2026, 10, 28), 'Catálogo e inventario básico: se registran productos, insumos y stock.'),
     3: (date(2026, 10, 29), date(2026, 11, 4), 'Recetas y producción, con los servicios comunicados por eventos.'),
+    4: (date(2026, 11, 5), date(2026, 11, 11), 'Pedido a domicilio con pago en línea (saga completa).'),
 }
 DAILY = []
 for n in list(SPRINTS):
@@ -278,9 +279,11 @@ for n, (ini, fin, objetivo, tareas) in SPRINTS.items():
         f = hoy_fila + k
         celda(ws, f, col, f'=$B$2+{k}', formato='dd/mm')
         celda(ws, f, col + 1, f'=IF({k}>{duracion},0,ROUND($E${t}*(1-{k}/{duracion}),1))')
-        # Restante = planificado - lo terminado hasta ese día. Días futuros quedan vacíos.
-        celda(ws, f, col + 2, f'=IF(I{f}>TODAY(),NA(),$E${t}-SUMIFS({rng("E")},{rng("F")},"Done",{rng("G")},"<="&I{f}))')
-        celda(ws, f, col + 3, f'=IF(I{f}>TODAY(),NA(),SUMIFS({rng("E")},{rng("F")},"Done",{rng("G")},"<="&I{f}))')
+        # Restante = planificado - lo terminado hasta ese día. Los días después de hoy (o de la
+        # última tarea terminada, si el sprint ya se registró completo) quedan vacíos.
+        corte = f'MAX(TODAY(),MAX({rng("G")}))'
+        celda(ws, f, col + 2, f'=IF(I{f}>{corte},NA(),$E${t}-SUMIFS({rng("E")},{rng("F")},"Done",{rng("G")},"<="&I{f}))')
+        celda(ws, f, col + 3, f'=IF(I{f}>{corte},NA(),SUMIFS({rng("E")},{rng("F")},"Done",{rng("G")},"<="&I{f}))')
         celda(ws, f, col + 4, f'=$E${t}')
     ultima = hoy_fila + dias - 1
 

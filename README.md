@@ -15,7 +15,7 @@ Docente: Ing. Edwin Calle Terrazas.
 | Sprint 1 | 17-oct – 21-oct | Infraestructura base + Identidad (inicio de sesión) | Terminado |
 | Sprint 2 | 22-oct – 28-oct | Catálogo de productos e inventario básico | Terminado |
 | Sprint 3 | 29-oct – 04-nov | Recetas, producción y eventos entre servicios | Terminado |
-| Sprint 4 | 05-nov – 11-nov | Pedidos a domicilio y pago en línea (saga) | Pendiente |
+| Sprint 4 | 05-nov – 11-nov | Pedidos a domicilio y pago en línea (saga) | Terminado |
 | Sprint 5 | 12-nov – 18-nov | Gestión de pedidos, reparto y ventas de mostrador | Pendiente |
 | Sprint 6 | 19-nov – 25-nov | Reportes, temas, despliegue y pruebas | Pendiente |
 | Sprint 7 | 26-nov – 02-dic | Reserva: ajustes y cierre del informe | Pendiente |
