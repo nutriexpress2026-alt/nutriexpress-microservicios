@@ -5,9 +5,9 @@ import { ErrorApp } from '../errors/error-app.js';
  *
  * El catálogo no lee las tablas de inventario (RNF-ARQ-02): las existencias y
  * el costo promedio de cada producto se los pide a ms-inventario por su ruta
- * interna, que el API Gateway no expone. A la inversa, cada alta o cambio de
- * producto se le avisa para que mantenga su réplica (producto) al día; desde el
- * Sprint 3 ese aviso pasa a ser un evento en RabbitMQ.
+ * interna, que el API Gateway no expone. Cada alta o cambio de producto se le
+ * avisa con el evento ProductoGuardado (HT-03, `producto.service.ts`); aquí
+ * queda solo lo que necesita respuesta en el momento.
  */
 const URL = process.env.INVENTARIO_URL ?? 'http://ms-inventario:4003';
 
@@ -33,28 +33,6 @@ export async function existencias(ids: number[]): Promise<Map<number, Existencia
     return new Map(lista.map((e) => [e.idProducto, e]));
   } catch {
     return null;
-  }
-}
-
-export interface ProductoReplica {
-  id: number;
-  nombre: string;
-  tipoConservacion: string;
-  activo: boolean;
-}
-
-/** Crea o actualiza la réplica del producto en ms-inventario. */
-export async function sincronizarProducto(p: ProductoReplica): Promise<void> {
-  try {
-    await fetch(`${URL}/interno/productos/${p.id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(p),
-      signal: AbortSignal.timeout(3000),
-    });
-  } catch {
-    // Si inventario no está, la réplica se pone al día cuando arranque: pide la
-    // lista completa a /interno/productos de este servicio.
   }
 }
 

@@ -1,30 +1,17 @@
 import { Router } from 'express';
-import { z } from 'zod';
 import * as productoModel from '../models/producto.model.js';
 import { soloRedInterna } from '../middlewares/auth.middleware.js';
 import { ErrorApp } from '../errors/error-app.js';
-import { TIPOS_CONSERVACION } from '../config/dominio.js';
 
 /**
  * Rutas internas para ms-catalogo, dentro de la red de Docker. Se montan fuera
  * de /api, así que el API Gateway no las expone (RNF-ARQ-04).
+ *
+ * Que un producto se creó o cambió ya no llega por aquí sino con el evento
+ * ProductoGuardado (HT-03, `services/replica.service.ts`).
  */
 const router = Router();
 router.use(soloRedInterna);
-
-const esquemaReplica = z.object({
-  nombre: z.string().min(1).max(100),
-  tipoConservacion: z.enum(TIPOS_CONSERVACION),
-  activo: z.boolean(),
-});
-
-/** ms-catalogo avisa que se creó o cambió un producto. */
-router.put('/productos/:id', async (req, res) => {
-  const id = Number(req.params.id);
-  const datos = esquemaReplica.parse(req.body);
-  await productoModel.guardarReplica({ id, ...datos });
-  res.status(204).end();
-});
 
 /** ms-catalogo quiere eliminar un producto: solo si aquí no tiene existencias ni movimientos. */
 router.delete('/productos/:id', async (req, res) => {
