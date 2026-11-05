@@ -12,6 +12,7 @@ datasource db {
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model almacen {
+  reserva             reserva[]
   id_almacen          Int                   @id @default(autoincrement())
   nombre              String                @unique @db.VarChar(50)
   tipo_conservacion   String                @unique(map: "ux_almacen_preferido", where: raw("preferido")) @db.VarChar(20)
@@ -77,25 +78,26 @@ model detalle_ingreso_producto {
 
 /// Réplica de ms-identidad: se completa con el token de quien registra.
 model empleado {
-  id_empleado Int    @id
-  nombre      String @db.VarChar(100)
-  apellido    String @db.VarChar(100)
-  nota_egreso         nota_egreso[]
-  nota_ingreso        nota_ingreso[]
+  id_empleado  Int            @id
+  nombre       String         @db.VarChar(100)
+  apellido     String         @db.VarChar(100)
+  nota_egreso  nota_egreso[]
+  nota_ingreso nota_ingreso[]
 }
 
 model ingrediente {
-  id_ingrediente       Int                   @id @default(autoincrement())
-  nombre               String                @db.VarChar(100)
-  stock_minimo         Decimal               @default(0) @db.Decimal(12, 3)
-  costo_unitario       Decimal               @default(0) @db.Decimal(10, 2)
-  activo               Boolean               @default(true)
-  id_unidad            Int
-  tipo_conservacion    String                @default("Seco") @db.VarChar(20)
-  controla_vencimiento Boolean               @default(false)
-  unidad_medida        unidad_medida         @relation(fields: [id_unidad], references: [id_unidad], onDelete: NoAction, onUpdate: NoAction, map: "fk_ingrediente_unidad")
-  ingrediente_almacen  ingrediente_almacen[]
-  lote                 lote[]
+  detalle_reserva_insumo detalle_reserva_insumo[]
+  id_ingrediente         Int                      @id @default(autoincrement())
+  nombre                 String                   @db.VarChar(100)
+  stock_minimo           Decimal                  @default(0) @db.Decimal(12, 3)
+  costo_unitario         Decimal                  @default(0) @db.Decimal(10, 2)
+  activo                 Boolean                  @default(true)
+  id_unidad              Int
+  tipo_conservacion      String                   @default("Seco") @db.VarChar(20)
+  controla_vencimiento   Boolean                  @default(false)
+  unidad_medida          unidad_medida            @relation(fields: [id_unidad], references: [id_unidad], onDelete: NoAction, onUpdate: NoAction, map: "fk_ingrediente_unidad")
+  ingrediente_almacen    ingrediente_almacen[]
+  lote                   lote[]
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -151,11 +153,12 @@ model nota_ingreso {
 
 /// Réplica de ms-catalogo: la mantiene él (RNF-ARQ-02).
 model producto {
-  id_producto       Int     @id
-  nombre            String  @db.VarChar(100)
-  tipo_conservacion String  @default("Seco") @db.VarChar(20)
-  activo            Boolean @default(true)
-  producto_almacen      producto_almacen[]
+  detalle_reserva_producto detalle_reserva_producto[]
+  id_producto              Int                        @id
+  nombre                   String                     @db.VarChar(100)
+  tipo_conservacion        String                     @default("Seco") @db.VarChar(20)
+  activo                   Boolean                    @default(true)
+  producto_almacen         producto_almacen[]
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -213,4 +216,40 @@ model evento_procesado {
 model sesion_vigente {
   clave String   @id @db.VarChar(30)
   desde DateTime @db.Timestamp(6)
+}
+
+model detalle_reserva_insumo {
+  id_reserva     String      @db.VarChar(60)
+  id_ingrediente Int
+  cantidad       Decimal     @db.Decimal(12, 3)
+  ingrediente    ingrediente @relation(fields: [id_ingrediente], references: [id_ingrediente], onDelete: NoAction, onUpdate: NoAction, map: "fk_detresins_insumo")
+  reserva        reserva     @relation(fields: [id_reserva], references: [id_reserva], onDelete: NoAction, onUpdate: NoAction, map: "fk_detresins_reserva")
+
+  @@id([id_reserva, id_ingrediente])
+  @@index([id_ingrediente], map: "ix_detresins_insumo")
+}
+
+model detalle_reserva_producto {
+  id_reserva  String   @db.VarChar(60)
+  id_producto Int
+  cantidad    Int
+  producto    producto @relation(fields: [id_producto], references: [id_producto], onDelete: NoAction, onUpdate: NoAction, map: "fk_detresprod_producto")
+  reserva     reserva  @relation(fields: [id_reserva], references: [id_reserva], onDelete: NoAction, onUpdate: NoAction, map: "fk_detresprod_reserva")
+
+  @@id([id_reserva, id_producto])
+  @@index([id_producto], map: "ix_detresprod_producto")
+}
+
+model reserva {
+  id_reserva               String                     @id @db.VarChar(60)
+  origen                   String                     @db.VarChar(30)
+  estado                   String                     @default("Activa") @db.VarChar(12)
+  creada_en                DateTime                   @default(now()) @db.Timestamp(6)
+  cerrada_en               DateTime?                  @db.Timestamp(6)
+  id_almacen_destino       Int?
+  detalle_reserva_insumo   detalle_reserva_insumo[]
+  detalle_reserva_producto detalle_reserva_producto[]
+  almacen                  almacen?                   @relation(fields: [id_almacen_destino], references: [id_almacen], onDelete: NoAction, onUpdate: NoAction, map: "fk_reserva_almacen")
+
+  @@index([estado], map: "ix_reserva_estado")
 }
