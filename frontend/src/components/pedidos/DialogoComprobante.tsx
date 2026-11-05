@@ -11,6 +11,7 @@ import { Esqueleto } from '@/components/ui/Esqueleto';
 import { Ticket } from '@/components/ventas/Ticket';
 import { formatearFecha } from '@/lib/formato';
 import type { ComprobantePedido, EnvioComprobante } from '@/types';
+import { SPRINT_ACTUAL } from '@/lib/modulos';
 
 /**
  * Manda el comprobante al correo de la cuenta y dice cómo le fue.
@@ -116,7 +117,10 @@ export function DialogoComprobante({
               <Check className="size-7" strokeWidth={3} aria-hidden />
             </motion.div>
             <p className="text-sm text-tinta">Pago acreditado. Su pedido entró a preparación</p>
-            <p className="text-xs text-tinta-tenue">Le enviamos una copia de este comprobante a su correo.</p>
+            {/* El envío por correo llega con ms-reportes (HU-32, Sprint 6): antes no se promete. */}
+            {SPRINT_ACTUAL >= 6 && (
+              <p className="text-xs text-tinta-tenue">Le enviamos una copia de este comprobante a su correo.</p>
+            )}
           </div>
         )}
 

@@ -13,7 +13,14 @@ import { SPRINT_ACTUAL } from '../src/lib/modulos';
 
 /** Del catálogo al paso de entrega, con el primer producto que tenga stock. */
 async function alCarrito(page: Page) {
-  await page.getByRole('button', { name: 'Agregar', exact: true }).first().click();
+  // Si inventario tarda en responder, el catálogo se muestra sin stock (RNF-DIS-01):
+  // en una computadora lenta y cargada se vuelve a pedir.
+  const agregar = page.getByRole('button', { name: 'Agregar', exact: true }).first();
+  await expect(async () => {
+    if (!(await agregar.isVisible())) await page.reload();
+    await expect(agregar).toBeVisible({ timeout: 10_000 });
+  }).toPass({ timeout: 60_000 });
+  await agregar.click();
   await page.getByRole('link', { name: 'Carrito con 1 artículo(s)' }).click();
   await expect(page.getByRole('heading', { name: 'Su pedido' })).toBeVisible();
   await page.getByRole('button', { name: 'Continuar' }).click();
@@ -38,7 +45,8 @@ test.describe('Pedido a domicilio', () => {
     await page.getByRole('button', { name: 'Confirmar pedido' }).click();
 
     // Confirmado: aparece en «Mis pedidos» con su número, esperando que lo preparen.
-    await expect(page).toHaveURL(/\/portal\/pedidos/);
+    // Confirmar pasa por tres servicios (catálogo, inventario y pedidos): se le da tiempo.
+    await expect(page).toHaveURL(/\/portal\/pedidos/, { timeout: 45_000 });
     const aviso = page.getByText(/Pedido #(\d{5}) confirmado/);
     await expect(aviso).toBeVisible();
     const numero = (await aviso.textContent())!.match(/#(\d{5})/)![1];
@@ -65,12 +73,12 @@ test.describe('Pedido a domicilio', () => {
 
     // El cobro muestra el código y, simulado, se acredita a los pocos segundos.
     const cobro = page.getByRole('dialog', { name: 'Cobrar' });
-    await expect(cobro.getByRole('img').first()).toBeVisible();
-    await expect(page.getByText('Pago recibido')).toBeVisible({ timeout: 30_000 });
-    await page.getByRole('button', { name: 'Continuar' }).click();
+    await expect(cobro.getByRole('img').first()).toBeVisible({ timeout: 45_000 });
 
-    // El comprobante del pedido pagado (los datos los da ms-pedidos).
+    // Al acreditarse, el cobro se cierra solo y aparece el comprobante del pedido
+    // pagado (PagoConfirmado ya lo pasó a preparación; los datos los da ms-pedidos).
     const comprobante = page.getByRole('dialog', { name: 'Comprobante' });
+    await expect(comprobante.getByText('Pago acreditado. Su pedido entró a preparación')).toBeVisible({ timeout: 45_000 });
     await expect(comprobante.getByText(/Pedido #\d{5}/)).toBeVisible({ timeout: 15_000 });
   });
 });
