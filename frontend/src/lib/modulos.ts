@@ -43,7 +43,7 @@ export interface Seccion {
  * Sprint en curso del proyecto de microservicios. Las pestañas cuyo servicio
  * llega en un sprint posterior no se muestran todavía (`desdeSprint`).
  */
-export const SPRINT_ACTUAL = 2;
+export const SPRINT_ACTUAL = 3;
 
 export interface Modulo {
   /** Nombre corto, para la barra lateral. */

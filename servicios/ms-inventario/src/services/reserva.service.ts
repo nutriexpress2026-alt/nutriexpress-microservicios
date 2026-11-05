@@ -144,7 +144,11 @@ export async function reservar(pedido: PedidoReserva): Promise<{ reserva: Reserv
   try {
     return await prisma.$transaction(async (tx) => {
       const existente = await reservaModel.buscar(pedido.id, tx);
-      if (existente) return { reserva: aDTO(existente), nueva: false };
+      // Una liberada se puede volver a pedir con el mismo id (por ejemplo, la
+      // orden cuya finalización falló y se reintenta): se reemplaza. Una activa
+      // o consumida se devuelve tal cual, sin descontar otra vez.
+      if (existente && existente.estado !== 'Liberada') return { reserva: aDTO(existente), nueva: false };
+      if (existente) await reservaModel.quitar(tx, pedido.id);
 
       await reservaModel.bloquear(
         tx,

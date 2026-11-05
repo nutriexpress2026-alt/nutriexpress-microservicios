@@ -77,17 +77,18 @@ model insumo {
 /// id_producto fuera único y deja la relación uno a uno; un producto tiene varias versiones,
 /// así que aquí va sin @unique. La regla la sigue haciendo cumplir la base (esquema.sql).
 model receta {
-  id_receta                  Int              @id @default(autoincrement())
+  id_receta                  Int                @id @default(autoincrement())
   id_producto                Int
-  nombre                     String           @db.VarChar(100)
+  nombre                     String             @db.VarChar(100)
   rendimiento                Int
-  tiempo_preparacion_minutos Int              @default(0)
-  instrucciones              String?          @db.VarChar(2000)
-  divisible                  Boolean          @default(true)
-  activa                     Boolean          @default(false)
-  creada_en                  DateTime         @default(now()) @db.Timestamp(6)
+  tiempo_preparacion_minutos Int                @default(0)
+  instrucciones              String?            @db.VarChar(2000)
+  divisible                  Boolean            @default(true)
+  activa                     Boolean            @default(false)
+  creada_en                  DateTime           @default(now()) @db.Timestamp(6)
   detalle_receta             detalle_receta[]
-  producto                   producto         @relation(fields: [id_producto], references: [id_producto], onDelete: NoAction, onUpdate: NoAction, map: "fk_receta_producto")
+  orden_produccion           orden_produccion[]
+  producto                   producto           @relation(fields: [id_producto], references: [id_producto], onDelete: NoAction, onUpdate: NoAction, map: "fk_receta_producto")
 
   @@index([id_producto], map: "ix_receta_producto")
 }
@@ -101,4 +102,41 @@ model detalle_receta {
 
   @@id([id_receta, id_ingrediente])
   @@index([id_ingrediente], map: "ix_detreceta_insumo")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model detalle_orden_insumo {
+  id_orden_produccion Int
+  id_ingrediente      Int
+  nombre              String           @db.VarChar(100)
+  unidad              String           @db.VarChar(10)
+  cantidad            Decimal          @db.Decimal(12, 3)
+  costo_unitario      Decimal          @db.Decimal(10, 2)
+  orden_produccion    orden_produccion @relation(fields: [id_orden_produccion], references: [id_orden_produccion], onDelete: NoAction, onUpdate: NoAction, map: "fk_detorden_orden")
+
+  @@id([id_orden_produccion, id_ingrediente])
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model orden_produccion {
+  id_orden_produccion  Int                    @id @default(autoincrement())
+  fecha                DateTime               @default(now()) @db.Timestamp(6)
+  estado               String                 @default("Pendiente") @db.VarChar(12)
+  cantidad             Int
+  id_receta            Int
+  id_empleado          Int
+  empleado_nombre      String                 @db.VarChar(201)
+  fecha_finalizacion   DateTime?              @db.Timestamp(6)
+  cantidad_obtenida    Int?
+  costo_total          Decimal?               @db.Decimal(12, 2)
+  id_almacen_destino   Int?
+  almacen_destino      String?                @db.VarChar(50)
+  id_nota_egreso       Int?
+  id_nota_ingreso      Int?
+  detalle_orden_insumo detalle_orden_insumo[]
+  receta               receta                 @relation(fields: [id_receta], references: [id_receta], onDelete: NoAction, onUpdate: NoAction, map: "fk_ordprod_receta")
+
+  @@index([estado], map: "ix_ordprod_estado")
+  @@index([fecha(sort: Desc)], map: "ix_ordprod_fecha")
+  @@index([id_receta], map: "ix_ordprod_receta")
 }

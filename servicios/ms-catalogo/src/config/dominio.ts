@@ -27,3 +27,25 @@ export type TipoImagenProducto = (typeof TIPOS_IMAGEN_PRODUCTO)[number];
 
 /** Tamaño máximo admitido para la foto de un producto. */
 export const TAMANO_MAXIMO_IMAGEN_PRODUCTO = 3 * 1024 * 1024;
+
+/* Ciclo de vida de la orden de producción (HU-10) */
+
+/** Valores admitidos por la restricción `ck_ordprod_estado` del esquema. */
+export const ESTADOS_ORDEN = ['Pendiente', 'En proceso', 'Finalizada', 'Cancelada'] as const;
+
+export type EstadoOrden = (typeof ESTADOS_ORDEN)[number];
+
+/**
+ * CU-PRO-02: "El estado de la orden evoluciona según el flujo: Pendiente, En
+ * proceso y Finalizada." La cancelación no figura en la tabla porque es otro
+ * caso de uso —CU-PRO-04, que extiende a este— y tiene su propia condición.
+ */
+export const FLUJO_ORDEN: Record<EstadoOrden, EstadoOrden[]> = {
+  Pendiente: ['En proceso'],
+  'En proceso': ['Finalizada'],
+  Finalizada: [],
+  Cancelada: [],
+};
+
+/** CU-PRO-04: se cancela mientras esté Pendiente o En proceso. */
+export const ESTADOS_ORDEN_CANCELABLES: EstadoOrden[] = ['Pendiente', 'En proceso'];

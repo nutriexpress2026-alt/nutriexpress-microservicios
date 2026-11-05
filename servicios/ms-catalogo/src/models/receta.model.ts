@@ -4,7 +4,7 @@ import type { DatosReceta } from '../dtos/receta.dto.js';
 /** Capa Model — recetas y su detalle de insumos (HU-09, RF-PRO-04). */
 
 const INCLUIR = {
-  producto: { select: { id_producto: true, nombre: true } },
+  producto: { select: { id_producto: true, nombre: true, activo: true } },
   detalle_receta: { include: { insumo: true }, orderBy: { id_ingrediente: 'asc' as const } },
 };
 

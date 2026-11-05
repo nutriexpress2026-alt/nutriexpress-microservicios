@@ -8,7 +8,7 @@ import { EntradaModulo } from '@/components/EntradaModulo';
  * esa (RF-SEG-08). Producción pedía gestionar productos para aparecer, y al
  * cocinero con solo el permiso de órdenes no le quedaba cómo llegar a ellas.
  *
- * La pestaña Órdenes llega en el Sprint 3 (ms-produccion): las pruebas que la
+ * La pestaña Órdenes llega en el Sprint 3 (HU-10, en ms-catalogo): las pruebas que la
  * necesitan esperan a ese sprint y se activan solas al subir SPRINT_ACTUAL.
  */
 const conOrdenes = SPRINT_ACTUAL >= 3;

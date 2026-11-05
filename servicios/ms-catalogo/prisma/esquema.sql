@@ -129,3 +129,50 @@ CREATE TABLE IF NOT EXISTS detalle_receta (
 CREATE UNIQUE INDEX IF NOT EXISTS ux_receta_activa ON receta(id_producto) WHERE activa;
 CREATE INDEX IF NOT EXISTS ix_receta_producto      ON receta(id_producto);
 CREATE INDEX IF NOT EXISTS ix_detreceta_insumo     ON detalle_receta(id_ingrediente);
+
+-- HU-10 · Órdenes de producción (CU-PRO-02 y CU-PRO-04): Pendiente → En proceso →
+-- Finalizada, o Cancelada. Al finalizar, inventario descuenta los insumos e ingresa
+-- el producto (evento OrdenFinalizada) y devuelve los números de nota.
+CREATE TABLE IF NOT EXISTS orden_produccion (
+    id_orden_produccion  INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    fecha                TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    estado               VARCHAR(12) NOT NULL DEFAULT 'Pendiente',
+    cantidad             INT NOT NULL,
+    id_receta            INT NOT NULL,
+    -- Quién la registró: el id y el nombre vienen del token (el usuario vive en
+    -- ms-identidad).
+    id_empleado          INT NOT NULL,
+    empleado_nombre      VARCHAR(201) NOT NULL,
+    fecha_finalizacion   TIMESTAMP,
+    -- Lo que salió de verdad; la merma es cantidad - cantidad_obtenida.
+    cantidad_obtenida    INT,
+    costo_total          NUMERIC(12,2),
+    -- El almacén de inventario al que entró el producto terminado.
+    id_almacen_destino   INT,
+    almacen_destino      VARCHAR(50),
+    -- Las notas que registró inventario (ProduccionRegistrada).
+    id_nota_egreso       INT,
+    id_nota_ingreso      INT,
+    CONSTRAINT fk_ordprod_receta FOREIGN KEY (id_receta) REFERENCES receta(id_receta),
+    CONSTRAINT ck_ordprod_estado CHECK (estado IN ('Pendiente','En proceso','Finalizada','Cancelada')),
+    CONSTRAINT ck_ordprod_cantidad CHECK (cantidad > 0),
+    CONSTRAINT ck_ordprod_obtenida CHECK (cantidad_obtenida IS NULL OR cantidad_obtenida >= 0)
+);
+
+-- Los insumos de una corrida finalizada: el hecho, no la previsión. Editar la
+-- receta después no reescribe lo que ya se produjo (hallazgo H6).
+CREATE TABLE IF NOT EXISTS detalle_orden_insumo (
+    id_orden_produccion  INT NOT NULL,
+    id_ingrediente       INT NOT NULL,
+    nombre               VARCHAR(100) NOT NULL,
+    unidad               VARCHAR(10) NOT NULL,
+    cantidad             NUMERIC(12,3) NOT NULL,
+    costo_unitario       NUMERIC(10,2) NOT NULL,
+    PRIMARY KEY (id_orden_produccion, id_ingrediente),
+    CONSTRAINT fk_detorden_orden FOREIGN KEY (id_orden_produccion) REFERENCES orden_produccion(id_orden_produccion),
+    CONSTRAINT ck_detorden_cantidad CHECK (cantidad > 0)
+);
+
+CREATE INDEX IF NOT EXISTS ix_ordprod_estado ON orden_produccion(estado);
+CREATE INDEX IF NOT EXISTS ix_ordprod_receta ON orden_produccion(id_receta);
+CREATE INDEX IF NOT EXISTS ix_ordprod_fecha  ON orden_produccion(fecha DESC);
