@@ -9,6 +9,7 @@
 #   27018 MongoDB
 #   6380  Redis (6380 para no chocar con un Redis local en el 6379), solo desde esta PC
 #   15672 Panel de RabbitMQ (usuario y contraseña en .env)
+#   5673  RabbitMQ (AMQP), solo desde esta PC: lo usan las pruebas
 #
 # Cada microservicio tiene su propia base (RNF-ARQ-02): un mismo servidor de
 # PostgreSQL con una base y un usuario por servicio, y MongoDB para ms-reportes.
@@ -66,6 +67,8 @@ services:
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_CLAVE:-nutriexpress}
     ports:
       - "15672:15672"
+      # AMQP, para las pruebas que corren en la PC (5673: no chocar con un RabbitMQ local).
+      - "127.0.0.1:5673:5672"
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
       interval: 10s

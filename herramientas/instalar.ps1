@@ -41,12 +41,12 @@ $libreGB = [math]::Round((Get-PSDrive C).Free / 1GB, 1)
 if ($libreGB -lt 10) { Falla "Solo hay $libreGB GB libres en C:. Hacen falta al menos 10 GB (Docker se queda sin espacio y falla)" }
 Bien "$libreGB GB libres en C:"
 
-foreach ($puerto in 3000, 5433, 6380, 8080, 27018) {
+foreach ($puerto in 3000, 5433, 5673, 6380, 8080, 27018) {
   $ocupado = Get-NetTCPConnection -LocalPort $puerto -State Listen -ErrorAction SilentlyContinue |
     Where-Object { (Get-Process -Id $_.OwningProcess -ErrorAction SilentlyContinue).ProcessName -notmatch 'docker|wsl|vpnkit|node' }
   if ($ocupado) { Falla "El puerto $puerto lo usa otro programa (proceso $($ocupado[0].OwningProcess)). Ciérrelo y repita" }
 }
-Bien "Puertos 3000, 5433, 6380, 8080 y 27018 disponibles"
+Bien "Puertos 3000, 5433, 5673, 6380, 8080 y 27018 disponibles"
 
 # ------------------------------------------------------------------ 2. Configuración
 Paso "2/5 Configuración del frontend"
