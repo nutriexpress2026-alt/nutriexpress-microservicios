@@ -1,4 +1,5 @@
 import { ErrorApp } from '../errors/error-app.js';
+import * as insumoModel from '../models/insumo.model.js';
 
 /**
  * Cliente REST de ms-inventario (RNF-ARQ-05, comunicación síncrona).
@@ -53,4 +54,25 @@ export async function quitarProducto(id: number): Promise<void> {
       'No se puede eliminar el producto porque registra existencias o movimientos de inventario. Puede darlo de baja en su lugar.',
     );
   }
+}
+
+/**
+ * HU-09 · Pone al día la réplica de insumos pidiéndole la lista completa a
+ * ms-inventario. Se llama al arrancar: si un insumo cambió mientras el catálogo
+ * estaba apagado, aquí se recupera. Si inventario no responde, reintenta.
+ */
+export async function sincronizarInsumos(intentos = 20): Promise<void> {
+  for (let i = 1; i <= intentos; i++) {
+    try {
+      const r = await fetch(`${URL}/interno/insumos`, { signal: AbortSignal.timeout(5000) });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const insumos = (await r.json()) as insumoModel.DatosReplicaInsumo[];
+      for (const insumo of insumos) await insumoModel.guardarReplica(insumo);
+      console.log(`ms-catalogo: réplica de ${insumos.length} insumos al día`);
+      return;
+    } catch {
+      await new Promise((ok) => setTimeout(ok, 3000));
+    }
+  }
+  console.warn('ms-catalogo: ms-inventario no respondió; la réplica de insumos se actualizará con sus avisos');
 }

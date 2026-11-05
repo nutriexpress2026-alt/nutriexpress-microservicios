@@ -10,6 +10,8 @@ import type {
 import { ErrorApp } from '../errors/error-app.js';
 import { redondearCantidad } from '../utils/cantidad.js';
 import { UNIDADES_DE_INSUMO, type TipoConservacion } from '../config/dominio.js';
+import { avisar, avisarInsumos } from './aviso.service.js';
+import * as catalogo from '../clientes/catalogo.js';
 
 /**
  * CU-INV-01 — Gestionar Insumo.
@@ -98,6 +100,7 @@ export async function listarUnidades(): Promise<UnidadMedidaDTO[]> {
 export async function crear(datos: DatosCrearInsumo): Promise<InsumoDTO> {
   await exigirUnidad(datos.idUnidad);
   const creado = await insumoModel.crear(datos);
+  await avisarInsumos([creado.id_ingrediente]);
   return aDTO(await exigirInsumo(creado.id_ingrediente));
 }
 
@@ -126,6 +129,7 @@ export async function actualizar(id: number, datos: DatosActualizarInsumo): Prom
   }
 
   await insumoModel.actualizar(id, datos);
+  await avisarInsumos([id]);
   return aDTO(await exigirInsumo(id));
 }
 
@@ -139,8 +143,9 @@ export async function actualizar(id: number, datos: DatosActualizarInsumo): Prom
 export async function eliminar(id: number): Promise<void> {
   await exigirInsumo(id);
 
+  // Las recetas son de ms-catalogo: se le pregunta (HU-09).
   const [enRecetas, movimientos, existencias] = await Promise.all([
-    insumoModel.contarUsoEnRecetas(id),
+    catalogo.contarRecetasConInsumo(id),
     insumoModel.contarMovimientos(id),
     insumoModel.contarExistencias(id),
   ]);
@@ -158,4 +163,5 @@ export async function eliminar(id: number): Promise<void> {
   }
 
   await insumoModel.eliminar(id);
+  await avisar('InsumoEliminado', { id });
 }

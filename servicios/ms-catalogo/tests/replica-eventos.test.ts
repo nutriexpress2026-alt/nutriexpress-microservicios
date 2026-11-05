@@ -14,6 +14,8 @@ import { prisma } from '../src/config/prisma.js';
 const admin = cabecera({ permisos: ['PRODUCTO_GESTIONAR'] });
 let conexion: ChannelModel;
 const avisos: Evento<{ id: number; nombre: string; tipoConservacion: string; activo: boolean }>[] = [];
+/** Los productos que crea esta prueba, para borrarlos al terminar. */
+const creados: number[] = [];
 
 async function avisoDe(id: number, condicion: (d: (typeof avisos)[number]['datos']) => boolean = () => true) {
   for (let i = 0; i < 50; i++) {
@@ -38,6 +40,8 @@ beforeAll(async () => {
 afterAll(async () => {
   await conexion.close();
   await cerrarEventos();
+  // Deja la base como estaba: las demás pruebas cuentan los productos del catálogo.
+  await prisma.producto.deleteMany({ where: { id_producto: { in: creados } } });
   await prisma.$disconnect();
   await cerrarServidorDeClave();
 });
@@ -50,6 +54,7 @@ describe('HT-03 · ProductoGuardado mantiene la réplica de ms-inventario (T2.2)
       .set(admin)
       .send({ nombre: 'Té helado de limón', precioVenta: 9, idCategoria: categorias[0].id, tipoConservacion: 'Refrigerado' })
       .expect(201);
+    creados.push(creado.body.id);
 
     const aviso = await avisoDe(creado.body.id);
     expect(aviso.origen).toBe('ms-catalogo');
@@ -68,6 +73,7 @@ describe('HT-03 · ProductoGuardado mantiene la réplica de ms-inventario (T2.2)
       .set(admin)
       .send({ nombre: 'Galleta de avena', precioVenta: 4, idCategoria: categorias[0].id, tipoConservacion: 'Seco' })
       .expect(201);
+    creados.push(creado.body.id);
 
     await request(app).put(`/api/productos/${creado.body.id}`).set(admin).send({ activo: false }).expect(200);
     const baja = await avisoDe(creado.body.id, (d) => d.activo === false);

@@ -6,6 +6,7 @@ import { usarAlmacenDeVigencias } from './middlewares/sesiones-vigentes.js';
 import { almacenDeVigencias } from './models/sesion.model.js';
 import { registroDeEventos } from './models/evento.model.js';
 import { registrarSuscripciones } from './suscripciones.js';
+import { sincronizarInsumos } from './clientes/inventario.js';
 
 // HU-05: trae las vigencias anotadas antes de un reinicio. Después, los eventos
 // que consume (suscripciones.ts) y los que publica (ProductoGuardado...). Si
@@ -16,6 +17,8 @@ await conectarEventos({ servicio: 'ms-catalogo', registro: registroDeEventos });
 
 const servidor = app.listen(env.port, () => {
   console.log(`ms-catalogo escuchando en el puerto ${env.port}`);
+  // HU-09: la réplica de insumos, por si cambió algo mientras estaba apagado.
+  void sincronizarInsumos();
 });
 
 function apagar() {

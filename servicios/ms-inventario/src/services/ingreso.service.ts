@@ -26,6 +26,7 @@ import * as loteService from './lote.service.js';
 import * as costeoService from './costeo.service.js';
 import * as devolucionService from './devolucion.service.js';
 import { ErrorApp } from '../errors/error-app.js';
+import { avisarInsumos } from './aviso.service.js';
 
 /**
  * CU-INV-03 — Gestionar Ingreso.
@@ -303,6 +304,10 @@ export async function crear(
       idNotaEgreso: datos.idNotaEgreso,
     });
   });
+
+  // HU-09: una compra recalcula el costo de sus insumos (costeo.service); el
+  // catálogo lo necesita para el costo de las recetas.
+  if (datos.motivo === 'Compra' && insumos.length > 0) await avisarInsumos(insumos.map((l) => l.idItem));
 
   return leerNota(idNota);
 }

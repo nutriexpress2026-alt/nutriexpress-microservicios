@@ -28,6 +28,7 @@ model producto {
   imagen_tipo           String?            @db.VarChar(20)
   imagen_actualizada_en DateTime?          @db.Timestamptz(6)
   categoria             categoria          @relation(fields: [id_categoria], references: [id_categoria], onDelete: NoAction, onUpdate: NoAction, map: "fk_producto_categoria")
+  receta                receta[]
   valor_nutricional     valor_nutricional?
 }
 
@@ -60,4 +61,44 @@ model evento_procesado {
 model sesion_vigente {
   clave String   @id @db.VarChar(30)
   desde DateTime @db.Timestamp(6)
+}
+
+model insumo {
+  id_ingrediente Int              @id
+  nombre         String           @db.VarChar(100)
+  unidad         String           @db.VarChar(10)
+  costo_unitario Decimal          @default(0) @db.Decimal(10, 2)
+  activo         Boolean          @default(true)
+  detalle_receta detalle_receta[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// `db pull` lee el índice parcial ux_receta_activa (una sola activa por producto) como si
+/// id_producto fuera único y deja la relación uno a uno; un producto tiene varias versiones,
+/// así que aquí va sin @unique. La regla la sigue haciendo cumplir la base (esquema.sql).
+model receta {
+  id_receta                  Int              @id @default(autoincrement())
+  id_producto                Int
+  nombre                     String           @db.VarChar(100)
+  rendimiento                Int
+  tiempo_preparacion_minutos Int              @default(0)
+  instrucciones              String?          @db.VarChar(2000)
+  divisible                  Boolean          @default(true)
+  activa                     Boolean          @default(false)
+  creada_en                  DateTime         @default(now()) @db.Timestamp(6)
+  detalle_receta             detalle_receta[]
+  producto                   producto         @relation(fields: [id_producto], references: [id_producto], onDelete: NoAction, onUpdate: NoAction, map: "fk_receta_producto")
+
+  @@index([id_producto], map: "ix_receta_producto")
+}
+
+model detalle_receta {
+  id_receta          Int
+  id_ingrediente     Int
+  cantidad_requerida Decimal @db.Decimal(12, 3)
+  insumo             insumo  @relation(fields: [id_ingrediente], references: [id_ingrediente], onDelete: NoAction, onUpdate: NoAction, map: "fk_detreceta_insumo")
+  receta             receta  @relation(fields: [id_receta], references: [id_receta], onDelete: Cascade, onUpdate: NoAction, map: "fk_detreceta_receta")
+
+  @@id([id_receta, id_ingrediente])
+  @@index([id_ingrediente], map: "ix_detreceta_insumo")
 }
