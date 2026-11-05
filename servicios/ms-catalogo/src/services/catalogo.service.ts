@@ -34,7 +34,9 @@ function aValorNutricional(
  * igual, con los productos sin existencias (RNF-DIS-01).
  */
 function aDTO(producto: ProductoPublico, stocks: Map<number, inventario.ExistenciasProducto> | null): ProductoDTO {
-  const stock = stocks?.get(producto.id_producto)?.stockTotal ?? 0;
+  // Lo disponible: el stock menos lo reservado para pedidos que esperan (HU-21).
+  const e = stocks?.get(producto.id_producto);
+  const stock = Math.max(0, (e?.stockTotal ?? 0) - (e?.reservado ?? 0));
   return {
     id: producto.id_producto,
     nombre: producto.nombre,

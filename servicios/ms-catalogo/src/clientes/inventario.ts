@@ -84,6 +84,8 @@ export async function liberar(id: string): Promise<void> {
 export interface ExistenciasProducto {
   idProducto: number;
   stockTotal: number;
+  /** HU-21 · Apartado para pedidos (reservas activas): no se le puede ofrecer a otro cliente. */
+  reservado?: number;
   existencias: { idAlmacen: number; almacen: string; stock: number }[];
   costoPromedio: number | null;
 }

@@ -24,6 +24,22 @@ router.get('/productos', async (_req, res) => {
 });
 
 /**
+ * HU-21 · El precio vigente de los productos de un pedido (?ids=1,2,3). ms-pedidos
+ * lo pide al confirmar: el precio lo fija el servidor, nunca el navegador
+ * (RNF-SEG-03), y el dueño del precio es el catálogo (RNF-ARQ-02).
+ */
+router.get('/productos/precios', async (req, res) => {
+  const ids = String(req.query.ids ?? '')
+    .split(',')
+    .map(Number)
+    .filter((n) => Number.isInteger(n) && n > 0);
+  const productos = ids.length === 0 ? [] : await productoModel.preciosDe(ids);
+  res.json(
+    productos.map((p) => ({ id: p.id_producto, nombre: p.nombre, precioVenta: Number(p.precio_venta), activo: p.activo })),
+  );
+});
+
+/**
  * HU-09 · Cuántas recetas usan un insumo. ms-inventario lo pregunta antes de
  * eliminarlo (CU-INV-01: un insumo que forma parte de una receta no se elimina).
  */

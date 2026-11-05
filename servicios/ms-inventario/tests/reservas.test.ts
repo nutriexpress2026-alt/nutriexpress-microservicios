@@ -3,6 +3,7 @@ import request from 'supertest';
 import { cabecera, cerrarServidorDeClave } from './sesion-de-prueba.js';
 import { app } from '../src/app.js';
 import { productoGuardado } from '../src/services/replica.service.js';
+import { pedidoCancelado } from '../src/services/reserva.service.js';
 import { prisma } from '../src/config/prisma.js';
 
 /**
@@ -130,6 +131,16 @@ describe('HU-17 · Reservar y liberar stock', () => {
     await request(app).post('/interno/reservas/no-existe/liberar').expect(404);
   });
 
+  it('PedidoCancelado libera la reserva del pedido (y uno repetido o sin reserva no falla)', async () => {
+    const r = await kilos(10).expect(201);
+    await kilos(1).expect(409);
+    await pedidoCancelado({ datos: { idReserva: r.body.id } });
+    expect((await request(app).get(`/interno/reservas/${r.body.id}`).expect(200)).body.estado).toBe('Liberada');
+    await pedidoCancelado({ datos: { idReserva: r.body.id } });
+    await pedidoCancelado({ datos: { idReserva: 'pedido-que-no-existe' } });
+    expect(await disponibleDeHarina()).toBe(true);
+  });
+
   it('una reserva liberada se puede volver a pedir con el mismo id', async () => {
     const id = nuevaId();
     await kilos(3, id).expect(201);
@@ -174,6 +185,9 @@ describe('HU-17 · Reservar y liberar stock', () => {
     const r = await reservar({ id: nuevaId(), productos: [{ idProducto: ID_PRODUCTO, cantidad: 5 }] }).expect(201);
     expect(r.body.productos).toEqual([{ idProducto: ID_PRODUCTO, nombre: 'Pan de prueba', cantidad: 5 }]);
     await reservar({ id: nuevaId(), productos: [{ idProducto: ID_PRODUCTO, cantidad: 1 }] }).expect(409);
+    // El catálogo ve lo reservado, y ofrece al cliente solo lo que queda disponible (HU-21).
+    const existencias = (await request(app).get('/interno/productos/existencias').query({ ids: String(ID_PRODUCTO) })).body;
+    expect(existencias[0]).toMatchObject({ stockTotal: 5, reservado: 5 });
     await request(app).post(`/interno/reservas/${r.body.id}/liberar`).expect(200);
   });
 

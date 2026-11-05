@@ -271,6 +271,13 @@ export const eliminarImagen = (id: number) =>
   });
 
 /** Lista para la réplica de ms-inventario (GET /interno/productos). */
+/** HU-21 · El precio de hoy de los productos de un pedido (lo pide ms-pedidos). */
+export const preciosDe = (ids: number[]) =>
+  prisma.producto.findMany({
+    where: { id_producto: { in: ids } },
+    select: { id_producto: true, nombre: true, precio_venta: true, activo: true },
+  });
+
 export const paraReplica = () =>
   prisma.producto.findMany({
     select: { id_producto: true, nombre: true, tipo_conservacion: true, activo: true },
