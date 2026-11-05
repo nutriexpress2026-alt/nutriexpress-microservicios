@@ -279,7 +279,15 @@ def convertir(md, listas, figuras):
                 i += 1
             imagen = re.match(r'!\[[^\]]*\]\(([^)]+)\)', lineas[i].strip())
             if imagen:  # imagen ya hecha (por ejemplo, exportada de Enterprise Architect)
-                out.append(figuras.xml(nombre, os.path.normpath(os.path.join(DOCS, imagen.group(1)))))
+                ruta = os.path.normpath(os.path.join(DOCS, imagen.group(1)))
+                if os.path.exists(ruta):
+                    out.append(figuras.xml(nombre, ruta))
+                else:
+                    # Todavía sin exportar (un diagrama de EA): un aviso en su lugar, sin número de figura.
+                    # Al volver a armar el informe con la imagen ya exportada, aparece la figura.
+                    print('falta la imagen:', imagen.group(1))
+                    out.append(pendiente(f'[Figura pendiente: {nombre}. Se exporta de Enterprise Architect '
+                                         f'con herramientas/diagramas-ea/crear-diagramas.ps1.]'))
                 i += 1
                 continue
             i += 1  # apertura del bloque mermaid

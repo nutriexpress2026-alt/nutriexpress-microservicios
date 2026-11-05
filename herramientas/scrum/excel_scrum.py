@@ -110,6 +110,7 @@ def daily_de(texto, n):
 SPRINTS = {
     1: (date(2026, 10, 17), date(2026, 10, 21), 'Infraestructura, API Gateway e Identidad: se puede iniciar sesión en el sistema.'),
     2: (date(2026, 10, 22), date(2026, 10, 28), 'Catálogo e inventario básico: se registran productos, insumos y stock.'),
+    3: (date(2026, 10, 29), date(2026, 11, 4), 'Recetas y producción, con los servicios comunicados por eventos.'),
 }
 DAILY = []
 for n in list(SPRINTS):
