@@ -130,8 +130,10 @@ Pendiente, a confirmar con el equipo antes de programar:
   `publicar(tipo, datos)`. Cada servicio consumidor tiene su cola `<servicio>.eventos` y un
   `RegistroDeEventos` en **su** base con los ids ya procesados (ms-reportes: colección
   `eventos_procesados`). Se atiende de a uno; lo que falla dos veces va a `<servicio>.eventos.fallidos`.
-  Si RabbitMQ no responde, el servicio arranca igual y se reconecta solo. Pruebas: contra RabbitMQ en
-  `127.0.0.1:5673` (`ms-reportes/tests/eventos.test.ts`).
+  Si RabbitMQ no responde, el servicio arranca igual y se reconecta solo. Pruebas: contra el RabbitMQ
+  de docker compose (`127.0.0.1:5673`) en el virtual host `pruebas`, que crea
+  `servicios/compartido/rabbit-de-pruebas.ts` (globalSetup, copiado en `tests/`): lo que publican no
+  llega a los servicios levantados ni a las réplicas de las bases de desarrollo.
 - **Sesión**: ms-identidad firma el token con RS256 y publica la clave pública en
   `/api/auth/clave-publica`; los demás la verifican con `servicios/compartido/auth.middleware.ts`
   (copiado en cada servicio). El token trae nombre, apellido, rol, cargo y permisos.
