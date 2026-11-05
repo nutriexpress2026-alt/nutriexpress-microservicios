@@ -69,6 +69,17 @@ export async function saldosDeInsumos(tx: ClientePrisma, ids: number[]) {
   );
 }
 
+/** HU-21 · Unidades de cada producto apartadas en reservas activas (pedidos que esperan). */
+export async function reservadoDeProductos(ids: number[]): Promise<Map<number, number>> {
+  if (ids.length === 0) return new Map();
+  const filas = await prisma.detalle_reserva_producto.groupBy({
+    by: ['id_producto'],
+    where: { id_producto: { in: ids }, reserva: { estado: 'Activa' } },
+    _sum: { cantidad: true },
+  });
+  return new Map(filas.map((f) => [f.id_producto, Number(f._sum.cantidad ?? 0)]));
+}
+
 /** Stock total y lo reservado en reservas activas, por producto. */
 export async function saldosDeProductos(tx: ClientePrisma, ids: number[]) {
   const [productos, stock, reservado] = await Promise.all([

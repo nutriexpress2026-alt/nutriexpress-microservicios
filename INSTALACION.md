@@ -39,8 +39,8 @@ cd nutriexpress-microservicios
 powershell -ExecutionPolicy Bypass -File herramientas\instalar.ps1
 ```
 
-El script comprueba los programas, levanta los nueve contenedores (PostgreSQL, MongoDB, Redis,
-RabbitMQ, los cuatro microservicios y el API Gateway), instala y compila el frontend, y al final
+El script comprueba los programas, levanta los once contenedores (PostgreSQL, MongoDB, Redis,
+RabbitMQ, los seis microservicios y el API Gateway), instala y compila el frontend, y al final
 verifica que cada servicio responda. Si algo falta, dice qué y cómo resolverlo; se corrige y se vuelve a ejecutar. La primera vez
 tarda de 5 a 15 minutos en el paso 3.
 

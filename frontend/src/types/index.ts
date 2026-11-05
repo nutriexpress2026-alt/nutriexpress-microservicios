@@ -115,6 +115,8 @@ export interface Direccion {
   referencia: string;
   latitud: number | null;
   longitud: number | null;
+  /** HU-22 · La que el carrito ofrece elegida. Una sola por cliente. */
+  principal?: boolean;
   vigente: boolean;
 }
 

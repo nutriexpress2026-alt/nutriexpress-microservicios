@@ -200,6 +200,20 @@ export async function liberar(id: string): Promise<ReservaDTO> {
 }
 
 /**
+ * Evento PedidoCancelado (saga del pedido, 3.1.7): libera la reserva del pedido.
+ * Repetido no hace daño (liberar dos veces no es un error), y uno cuya reserva
+ * ya no existe o ya se consumió se ignora: no hay nada que devolver.
+ */
+export async function pedidoCancelado(evento: { datos: { idReserva: string } }): Promise<void> {
+  try {
+    await liberar(evento.datos.idReserva);
+  } catch (e) {
+    if (e instanceof ErrorApp && (e.estado === 404 || e.estado === 409)) return;
+    throw e;
+  }
+}
+
+/**
  * La reserva pasa a Consumida dentro de la transacción que registra sus
  * movimientos (HU-10). Devuelve null si ya se había consumido: el evento que la
  * consume pudo llegar dos veces.

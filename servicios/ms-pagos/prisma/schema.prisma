@@ -1,0 +1,60 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["partialIndexes"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model configuracion {
+  clave           String   @id @db.VarChar(50)
+  valor           String   @db.VarChar(200)
+  actualizado_en  DateTime @default(now()) @db.Timestamp(6)
+  actualizado_por String?  @db.VarChar(120)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model evento_pago {
+  id_evento   Int      @id @default(autoincrement())
+  id_pago     Int
+  tipo        String   @db.VarChar(40)
+  origen      String   @db.VarChar(20)
+  cuerpo      String
+  recibido_en DateTime @default(now()) @db.Timestamp(6)
+  pago        pago     @relation(fields: [id_pago], references: [id_pago], onDelete: NoAction, onUpdate: NoAction, map: "fk_evento_pago")
+}
+
+model evento_procesado {
+  id_evento    String   @id @db.Uuid
+  tipo         String   @db.VarChar(60)
+  procesado_en DateTime @default(now()) @db.Timestamp(6)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model pago {
+  id_pago            Int           @id @default(autoincrement())
+  monto              Decimal       @db.Decimal(12, 2)
+  moneda             String        @default("BOB") @db.Char(3)
+  metodo             String        @db.VarChar(20)
+  estado             String        @default("Pendiente") @db.VarChar(20)
+  modo               String        @db.VarChar(10)
+  pasarela           String        @db.VarChar(30)
+  id_transaccion_ext String?       @db.VarChar(100)
+  datos_cobro        String?
+  tipo_datos         String?       @db.VarChar(4)
+  fecha_creacion     DateTime      @default(now()) @db.Timestamp(6)
+  fecha_expiracion   DateTime?     @db.Timestamp(6)
+  fecha_confirmacion DateTime?     @db.Timestamp(6)
+  id_pedido          Int?
+  id_venta           Int?
+  evento_pago        evento_pago[]
+
+  @@index([id_pedido], map: "ix_pago_pedido")
+  @@index([fecha_expiracion], map: "ix_pago_pendiente", where: raw("((estado)::text = 'Pendiente'::text)"))
+}
+
+model sesion_vigente {
+  clave String   @id @db.VarChar(30)
+  desde DateTime @db.Timestamp(6)
+}

@@ -1,5 +1,5 @@
-﻿# Crea en Enterprise Architect los diagramas del informe (1.8, 2.4, 2.5, 3.1.2, 3.1.7, 3.2.3, 3.3.3
-# y 3.4.3) y exporta cada uno como PNG a docs/diagramasEA/imagenes.
+﻿# Crea en Enterprise Architect los diagramas del informe (1.8, 2.4, 2.5, 3.1.2, 3.1.7, 3.2.3, 3.3.3,
+# 3.4.3 y 3.5.3) y exporta cada uno como PNG a docs/diagramasEA/imagenes.
 #
 # Uso (PowerShell, con EA instalado):
 #   Invoke-Expression (Get-Content -Raw -Encoding UTF8 .\crear-diagramas.ps1)
@@ -627,6 +627,108 @@ try {
     "Flechas abiertas: eventos por RabbitMQ; llenas: llamadas REST.")
   Poner $d $nota 160 700 480 60 | Out-Null
   $diagramas += ,@($d, "3.4.3-finalizar-orden.png")
+
+  # ============================================================ Sprint 4
+  $sprint4 = $modelo.Packages.AddNew("Sprint 4", ""); $sprint4.Update() | Out-Null
+
+  # --- 3.5.3 ms-pedidos
+  $p = $sprint4.Packages.AddNew("3.5.3 Clases de ms-pedidos", ""); $p.Update() | Out-Null
+  $d = $p.Diagrams.AddNew("Clases de ms-pedidos", "Logical"); $d.Update() | Out-Null
+  $ubic = Clase "Ubicacion" @("idUbicacion: int", "idUsuario: int", "etiqueta: string", "calle: string", "numero: string",
+    "referencia: string", "latitud: decimal", "longitud: decimal", "principal: bool", "vigente: bool",
+    "fechaRegistro: datetime") 20 40 190
+  $ped = Clase "Pedido" @("idPedido: int", "fecha: datetime", "estadoPedido: string", "estadoPago: string",
+    "metodoPago: string", "referenciaPago: string", "total: decimal", "fechaEntrega: datetime",
+    "motivoCancelacion: string", "idUsuario: int", "clienteNombre: string", "idReserva: string", "idPago: int",
+    "idRepartidor: int", "repartidorNombre: string") 320 40 220
+  $detPed = Clase "DetallePedido" @("idProducto: int", "nombreProducto: string", "cantidad: int",
+    "precioUnitario: decimal") 640 70 200
+  $posic = Clase "PosicionRepartidor" @("idEmpleado: int", "latitud: decimal", "longitud: decimal", "precisionM: decimal",
+    "actualizadaEn: datetime") 640 250 200
+  $eventoPed = Clase "EventoProcesado" @("idEvento: uuid", "tipo: string", "procesadoEn: datetime") 900 40 180
+  $sesionPed = Clase "SesionVigente" @("clave: string", "desde: datetime") 900 180 180
+  Asociar $ped $ubic "0..*" "1" "se entrega en"
+  Asociar $detPed $ped "1..*" "1"
+  $nota = Nuevo $p "" "Note" -notas ("Base pedidos_db (PostgreSQL). Sin claves foráneas a otros servicios: el cliente " +
+    "(idUsuario), el producto, la reserva (ms-inventario), el cobro (ms-pagos) y el repartidor se guardan por su número, " +
+    "y el nombre y el precio del producto se copian al confirmar, para que la historia no cambie con el catálogo. " +
+    "Una sola Ubicacion principal por cliente. PosicionRepartidor la escribe el repartidor (HU-24, Sprint 5).")
+  Poner $d $nota 20 420 1060 60 | Out-Null
+  $diagramas += ,@($d, "3.5.3-clases-ms-pedidos.png")
+
+  # --- 3.5.3 ms-pagos
+  $p = $sprint4.Packages.AddNew("3.5.3 Clases de ms-pagos", ""); $p.Update() | Out-Null
+  $d = $p.Diagrams.AddNew("Clases de ms-pagos", "Logical"); $d.Update() | Out-Null
+  $pago = Clase "Pago" @("idPago: int", "monto: decimal", "moneda: string", "metodo: string", "estado: string",
+    "modo: string", "pasarela: string", "idTransaccionExt: string", "datosCobro: string", "tipoDatos: string",
+    "fechaCreacion: datetime", "fechaExpiracion: datetime", "fechaConfirmacion: datetime", "idPedido: int",
+    "idVenta: int") 20 40 220
+  $evPago = Clase "EventoPago" @("idEvento: int", "tipo: string", "origen: string", "cuerpo: string",
+    "recibidoEn: datetime") 340 40 200
+  $config = Clase "Configuracion" @("clave: string", "valor: string", "actualizadoEn: datetime",
+    "actualizadoPor: string") 340 230 200
+  $eventoPag = Clase "EventoProcesado" @("idEvento: uuid", "tipo: string", "procesadoEn: datetime") 620 40 180
+  $sesionPag = Clase "SesionVigente" @("clave: string", "desde: datetime") 620 180 180
+  Asociar $evPago $pago "0..*" "1" "bitácora de"
+  $nota = Nuevo $p "" "Note" -notas ("Base pagos_db (PostgreSQL). Un cobro es de un pedido (ms-pedidos) o de una venta " +
+    "(ms-ventas, Sprint 5), por su número. modo congela si fue Simulado o Real (HU-27); Configuracion guarda el modo " +
+    "vigente y quién lo cambió. EventoPago es la bitácora de todo lo que le pasó al cobro, avisos de la pasarela incluidos.")
+  Poner $d $nota 20 330 780 60 | Out-Null
+  $diagramas += ,@($d, "3.5.3-clases-ms-pagos.png")
+
+  # --- 3.5.3 Saga del pedido pagado en línea (secuencia)
+  $p = $sprint4.Packages.AddNew("3.5.3 Pago en línea de un pedido", ""); $p.Update() | Out-Null
+  $d = $p.Diagrams.AddNew("Pago en línea de un pedido", "Sequence"); $d.Update() | Out-Null
+  $L = @{}
+  $x = 40
+  foreach ($v in @(@("Cliente", "Actor"), @("ms-pedidos", "Sequence"), @("ms-catalogo", "Sequence"),
+      @("ms-inventario", "Sequence"), @("ms-pagos", "Sequence"))) {
+    $e = Nuevo $p $v[0] $v[1]
+    Poner $d $e $x 40 110 760 | Out-Null
+    $L[$v[0]] = $e
+    $x += 240
+  }
+  $mensajes = @(
+    @("Cliente", "ms-pedidos", "confirmar(items, dirección, QR)", "llamada"),
+    @("ms-pedidos", "ms-catalogo", "precios(idsProductos) [REST]", "llamada"),
+    @("ms-catalogo", "ms-pedidos", "precios(nombre, precio, activo)", "retorno"),
+    @("ms-pedidos", "ms-inventario", "reservar(pedido-uuid, productos) [REST]", "llamada"),
+    @("ms-inventario", "ms-pedidos", "reserva(Activa)", "retorno"),
+    @("ms-pedidos", "ms-pedidos", "crear pedido(Pendiente de pago)", "interna"),
+    @("ms-pedidos", "ms-pagos", "abrirCobro(idPedido, monto, QR) [REST]", "llamada"),
+    @("ms-pagos", "ms-pedidos", "cobro(QR, vence en 15 min)", "retorno"),
+    @("ms-pedidos", "Cliente", "pedido(cobro con QR)", "retorno"),
+    @("Cliente", "ms-pagos", "consultarCobro(idPago)", "llamada"),
+    @("ms-pagos", "ms-pedidos", "PagoConfirmado(idPedido, referencia)", "evento"),
+    @("ms-pedidos", "ms-pedidos", "pasar a Recibido(Pagado)", "interna"),
+    @("ms-pagos", "ms-pedidos", "PagoFallido(idPedido, Vencido)", "evento"),
+    @("ms-pedidos", "ms-pedidos", "cancelar(Sin pago)", "interna"),
+    @("ms-pedidos", "ms-inventario", "PedidoCancelado(idPedido, idReserva)", "evento")
+  )
+  $n = 1
+  foreach ($m in $mensajes) {
+    $c = $L[$m[0]].Connectors.AddNew($m[2], "Sequence")
+    $c.SupplierID = $L[$m[1]].ElementID
+    $c.SequenceNo = $n
+    $c.Update() | Out-Null
+    $tipo = $m[3]
+    if ($tipo -ne "llamada") { $c.Properties.Item("Kind").Value = "Signal" }
+    $c.Properties.Item("IsAsync").Value = ($tipo -eq "evento")
+    $c.Properties.Item("IsReturn").Value = ($tipo -eq "retorno")
+    $c.Update() | Out-Null
+    $n++
+  }
+  $alt = Nuevo $p "" "InteractionFragment" 0
+  $op1 = $alt.Partitions.AddNew("el cliente pagó", "")
+  $op1.Size = 104
+  $op2 = $alt.Partitions.AddNew("venció el plazo", "")
+  $alt.Update() | Out-Null
+  Poner $d $alt 20 446 1180 205 | Out-Null
+  $nota = Nuevo $p "" "Note" -notas ("Saga coreografiada (HU-21, HU-26). Confirmar usa REST porque el cliente necesita la " +
+    "respuesta en el momento (si hay stock y cuál es su QR); cada paso tiene su compensación. El desenlace del cobro " +
+    "llega por eventos de RabbitMQ (flechas abiertas). En efectivo no hay cobro: el pedido nace Recibido.")
+  Poner $d $nota 200 700 760 60 | Out-Null
+  $diagramas += ,@($d, "3.5.3-pago-en-linea.png")
 
   $proyecto = $r.GetProjectInterface()
   foreach ($par in $diagramas) {

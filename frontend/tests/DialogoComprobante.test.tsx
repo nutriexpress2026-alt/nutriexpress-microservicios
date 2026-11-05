@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { DialogoComprobante } from '@/components/pedidos/DialogoComprobante';
 import type { ComprobantePedido } from '@/types';
+import { SPRINT_ACTUAL } from '@/lib/modulos';
 
 /**
  * El comprobante del pedido pagado (RF-VEN-06 llevado al portal): el mismo
@@ -63,11 +64,21 @@ describe('DialogoComprobante', () => {
     expect(screen.queryByText(/Pago acreditado/)).not.toBeInTheDocument();
   });
 
-  it('tras pagar, confirma el pago y avisa que la copia va al correo', async () => {
+  it('tras pagar, confirma el pago', async () => {
     render(<DialogoComprobante idPedido={30} recienPagado onCerrar={vi.fn()} />);
-
     expect(await screen.findByText(/Pago acreditado/)).toBeInTheDocument();
-    expect(screen.getByText(/Le enviamos una copia/)).toBeInTheDocument();
+  });
+
+  // El envío por correo llega con ms-reportes (HU-32): antes, no se promete.
+  it.runIf(SPRINT_ACTUAL >= 6)('tras pagar, avisa que la copia va al correo', async () => {
+    render(<DialogoComprobante idPedido={30} recienPagado onCerrar={vi.fn()} />);
+    expect(await screen.findByText(/Le enviamos una copia/)).toBeInTheDocument();
+  });
+
+  it.runIf(SPRINT_ACTUAL < 6)('antes del Sprint 6 no promete una copia por correo', async () => {
+    render(<DialogoComprobante idPedido={30} recienPagado onCerrar={vi.fn()} />);
+    await screen.findByText(/Pago acreditado/);
+    expect(screen.queryByText(/Le enviamos una copia/)).not.toBeInTheDocument();
   });
 
   it('«Enviar a mi correo» dice a qué correo lo mandó', async () => {

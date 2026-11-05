@@ -1,0 +1,50 @@
+{
+  "name": "ms-pagos",
+  "version": "1.0.0",
+  "description": "Microservicio de pagos de NutriExpress: cobros con Libélula y pasarela simulada, avisos de pago, vencimiento y modo de cobro",
+  "type": "module",
+  "private": true,
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "db:init": "tsx prisma/inicializar.ts",
+    "db:pull": "prisma db pull",
+    "db:generate": "prisma generate"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "7.10.0",
+    "@prisma/client": "7.10.0",
+    "amqplib": "2.2.1",
+    "dotenv": "17.4.2",
+    "express": "5.2.1",
+    "helmet": "8.3.0",
+    "jsonwebtoken": "9.0.3",
+    "pg": "8.23.0",
+    "prisma": "7.10.0",
+    "qrcode": "1.5.4",
+    "tsx": "4.23.13",
+    "zod": "4.5.4"
+  },
+  "devDependencies": {
+    "@types/express": "5.0.6",
+    "@types/jsonwebtoken": "9.0.10",
+    "@types/node": "22.20.1",
+    "@types/pg": "8.23.1",
+    "@types/qrcode": "1.5.6",
+    "@types/supertest": "7.2.1",
+    "supertest": "7.2.2",
+    "typescript": "6.0.3",
+    "vitest": "4.1.11"
+  },
+  "allowScripts": {
+    "@prisma/engines@7.10.0": true,
+    "esbuild@0.28.2": true,
+    "prisma@7.10.0": true
+  }
+}

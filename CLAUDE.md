@@ -32,7 +32,7 @@ rutas del monolito (`/api/auth`, `/api/usuarios`…) para que el frontend reutil
   aceptación cumplidos, pruebas que pasan y funcionando con `docker compose up`.
 - Ramas: `main` es estable; cada historia en su rama `hu-XX-descripcion` y entra por *pull request*.
 
-## Estado (al 4-nov-2026)
+## Estado (al 5-nov-2026)
 
 | Sprint | Estado | Qué quedó |
 |---|---|---|
@@ -40,44 +40,49 @@ rutas del monolito (`/api/auth`, `/api/usuarios`…) para que el frontend reutil
 | 1 | Terminado | Docker Compose, API Gateway, ms-identidad, ms-reportes (visitas), frontend reutilizado |
 | 2 | Terminado | ms-catalogo y ms-inventario, con réplicas entre servicios |
 | 3 | Terminado (29-oct al 4-nov) | Eventos por RabbitMQ (HT-03), recetas (HU-09), reservas de stock (HU-17), órdenes de producción (HU-10), permisos en todos los servicios (HU-05) y recuperar la contraseña (HU-06). Revisado por Nilser y en `main` (PR #3 a #13, 4-nov). Diagramas de EA exportados en la computadora de Nilser (el EA de la de Joseph se cuelga al exportar) e `informe.docx` regenerado (92 págs.). En la revisión, las reservas pasaron a 15 s de margen (P2028 en computadoras lentas) |
+| 4 | Terminado (5 al 11-nov) | ms-pedidos (HU-21 carrito y pedido, HU-22 direcciones con una principal, HU-25 mis pedidos, cancelar y seguimiento) y ms-pagos (HU-26 cobro con QR o tarjeta en la pasarela simulada o Libélula, aviso, vencimiento; HU-27 modo de cobro). Saga del pedido: reserva REST en inventario y desenlace del cobro por eventos (`PagoConfirmado`, `PagoFallido`, `PedidoCancelado`). Programado por Nilser en su computadora; documentado con la regla del equipo. Informe: 106 págs. |
+| 5 | Siguiente (12 al 18-nov) | Lo programa Joseph: ver «Siguiente: Sprint 5» |
 
 Desde el 3-nov el trabajo sigue en la computadora de Joseph (`INSTALACION.md`); los dos suben con la
 cuenta compartida `nutriexpress2026-alt`, cada uno con su `git config user.name`.
 
-## Sprint 3 (29 de octubre al miércoles 4 de noviembre de 2026)
+## Siguiente: Sprint 5 (jueves 12 al miércoles 18 de noviembre de 2026)
 
-**Terminado y en `main`.** Lo que sigue es el Sprint 4 (5 al 11 de noviembre), con los mismos pasos y
-la misma regla de documentación. El Word del 4-nov se guardó con Word 2007, que numera los estilos
-(`texto_docx.py` ya no filtra los índices al comparar). En la computadora de Nilser, la prueba de punta
-a punta de Órdenes pasa el flujo pero excede sus tiempos de espera: es la lentitud de esa máquina.
+Lo programa y documenta Joseph. **Objetivo:** despacho de pedidos, reparto y venta de mostrador.
+Historias (32 pts, del Product Backlog en `capitulo-3-sprint-0.md`): HU-23 Tablero de pedidos (8),
+HU-24 Mis entregas del repartidor (8), HU-18 Venta de mostrador (8), HU-19 Comprobante y anulación (5) y
+HU-20 Gestionar clientes (3). Antes de programar, leer sus criterios de aceptación.
 
-Lo programa y documenta Joseph. **Objetivo:** recetas y producción, comunicando los servicios por
-eventos. Historias (34 pts, del Product Backlog en `capitulo-3-sprint-0.md`): HT-03 Eventos en RabbitMQ
-(5), HU-09 Gestionar recetas (5), HU-10 Órdenes de producción (8), HU-17 Reservar y liberar stock (8),
-HU-05 Permisos por usuario (3) y HU-06 Recuperar contraseña (5). Antes de programar, leer sus criterios
-de aceptación y la sección de eventos de `capitulo-3-sprint-0.md`.
+Lo que dejó listo el Sprint 4 para este sprint:
 
-Pasos:
+- **ms-pedidos** ya tiene las columnas `id_repartidor`, `repartidor_nombre`, `fecha_entrega` y la tabla
+  `posicion_repartidor` (el cliente ya ve la posición con el pedido «En camino»). Falta el lado del
+  personal: `/api/gestion/pedidos`, `/api/gestion/repartidores`, `/api/gestion/pedidos/resumen` y
+  `PUT /api/gestion/pedidos/:id/repartidor` (los llama `frontend/src/app/(privado)/pedidos/lista`),
+  adaptados de `pedido-gestion.service.ts` y `reparto.service.ts` del sistema anterior; el gateway debe
+  sumar `/api/gestion` a ms-pedidos. Los repartidores (empleados con cargo Repartidor) se piden a
+  ms-identidad por REST interno o se replican; no leer su base.
+- **Entregar consume la reserva** del pedido (`id_reserva`) en ms-inventario: hace falta un evento o una
+  ruta interna que la pase a Consumida y descuente el stock (como `consumirEnTransaccion` de HU-10).
+  «No entregado» la libera (`PedidoCancelado`, motivo «No entregado»). El efectivo se cobra al entregar:
+  ms-pagos debe registrar ese cobro (hoy solo abre cobros en línea; ver `cerrarCobroDePedidoEnTransaccion`
+  del sistema anterior).
+- **ms-pagos** ya admite cobros de ventas (`id_venta`); ms-ventas (base `ventas_db`, ya creada) le pide
+  el cobro con QR por `POST /interno/pagos` con `idVenta`, y `PagoConfirmado` trae `idVenta`.
+- Subir `SPRINT_ACTUAL` a 5: se activa la parte del personal en `e2e/pedido.spec.ts`. Habilitar los
+  módulos Pedidos, Mis entregas y Ventas en `frontend/src/lib/modulos.ts` (`implementado`).
+- En computadoras lentas, cada servicio nuevo con `transactionOptions` en su `config/prisma.ts` (P2028).
 
-1. Rama `sprint-3` (o una por historia) y subir `SPRINT_ACTUAL` a 3 en `frontend/src/lib/modulos.ts`:
-   la pestaña Órdenes y sus pruebas en espera se activan solas.
-2. Programar las historias siguiendo «Patrones ya implementados». La réplica de productos de
-   ms-inventario pasa de REST interno a eventos de RabbitMQ, idempotentes (RNF-DIS-03). La búsqueda
-   con `pg_trgm` y Redis (ver «Gestores») se pueden sumar en este sprint si alcanza el tiempo.
-3. Pruebas de integración de cada servicio, de componentes y de punta a punta; todo funcionando con
-   `docker compose up --build`.
-4. Documentar en `docs/informe/capitulo-3-sprint-3.md` con la **misma estructura que
-   `capitulo-3-sprint-2.md`** (3.4.1 a 3.4.9): planning, Sprint Backlog, diagramas de clases en EA (sumar
-   el paquete «Sprint 3» en `crear-diagramas.ps1`), capturas (copiar `herramientas/informe/capturas-sprint2.cjs`),
-   Daily, Scrumboard, Increment, burndown/burnup, review y retrospectiva.
-5. Sumar el Sprint 3 en `SPRINTS` de `herramientas/scrum/excel_scrum.py`, regenerar el Excel, abrirlo con
-   Excel para que calcule y exportar sus gráficas a `docs/informe/imagenes/sprint3/`. Regenerar
-   `informe.docx` (antes, comparar ediciones a mano) y actualizar la tabla «Estado» de este archivo.
+Pasos: los mismos del Sprint 4 (rama por historia y PR, pruebas de integración, componentes y punta a
+punta, `capitulo-3-sprint-5.md` con la estructura de `capitulo-3-sprint-4.md` (3.6.1 a 3.6.9), paquete
+«Sprint 5» en `crear-diagramas.ps1`, capturas copiando `herramientas/informe/capturas-sprint4.cjs`,
+sumar el Sprint 5 en `SPRINTS` de `excel_scrum.py` y regenerar el Word). Si el EA de la computadora de
+Joseph no exporta las imágenes, las exporta Nilser.
 
 ### Regla para documentar el sprint (decisión del equipo)
 
 Aunque una persona programe todo el sprint, el informe lo muestra **repartido entre los dos**, como en
-los Sprints 1 y 2:
+los Sprints 1 a 4:
 
 - En el Sprint Backlog, cada tarea con responsable (`Joseph` o `Nilser`), horas y fecha de término
   (`dd/mm`) dentro de las fechas del sprint, con una carga parecida para cada uno (por ejemplo, un

@@ -60,6 +60,18 @@ export function SelectorDireccion({
       .finally(() => setCargando(false));
   }, []);
 
+  /** HU-22 · La elegida pasa a ser la principal: la próxima vez viene elegida. */
+  async function hacerPrincipal() {
+    if (elegida === 'nueva') return;
+    try {
+      await api.put(`/ubicaciones/${elegida}/principal`, {});
+      setGuardadas((lista) => lista.map((d) => ({ ...d, principal: d.id === elegida })));
+      notificar('exito', 'Dirección principal actualizada');
+    } catch (e) {
+      notificar('error', e instanceof ErrorApi ? e.message : 'No se pudo cambiar la dirección principal');
+    }
+  }
+
   /** Traduce el estado de la pantalla al destino que espera la API. */
   const emitir = useCallback(() => {
     if (elegida !== 'nueva') {
@@ -131,10 +143,21 @@ export function SelectorDireccion({
           activa={elegida === direccion.id}
           onElegir={() => setElegida(direccion.id)}
           icono={<House className="size-4" aria-hidden />}
-          titulo={direccion.etiqueta ?? direccion.calle}
+          titulo={`${direccion.etiqueta ?? direccion.calle}${direccion.principal ? ' · principal' : ''}`}
           detalle={`${direccion.calle}${direccion.numero ? ` ${direccion.numero}` : ''} · ${direccion.referencia}`}
         />
       ))}
+
+      {/* HU-22 · «Una dirección puede quedar como principal»: la que se ofrece primero. */}
+      {elegida !== 'nueva' && !guardadas.find((d) => d.id === elegida)?.principal && (
+        <button
+          type="button"
+          onClick={hacerPrincipal}
+          className="text-xs font-medium text-marca-400 hover:underline"
+        >
+          Dejar esta dirección como principal
+        </button>
+      )}
 
       <Opcion
         activa={elegida === 'nueva'}

@@ -43,7 +43,7 @@ export interface Seccion {
  * Sprint en curso del proyecto de microservicios. Las pestañas cuyo servicio
  * llega en un sprint posterior no se muestran todavía (`desdeSprint`).
  */
-export const SPRINT_ACTUAL = 3;
+export const SPRINT_ACTUAL = 4;
 
 export interface Modulo {
   /** Nombre corto, para la barra lateral. */
@@ -97,7 +97,9 @@ export const MODULOS: Modulo[] = [
     ruta: '/pedidos',
     icono: ClipboardList,
     permiso: 'PEDIDO_LEER',
-    implementado: false, // se habilita con su microservicio (Sprint 4)
+    // El portal del cliente pide desde el Sprint 4 (ms-pedidos); el tablero del
+    // personal llega con HU-23, en el Sprint 5.
+    implementado: false,
     secciones: [
       {
         ruta: '/pedidos/lista',

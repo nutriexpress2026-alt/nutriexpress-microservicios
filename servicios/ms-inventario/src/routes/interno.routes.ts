@@ -2,6 +2,7 @@ import { Router } from 'express';
 import * as productoModel from '../models/producto.model.js';
 import * as insumoModel from '../models/insumo.model.js';
 import * as reservaService from '../services/reserva.service.js';
+import * as reservaModel from '../models/reserva.model.js';
 import { validarCuerpo } from '../middlewares/validate.middleware.js';
 import { esquemaReserva, esquemaVerificar } from '../dtos/reserva.dto.js';
 import { soloRedInterna } from '../middlewares/auth.middleware.js';
@@ -33,7 +34,11 @@ router.get('/productos/existencias', async (req, res) => {
     .split(',')
     .map(Number)
     .filter((n) => Number.isInteger(n) && n > 0);
-  const [filas, costos] = await Promise.all([productoModel.existenciasDe(ids), productoModel.costosPromedio(ids)]);
+  const [filas, costos, reservado] = await Promise.all([
+    productoModel.existenciasDe(ids),
+    productoModel.costosPromedio(ids),
+    reservaModel.reservadoDeProductos(ids),
+  ]);
   res.json(
     ids.map((id) => {
       const existencias = filas
@@ -42,6 +47,8 @@ router.get('/productos/existencias', async (req, res) => {
       return {
         idProducto: id,
         stockTotal: existencias.reduce((t, e) => t + e.stock, 0),
+        // HU-21: lo apartado para pedidos que todavía no se entregaron.
+        reservado: reservado.get(id) ?? 0,
         existencias,
         costoPromedio: costos.get(id) ?? null,
       };

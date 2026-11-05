@@ -77,4 +77,11 @@ describe('Rutas internas (para ms-inventario)', () => {
   it('no responde si la petición viene del API Gateway', async () => {
     await request(app).get('/interno/productos').set('X-Forwarded-For', '1.2.3.4').expect(404);
   });
+
+  it('HU-21 · da el precio vigente de los productos de un pedido (para ms-pedidos)', async () => {
+    const [primero] = (await request(app).get('/interno/productos').expect(200)).body;
+    const r = await request(app).get(`/interno/productos/precios?ids=${primero.id},999999`).expect(200);
+    expect(r.body).toEqual([{ id: primero.id, nombre: primero.nombre, precioVenta: expect.any(Number), activo: true }]);
+    expect((await request(app).get('/interno/productos/precios?ids=').expect(200)).body).toEqual([]);
+  });
 });
