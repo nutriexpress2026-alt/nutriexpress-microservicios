@@ -7,6 +7,18 @@ import { validarCuerpo } from '../middlewares/validate.middleware.js';
 import { esquemaReserva, esquemaVerificar } from '../dtos/reserva.dto.js';
 import { soloRedInterna } from '../middlewares/auth.middleware.js';
 import { ErrorApp } from '../errors/error-app.js';
+import * as salidaService from '../services/salida.service.js';
+import { z } from 'zod';
+
+const esquemaEmpleado = z.object({ id: z.number().int().positive(), nombre: z.string().min(1), apellido: z.string().min(1) });
+const esquemaConsumir = z.object({ observacion: z.string().trim().min(1).max(200), empleado: esquemaEmpleado });
+const esquemaDevolver = z.object({
+  referencia: z.string().trim().min(1).max(100),
+  lineas: z
+    .array(z.object({ idProducto: z.number().int().positive(), idAlmacen: z.number().int().positive(), cantidad: z.number().int().positive() }))
+    .min(1),
+  empleado: esquemaEmpleado,
+});
 
 /**
  * Rutas internas para ms-catalogo, dentro de la red de Docker. Se montan fuera
@@ -72,6 +84,19 @@ router.post('/reservas', validarCuerpo(esquemaReserva), async (req, res) => {
 
 router.get('/reservas/:id', async (req, res) => {
   res.json(await reservaService.obtener(String(req.params.id)));
+});
+
+/**
+ * HU-18, HU-24 · Una venta de mostrador o un pedido entregado consume su reserva:
+ * nota de egreso con motivo Venta. Repetirlo no descuenta dos veces.
+ */
+router.post('/reservas/:id/consumir', validarCuerpo(esquemaConsumir), async (req, res) => {
+  res.json(await salidaService.consumirParaVenta(String(req.params.id), req.body));
+});
+
+/** HU-19 · Una venta anulada devuelve sus productos a los almacenes de los que salieron. */
+router.post('/devoluciones', validarCuerpo(esquemaDevolver), async (req, res) => {
+  res.status(201).json(await salidaService.devolver(req.body));
 });
 
 router.post('/reservas/:id/liberar', async (req, res) => {

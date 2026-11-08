@@ -157,6 +157,15 @@ export async function existenciasPorAlmacen(tx: ClientePrisma, idIngrediente: nu
   return filas.map((f) => ({ idAlmacen: f.id_almacen, stock: Number(f.stock_actual) }));
 }
 
+/** HU-18, HU-24 · Existencias de un producto terminado por almacén, del que más tiene al que menos. */
+export async function existenciasProductoPorAlmacen(tx: ClientePrisma, idProducto: number) {
+  const filas = await tx.producto_almacen.findMany({
+    where: { id_producto: idProducto, stock_actual: { gt: 0 } },
+    orderBy: [{ stock_actual: 'desc' }, { id_almacen: 'asc' }],
+  });
+  return filas.map((f) => ({ idAlmacen: f.id_almacen, stock: Number(f.stock_actual) }));
+}
+
 /** Almacenes de un tipo de conservación, el preferido primero. */
 export const almacenesDeTipo = (tx: ClientePrisma, tipo: string) =>
   tx.almacen.findMany({

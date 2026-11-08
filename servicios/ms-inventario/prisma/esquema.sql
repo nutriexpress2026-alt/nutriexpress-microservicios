@@ -294,3 +294,9 @@ CREATE TABLE IF NOT EXISTS detalle_reserva_producto (
 CREATE INDEX IF NOT EXISTS ix_reserva_estado      ON reserva(estado);
 CREATE INDEX IF NOT EXISTS ix_detresins_insumo    ON detalle_reserva_insumo(id_ingrediente);
 CREATE INDEX IF NOT EXISTS ix_detresprod_producto ON detalle_reserva_producto(id_producto);
+
+-- HU-18, HU-24 (Sprint 5) · Las ventas de mostrador y los pedidos entregados salen
+-- con motivo Venta. Se vuelve a crear la restricción para sumarlo (idempotente).
+ALTER TABLE nota_egreso DROP CONSTRAINT IF EXISTS ck_notaegr_motivo;
+ALTER TABLE nota_egreso ADD CONSTRAINT ck_notaegr_motivo
+    CHECK (motivo IN ('Produccion','Merma','Ajuste','Devolucion','Venta'));
