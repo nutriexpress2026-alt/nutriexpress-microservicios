@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { BotonBuscar, ProveedorBuscador } from '@/components/buscador/BuscadorGeneral';
 import type { BusquedaGeneral } from '@/types';
+import { SPRINT_ACTUAL } from '@/lib/modulos';
 
 /**
  * Buscador general del escritorio del personal.
@@ -139,7 +140,8 @@ describe('BuscadorGeneral', () => {
     dibujar();
     await usuario.click(screen.getByRole('button', { name: /Buscar/ }));
 
-    // «io» coincide con Inicio y con las pestañas de Inventario: la segunda, Stock, se elige con ↓.
+    // «io» coincide con Inicio y, desde el Sprint 5, con los Pedidos (alias «domicilio»):
+    // la segunda opción se elige con ↓.
     await usuario.type(caja(), 'io');
     const opciones = screen.getAllByRole('option');
     expect(opciones.length).toBeGreaterThan(1);
@@ -148,7 +150,7 @@ describe('BuscadorGeneral', () => {
     expect(screen.getAllByRole('option')[1]).toHaveAttribute('aria-selected', 'true');
     await usuario.keyboard('{Enter}');
     expect(empujar).toHaveBeenCalledTimes(1);
-    expect(empujar).toHaveBeenCalledWith('/inventario/stock');
+    expect(empujar).toHaveBeenCalledWith(SPRINT_ACTUAL >= 5 ? '/pedidos/lista' : '/inventario/stock');
   });
 
   it('dice cuando nada coincide', async () => {

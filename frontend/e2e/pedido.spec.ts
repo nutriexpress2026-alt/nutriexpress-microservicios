@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { ADMIN, iniciarSesion, registrarCliente } from './ayudantes';
+import { ADMIN, API, iniciarSesion, registrarCliente } from './ayudantes';
 import { SPRINT_ACTUAL } from '../src/lib/modulos';
 
 /**
@@ -80,5 +80,58 @@ test.describe('Pedido a domicilio', () => {
     const comprobante = page.getByRole('dialog', { name: 'Comprobante' });
     await expect(comprobante.getByText('Pago acreditado. Su pedido entró a preparación')).toBeVisible({ timeout: 45_000 });
     await expect(comprobante.getByText(/Pedido #\d{5}/)).toBeVisible({ timeout: 15_000 });
+  });
+});
+
+/** El repartidor del seed, de turno para que el tablero lo sugiera (HU-23). */
+const REPARTIDOR = { usuario: 'repartidor', contrasena: 'Reparto1234!' };
+
+test.describe('Despacho del pedido', () => {
+  // El tablero y «Mis entregas» llegan en el Sprint 5.
+  test.skip(SPRINT_ACTUAL < 5, 'El despacho se implementa en el Sprint 5');
+
+  test('el personal lo prepara y lo asigna, y el repartidor lo entrega cobrando el efectivo', async ({ page, request }) => {
+    test.setTimeout(180_000);
+    const cliente = await registrarCliente(request);
+    await iniciarSesion(page, cliente.usuario, cliente.contrasena);
+    await expect(page).toHaveURL(/\/portal/);
+    await alCarrito(page);
+    await page.getByRole('button', { name: 'Confirmar pedido' }).click();
+    const aviso = page.getByText(/Pedido #(\d{5}) confirmado/);
+    await expect(aviso).toBeVisible({ timeout: 45_000 });
+    const numero = (await aviso.textContent())!.match(/#(\d{5})/)![1];
+
+    // El repartidor marca que está de turno (por la API: no es lo que se prueba aquí).
+    const sesion = await (await request.post(`${API}/auth/login`, { data: { nombreUsuario: REPARTIDOR.usuario, contrasena: REPARTIDOR.contrasena } })).json();
+    const turno = await request.put(`${API}/gestion/disponibilidad`, { headers: { Authorization: `Bearer ${sesion.token}` }, data: { disponible: true } });
+    expect(turno.ok(), await turno.text()).toBeTruthy();
+
+    // HU-23: el administrador lo pone en preparación, acepta la sugerencia y lo despacha.
+    await page.evaluate(() => localStorage.clear());
+    await iniciarSesion(page, ADMIN.usuario, ADMIN.contrasena);
+    await expect(page).toHaveURL(/\/inicio$/);
+    await page.goto(`/pedidos/lista?pedido=${Number(numero)}`);
+    const panel = page.getByRole('dialog', { name: `Pedido #${numero}` });
+    await panel.getByRole('button', { name: 'Poner en preparación' }).click();
+    await panel.getByText('Sugerencia').waitFor({ timeout: 30_000 });
+    await panel.getByRole('button', { name: 'Asignar' }).first().click();
+    await expect(panel.getByText('Marcos Vargas')).toBeVisible({ timeout: 30_000 });
+    await panel.getByRole('button', { name: 'Marcar en camino' }).click();
+    await expect(panel.getByRole('button', { name: 'Registrar entrega' })).toBeVisible({ timeout: 30_000 });
+
+    // HU-24: el repartidor lo ve en «Mis entregas» y lo cierra cobrando el efectivo.
+    await page.evaluate(() => localStorage.clear());
+    await iniciarSesion(page, REPARTIDOR.usuario, REPARTIDOR.contrasena);
+    await page.waitForURL((url) => !url.pathname.startsWith('/login'), { timeout: 45_000 });
+    await page.goto('/entregas');
+    const tarjeta = page.getByRole('listitem').filter({ hasText: `#${numero}` });
+    await tarjeta.getByRole('button', { name: 'Registrar entrega' }).click();
+    await page.getByRole('button', { name: 'Sí, entregado y cobrado' }).click();
+    await expect(tarjeta).toHaveCount(0, { timeout: 30_000 });
+
+    // El cliente lo ve entregado y pagado.
+    const sesionCliente = await (await request.post(`${API}/auth/login`, { data: { nombreUsuario: cliente.usuario, contrasena: cliente.contrasena } })).json();
+    const pedido = await (await request.get(`${API}/pedidos/${Number(numero)}`, { headers: { Authorization: `Bearer ${sesionCliente.token}` } })).json();
+    expect(pedido).toMatchObject({ estadoPedido: 'Entregado', estadoPago: 'Pagado' });
   });
 });

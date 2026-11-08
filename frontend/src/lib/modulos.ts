@@ -43,7 +43,7 @@ export interface Seccion {
  * Sprint en curso del proyecto de microservicios. Las pestañas cuyo servicio
  * llega en un sprint posterior no se muestran todavía (`desdeSprint`).
  */
-export const SPRINT_ACTUAL = 4;
+export const SPRINT_ACTUAL = 5;
 
 export interface Modulo {
   /** Nombre corto, para la barra lateral. */
@@ -87,7 +87,7 @@ export const MODULOS: Modulo[] = [
     icono: Bike,
     permiso: 'PEDIDO_LEER',
     cargos: [CARGO_REPARTIDOR],
-    implementado: false, // se habilita con su microservicio (Sprint 5)
+    implementado: true, // ms-pedidos, HU-24 (Sprint 5)
     alias: 'reparto repartidor mapa entregar',
   },
   {
@@ -97,9 +97,8 @@ export const MODULOS: Modulo[] = [
     ruta: '/pedidos',
     icono: ClipboardList,
     permiso: 'PEDIDO_LEER',
-    // El portal del cliente pide desde el Sprint 4 (ms-pedidos); el tablero del
-    // personal llega con HU-23, en el Sprint 5.
-    implementado: false,
+    // El portal del cliente pide desde el Sprint 4; el tablero del personal, HU-23 (Sprint 5).
+    implementado: true,
     secciones: [
       {
         ruta: '/pedidos/lista',
@@ -175,7 +174,7 @@ export const MODULOS: Modulo[] = [
     ruta: '/ventas',
     icono: ShoppingBag,
     permiso: 'VENTA_LEER',
-    implementado: false, // se habilita con su microservicio (Sprint 5)
+    implementado: true, // ms-ventas, HU-18 a HU-20 (Sprint 5)
     secciones: [
       {
         ruta: '/ventas/registro',
