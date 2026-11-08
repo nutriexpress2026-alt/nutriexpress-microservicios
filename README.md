@@ -16,7 +16,7 @@ Docente: Ing. Edwin Calle Terrazas.
 | Sprint 2 | 22-oct – 28-oct | Catálogo de productos e inventario básico | Terminado |
 | Sprint 3 | 29-oct – 04-nov | Recetas, producción y eventos entre servicios | Terminado |
 | Sprint 4 | 05-nov – 11-nov | Pedidos a domicilio y pago en línea (saga) | Terminado |
-| Sprint 5 | 12-nov – 18-nov | Gestión de pedidos, reparto y ventas de mostrador | Pendiente |
+| Sprint 5 | 12-nov – 18-nov | Gestión de pedidos, reparto y ventas de mostrador | Terminado |
 | Sprint 6 | 19-nov – 25-nov | Reportes, temas, despliegue y pruebas | Pendiente |
 | Sprint 7 | 26-nov – 02-dic | Reserva: ajustes y cierre del informe | Pendiente |
 
@@ -54,7 +54,7 @@ docker-compose.yml         Levanta todo el sistema (desde el Sprint 1)
 
 | Servicio | Responsabilidad | Base de datos |
 |---|---|---|
-| `ms-identidad` | Usuarios, roles, permisos, inicio de sesión | PostgreSQL (+ Redis) |
+| `ms-identidad` | Usuarios, roles, permisos, inicio de sesión y fichas de clientes | PostgreSQL (+ Redis) |
 | `ms-catalogo` | Productos, recetas, órdenes de producción, información del negocio | PostgreSQL (+ Redis) |
 | `ms-inventario` | Insumos, almacenes, notas de ingreso y egreso, stock, lotes | PostgreSQL |
 | `ms-ventas` | Ventas de mostrador y comprobantes | PostgreSQL |

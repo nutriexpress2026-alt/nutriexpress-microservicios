@@ -32,7 +32,7 @@ rutas del monolito (`/api/auth`, `/api/usuarios`…) para que el frontend reutil
   aceptación cumplidos, pruebas que pasan y funcionando con `docker compose up`.
 - Ramas: `main` es estable; cada historia en su rama `hu-XX-descripcion` y entra por *pull request*.
 
-## Estado (al 5-nov-2026)
+## Estado (al 7-nov-2026)
 
 | Sprint | Estado | Qué quedó |
 |---|---|---|
@@ -41,48 +41,50 @@ rutas del monolito (`/api/auth`, `/api/usuarios`…) para que el frontend reutil
 | 2 | Terminado | ms-catalogo y ms-inventario, con réplicas entre servicios |
 | 3 | Terminado (29-oct al 4-nov) | Eventos por RabbitMQ (HT-03), recetas (HU-09), reservas de stock (HU-17), órdenes de producción (HU-10), permisos en todos los servicios (HU-05) y recuperar la contraseña (HU-06). Revisado por Nilser y en `main` (PR #3 a #13, 4-nov). Diagramas de EA exportados en la computadora de Nilser (el EA de la de Joseph se cuelga al exportar) e `informe.docx` regenerado (92 págs.). En la revisión, las reservas pasaron a 15 s de margen (P2028 en computadoras lentas) |
 | 4 | Terminado (5 al 11-nov) | ms-pedidos (HU-21 carrito y pedido, HU-22 direcciones con una principal, HU-25 mis pedidos, cancelar y seguimiento) y ms-pagos (HU-26 cobro con QR o tarjeta en la pasarela simulada o Libélula, aviso, vencimiento; HU-27 modo de cobro). Saga del pedido: reserva REST en inventario y desenlace del cobro por eventos (`PagoConfirmado`, `PagoFallido`, `PedidoCancelado`). Programado por Nilser en su computadora; documentado con la regla del equipo. Informe: 106 págs. |
-| 5 | Siguiente (12 al 18-nov) | Lo programa Joseph: ver «Siguiente: Sprint 5» |
+| 5 | Terminado (12 al 18-nov) | Joseph le pidió a Nilser avanzarlo: lo programó Nilser en su computadora el 7-nov (rama `sprint-5`). ms-ventas nuevo (HU-18 venta de mostrador en efectivo o QR, HU-19 comprobante `V-000001` y anulación), en ms-pedidos el tablero y el reparto (HU-23, HU-24, tabla `turno_repartidor`), en ms-identidad la gestión de clientes (HU-20: se quedó ahí porque la ficha ya vivía en identidad). Doce contenedores. Documentado con la regla del equipo. Informe: 122 págs. |
+| 6 | Siguiente (19 al 25-nov) | Ver «Siguiente: Sprint 6» |
 
 Desde el 3-nov el trabajo sigue en la computadora de Joseph (`INSTALACION.md`); los dos suben con la
 cuenta compartida `nutriexpress2026-alt`, cada uno con su `git config user.name`.
 
-## Siguiente: Sprint 5 (jueves 12 al miércoles 18 de noviembre de 2026)
+## Siguiente: Sprint 6 (jueves 19 al miércoles 25 de noviembre de 2026)
 
-Lo programa y documenta Joseph. **Objetivo:** despacho de pedidos, reparto y venta de mostrador.
-Historias (32 pts, del Product Backlog en `capitulo-3-sprint-0.md`): HU-23 Tablero de pedidos (8),
-HU-24 Mis entregas del repartidor (8), HU-18 Venta de mostrador (8), HU-19 Comprobante y anulación (5) y
-HU-20 Gestionar clientes (3). Antes de programar, leer sus criterios de aceptación.
+**Objetivo:** reportes, correo al cliente, temas y despliegue. Historias (28 pts, del Product Backlog en
+`capitulo-3-sprint-0.md`): HU-28 Reporte de ventas (8), HU-29 Reporte de pedidos (5), HU-32
+Notificaciones por correo (5), HU-33 Temas y modo día/noche (5) y HT-04 Despliegue en el VPS (5). Antes
+de programar, leer sus criterios de aceptación. El Sprint 7 (26-nov al 2-dic) queda de reserva: HU-07
+Perfil propio y HU-30 Reporte de producción e inventario.
 
-Lo que dejó listo el Sprint 4 para este sprint:
+Lo que dejó listo el Sprint 5 para este sprint:
 
-- **ms-pedidos** ya tiene las columnas `id_repartidor`, `repartidor_nombre`, `fecha_entrega` y la tabla
-  `posicion_repartidor` (el cliente ya ve la posición con el pedido «En camino»). Falta el lado del
-  personal: `/api/gestion/pedidos`, `/api/gestion/repartidores`, `/api/gestion/pedidos/resumen` y
-  `PUT /api/gestion/pedidos/:id/repartidor` (los llama `frontend/src/app/(privado)/pedidos/lista`),
-  adaptados de `pedido-gestion.service.ts` y `reparto.service.ts` del sistema anterior; el gateway debe
-  sumar `/api/gestion` a ms-pedidos. Los repartidores (empleados con cargo Repartidor) se piden a
-  ms-identidad por REST interno o se replican; no leer su base.
-- **Entregar consume la reserva** del pedido (`id_reserva`) en ms-inventario: hace falta un evento o una
-  ruta interna que la pase a Consumida y descuente el stock (como `consumirEnTransaccion` de HU-10).
-  «No entregado» la libera (`PedidoCancelado`, motivo «No entregado»). El efectivo se cobra al entregar:
-  ms-pagos debe registrar ese cobro (hoy solo abre cobros en línea; ver `cerrarCobroDePedidoEnTransaccion`
-  del sistema anterior).
-- **ms-pagos** ya admite cobros de ventas (`id_venta`); ms-ventas (base `ventas_db`, ya creada) le pide
-  el cobro con QR por `POST /interno/pagos` con `idVenta`, y `PagoConfirmado` trae `idVenta`.
-- Subir `SPRINT_ACTUAL` a 5: se activa la parte del personal en `e2e/pedido.spec.ts`. Habilitar los
-  módulos Pedidos, Mis entregas y Ventas en `frontend/src/lib/modulos.ts` (`implementado`).
-- En computadoras lentas, cada servicio nuevo con `transactionOptions` en su `config/prisma.ts` (P2028).
+- **Eventos para ms-reportes** (MongoDB): `VentaRegistrada { idVenta, estado (Pagado, Pendiente o
+  Anulado), tipoVenta, metodoPago, total, idCliente, fecha }` sale al vender, al acreditarse el QR y al
+  anular (HU-28: «las anuladas no suman»); `PedidoEstadoCambiado { idPedido, idUsuario, cliente, estado,
+  motivo, metodoPago, total, fecha }` sale en cada cambio de estado. Para HU-29 («por repartidor»,
+  «distingue asignados de entregados») hay que sumarle `idRepartidor` y `repartidorNombre` en
+  `avisarEstado` de `ms-pedidos/src/services/pedido.service.ts`.
+- **Correo (HU-32)**: ms-reportes consume `PedidoEstadoCambiado` y manda el correo (adaptar el envío del
+  sistema anterior); el correo del cliente se pide a ms-identidad por REST interno (hay que sumar la ruta)
+  o viaja en el evento. Subir `SPRINT_ACTUAL` a 6 activa en el comprobante el aviso «Le enviamos una
+  copia a su correo» (`DialogoComprobante.tsx`) y sus pruebas en espera.
+- **Frontend**: las pestañas «Reportes» tienen `desdeSprint: 6` en `frontend/src/lib/modulos.ts`; el
+  `e2e/gestion.spec.ts` tiene una prueba en espera hasta el Sprint 6.
+- **Pendiente del Sprint 5**: la prueba de punta a punta «Despacho del pedido» (`e2e/pedido.spec.ts`) se
+  pasa de sus tiempos en la computadora de Nilser (el navegador tarda en salir del login con doce
+  contenedores); correrla en la de Joseph. El recorrido se verificó por la API y con las capturas.
+- **Docker en computadoras lentas**: construir las imágenes de a una (`docker compose build <servicio>`);
+  las siete a la vez agotan la descarga de npm (`EIDLETIMEOUT`).
 
-Pasos: los mismos del Sprint 4 (rama por historia y PR, pruebas de integración, componentes y punta a
-punta, `capitulo-3-sprint-5.md` con la estructura de `capitulo-3-sprint-4.md` (3.6.1 a 3.6.9), paquete
-«Sprint 5» en `crear-diagramas.ps1`, capturas copiando `herramientas/informe/capturas-sprint4.cjs`,
-sumar el Sprint 5 en `SPRINTS` de `excel_scrum.py` y regenerar el Word). Si el EA de la computadora de
+Pasos: los mismos del Sprint 5 (rama y PR, pruebas de integración, componentes y punta a punta,
+`capitulo-3-sprint-6.md` con la estructura de `capitulo-3-sprint-5.md` (3.7.1 a 3.7.9), paquete
+«Sprint 6» en `crear-diagramas.ps1`, capturas copiando `herramientas/informe/capturas-sprint5.cjs`,
+sumar el Sprint 6 en `SPRINTS` de `excel_scrum.py` y regenerar el Word). Si el EA de la computadora de
 Joseph no exporta las imágenes, las exporta Nilser.
 
 ### Regla para documentar el sprint (decisión del equipo)
 
 Aunque una persona programe todo el sprint, el informe lo muestra **repartido entre los dos**, como en
-los Sprints 1 a 4:
+los Sprints 1 a 5:
 
 - En el Sprint Backlog, cada tarea con responsable (`Joseph` o `Nilser`), horas y fecha de término
   (`dd/mm`) dentro de las fechas del sprint, con una carga parecida para cada uno (por ejemplo, un
@@ -139,6 +141,16 @@ Pendiente, a confirmar con el equipo antes de programar:
   propio (repetirlo no descuenta dos veces); disponible = stock − reservas activas, con bloqueo
   `FOR UPDATE`. `consumirEnTransaccion` la pasa a Consumida dentro de la transacción que registra los
   movimientos. Los pedidos del Sprint 4 la usan igual (reserva de productos terminados).
+- **Salida por venta y devolución** (Sprint 5, ms-inventario): `POST /interno/reservas/:id/consumir`
+  descuenta lo reservado con una nota de egreso motivo Venta y dice de qué almacén salió cada producto
+  (repetirlo responde `yaConsumida`); `POST /interno/devoluciones` lo devuelve al mismo almacén, idempotente
+  por su referencia («Venta 12 anulada»). Lo usan ms-pedidos al entregar y ms-ventas al vender y anular.
+- **Cobro en efectivo** (Sprint 5, ms-pagos): `POST /interno/pagos/efectivo` con `idPedido` o `idVenta`
+  registra un cobro ya Pagado (pasarela «Mostrador»), idempotente. Al anular una venta,
+  `POST /interno/pagos/venta/:id/anular` cierra el cobro pendiente o deja Reembolsado el pagado.
+- **Datos de personas por REST interno** (ms-identidad): `/interno/repartidores`, `/interno/empleados/:id`
+  (con su cargo) y `/interno/clientes/:id`. ms-identidad pide a ms-pedidos y ms-ventas cuántos pedidos y
+  ventas tiene cada cliente (`/interno/pedidos/conteo`, `/interno/ventas/conteo`).
 - **Saga de finalizar una orden** (HU-10): ms-catalogo reserva por REST (`orden-<id>`), deja la orden
   Finalizada y publica `OrdenFinalizada`; si no puede publicar, compensa (vuelve a En proceso y libera
   la reserva, 503). ms-inventario registra egreso + ingreso en una transacción y responde

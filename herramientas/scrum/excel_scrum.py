@@ -112,6 +112,7 @@ SPRINTS = {
     2: (date(2026, 10, 22), date(2026, 10, 28), 'Catálogo e inventario básico: se registran productos, insumos y stock.'),
     3: (date(2026, 10, 29), date(2026, 11, 4), 'Recetas y producción, con los servicios comunicados por eventos.'),
     4: (date(2026, 11, 5), date(2026, 11, 11), 'Pedido a domicilio con pago en línea (saga completa).'),
+    5: (date(2026, 11, 12), date(2026, 11, 18), 'Despacho de pedidos, reparto y venta de mostrador.'),
 }
 DAILY = []
 for n in list(SPRINTS):

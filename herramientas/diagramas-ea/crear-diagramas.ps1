@@ -730,6 +730,148 @@ try {
   Poner $d $nota 200 700 760 60 | Out-Null
   $diagramas += ,@($d, "3.5.3-pago-en-linea.png")
 
+  # ============================================================ Sprint 5
+  $sprint5 = $modelo.Packages.AddNew("Sprint 5", ""); $sprint5.Update() | Out-Null
+
+  # --- 3.6.3 ms-ventas
+  $p = $sprint5.Packages.AddNew("3.6.3 Clases de ms-ventas", ""); $p.Update() | Out-Null
+  $d = $p.Diagrams.AddNew("Clases de ms-ventas", "Logical"); $d.Update() | Out-Null
+  $venta = Clase "Venta" @("idVenta: int", "fecha: datetime", "tipoVenta: string", "metodoPago: string",
+    "estadoPago: string", "total: decimal", "idCliente: int", "clienteNombre: string", "idEmpleado: int",
+    "empleadoNombre: string", "empleadoApellido: string", "idReserva: string", "idNotaEgreso: int", "idPago: int",
+    "motivoAnulacion: string", "anuladaEn: datetime") 20 40 220
+  $detVenta = Clase "DetalleVenta" @("idProducto: int", "idAlmacen: int", "nombreProducto: string",
+    "nombreAlmacen: string", "cantidad: int", "precioUnitario: decimal") 340 70 210
+  $eventoVen = Clase "EventoProcesado" @("idEvento: uuid", "tipo: string", "procesadoEn: datetime") 640 40 180
+  $sesionVen = Clase "SesionVigente" @("clave: string", "desde: datetime") 640 180 180
+  Asociar $detVenta $venta "1..*" "1"
+  $nota = Nuevo $p "" "Note" -notas ("Base ventas_db (PostgreSQL). El cliente (ms-identidad) es opcional: sin él es " +
+    "consumidor final. Quien atendió sale del token. La venta guarda la reserva que consumió en ms-inventario, su nota " +
+    "de egreso y, si se cobró con QR, el cobro de ms-pagos. DetalleVenta copia el nombre y el precio al vender y el " +
+    "almacén del que salió, para devolver lo mismo al anular (HU-19).")
+  Poner $d $nota 20 420 820 60 | Out-Null
+  $diagramas += ,@($d, "3.6.3-clases-ms-ventas.png")
+
+  # --- 3.6.3 ms-pedidos: el reparto
+  $p = $sprint5.Packages.AddNew("3.6.3 Clases de ms-pedidos (reparto)", ""); $p.Update() | Out-Null
+  $d = $p.Diagrams.AddNew("Clases de ms-pedidos (Sprint 5)", "Logical"); $d.Update() | Out-Null
+  $pedR = Clase "Pedido" @("idPedido: int", "estadoPedido: string", "estadoPago: string", "metodoPago: string",
+    "total: decimal", "fechaEntrega: datetime", "motivoCancelacion: string", "idReserva: string",
+    "idRepartidor: int", "repartidorNombre: string") 20 40 210
+  $turno = Clase "TurnoRepartidor" @("idEmpleado: int", "disponible: bool", "actualizadoEn: datetime") 340 40 200
+  $posR = Clase "PosicionRepartidor" @("idEmpleado: int", "latitud: decimal", "longitud: decimal", "precisionM: decimal",
+    "actualizadaEn: datetime") 340 200 200
+  $nota = Nuevo $p "" "Note" -notas ("Pedido resumido (completo en 3.5.3). El repartidor es un empleado de ms-identidad " +
+    "con cargo Repartidor: se consulta por REST interno y se guarda por su número y nombre. TurnoRepartidor dice si " +
+    "está de turno (para sugerir a quién asignar); PosicionRepartidor la escribe él desde Mis entregas y se borra al " +
+    "no quedarle pedidos en camino. Flujo: Recibido, En preparacion, En camino, Entregado o Cancelado.")
+  Poner $d $nota 20 380 760 60 | Out-Null
+  $diagramas += ,@($d, "3.6.3-clases-ms-pedidos-reparto.png")
+
+  # --- 3.6.3 Venta de mostrador (secuencia)
+  $p = $sprint5.Packages.AddNew("3.6.3 Venta de mostrador", ""); $p.Update() | Out-Null
+  $d = $p.Diagrams.AddNew("Venta de mostrador", "Sequence"); $d.Update() | Out-Null
+  $L = @{}
+  $x = 40
+  foreach ($v in @(@("Vendedor", "Actor"), @("ms-ventas", "Sequence"), @("ms-catalogo", "Sequence"),
+      @("ms-inventario", "Sequence"), @("ms-pagos", "Sequence"))) {
+    $e = Nuevo $p $v[0] $v[1]
+    Poner $d $e $x 40 110 700 | Out-Null
+    $L[$v[0]] = $e
+    $x += 240
+  }
+  $mensajes = @(
+    @("Vendedor", "ms-ventas", "vender(items, tipo, método, cliente)", "llamada"),
+    @("ms-ventas", "ms-catalogo", "precios(idsProductos) [REST]", "llamada"),
+    @("ms-catalogo", "ms-ventas", "precios(nombre, precio, activo)", "retorno"),
+    @("ms-ventas", "ms-inventario", "reservar(venta-uuid, productos) [REST]", "llamada"),
+    @("ms-ventas", "ms-inventario", "consumir(venta-uuid) [REST]", "llamada"),
+    @("ms-inventario", "ms-ventas", "nota de egreso(Venta, almacenes)", "retorno"),
+    @("ms-ventas", "ms-ventas", "crear venta y su detalle", "interna"),
+    @("ms-ventas", "ms-pagos", "registrarEfectivo(idVenta, monto) [REST]", "llamada"),
+    @("ms-ventas", "Vendedor", "venta Pagada y su comprobante", "retorno"),
+    @("ms-ventas", "ms-pagos", "abrirCobro(idVenta, monto, QR) [REST]", "llamada"),
+    @("ms-pagos", "ms-ventas", "cobro(QR)", "retorno"),
+    @("ms-ventas", "Vendedor", "venta Pendiente con el QR", "retorno"),
+    @("ms-pagos", "ms-ventas", "PagoConfirmado(idVenta)", "evento"),
+    @("ms-ventas", "ms-ventas", "pasar a Pagado", "interna")
+  )
+  $n = 1
+  foreach ($m in $mensajes) {
+    $c = $L[$m[0]].Connectors.AddNew($m[2], "Sequence")
+    $c.SupplierID = $L[$m[1]].ElementID
+    $c.SequenceNo = $n
+    $c.Update() | Out-Null
+    $tipo = $m[3]
+    if ($tipo -ne "llamada") { $c.Properties.Item("Kind").Value = "Signal" }
+    $c.Properties.Item("IsAsync").Value = ($tipo -eq "evento")
+    $c.Properties.Item("IsReturn").Value = ($tipo -eq "retorno")
+    $c.Update() | Out-Null
+    $n++
+  }
+  $alt = Nuevo $p "" "InteractionFragment" 0
+  $op1 = $alt.Partitions.AddNew("en efectivo", "")
+  $op1.Size = 80
+  $op2 = $alt.Partitions.AddNew("con QR", "")
+  $alt.Update() | Out-Null
+  Poner $d $alt 20 330 1180 290 | Out-Null
+  $nota = Nuevo $p "" "Note" -notas ("HU-18. El precio lo pone el catálogo y el stock se descuenta al confirmar: la " +
+    "reserva se consume en el acto. Si falta stock, inventario responde 409 y no se crea la venta. Si ms-pagos no " +
+    "puede abrir el QR, la venta se deshace y el stock vuelve. Anular (HU-19) devuelve el stock al mismo almacén.")
+  Poner $d $nota 200 660 760 60 | Out-Null
+  $diagramas += ,@($d, "3.6.3-venta-mostrador.png")
+
+  # --- 3.6.3 Entregar un pedido (secuencia)
+  $p = $sprint5.Packages.AddNew("3.6.3 Entregar un pedido", ""); $p.Update() | Out-Null
+  $d = $p.Diagrams.AddNew("Entregar un pedido", "Sequence"); $d.Update() | Out-Null
+  $L = @{}
+  $x = 40
+  foreach ($v in @(@("Repartidor", "Actor"), @("ms-pedidos", "Sequence"), @("ms-identidad", "Sequence"),
+      @("ms-inventario", "Sequence"), @("ms-pagos", "Sequence"))) {
+    $e = Nuevo $p $v[0] $v[1]
+    Poner $d $e $x 40 110 700 | Out-Null
+    $L[$v[0]] = $e
+    $x += 240
+  }
+  $mensajes = @(
+    @("ms-pedidos", "ms-identidad", "empleado(idRepartidor) [REST]", "llamada"),
+    @("ms-identidad", "ms-pedidos", "empleado(cargo Repartidor, activo)", "retorno"),
+    @("Repartidor", "ms-pedidos", "informarPosicion(latitud, longitud)", "llamada"),
+    @("Repartidor", "ms-pedidos", "avanzarEstado(Entregado)", "llamada"),
+    @("ms-pedidos", "ms-inventario", "consumir(idReserva) [REST]", "llamada"),
+    @("ms-inventario", "ms-pedidos", "nota de egreso(Venta)", "retorno"),
+    @("ms-pedidos", "ms-pagos", "registrarEfectivo(idPedido, monto) [REST]", "llamada"),
+    @("ms-pedidos", "ms-pedidos", "pasar a Entregado(Pagado)", "interna"),
+    @("ms-pedidos", "Repartidor", "pedido Entregado", "retorno"),
+    @("Repartidor", "ms-pedidos", "avanzarEstado(Cancelado)", "llamada"),
+    @("ms-pedidos", "ms-pedidos", "cancelar(No entregado)", "interna"),
+    @("ms-pedidos", "ms-inventario", "PedidoCancelado(idPedido, idReserva)", "evento")
+  )
+  $n = 1
+  foreach ($m in $mensajes) {
+    $c = $L[$m[0]].Connectors.AddNew($m[2], "Sequence")
+    $c.SupplierID = $L[$m[1]].ElementID
+    $c.SequenceNo = $n
+    $c.Update() | Out-Null
+    $tipo = $m[3]
+    if ($tipo -ne "llamada") { $c.Properties.Item("Kind").Value = "Signal" }
+    $c.Properties.Item("IsAsync").Value = ($tipo -eq "evento")
+    $c.Properties.Item("IsReturn").Value = ($tipo -eq "retorno")
+    $c.Update() | Out-Null
+    $n++
+  }
+  $alt = Nuevo $p "" "InteractionFragment" 0
+  $op1 = $alt.Partitions.AddNew("entregado", "")
+  $op1.Size = 180
+  $op2 = $alt.Partitions.AddNew("no entregado", "")
+  $alt.Update() | Out-Null
+  Poner $d $alt 20 270 1180 330 | Out-Null
+  $nota = Nuevo $p "" "Note" -notas ("HU-23 y HU-24. Al asignar, ms-pedidos comprueba en ms-identidad que el empleado " +
+    "tenga cargo Repartidor. Solo el repartidor asignado (o quien tenga PEDIDO_CERRAR_AJENO) cierra la entrega. " +
+    "Entregar consume la reserva del pedido y, si era en efectivo, registra el cobro; no entregar la libera.")
+  Poner $d $nota 200 660 760 60 | Out-Null
+  $diagramas += ,@($d, "3.6.3-entregar-pedido.png")
+
   $proyecto = $r.GetProjectInterface()
   foreach ($par in $diagramas) {
     $dd = $par[0]
