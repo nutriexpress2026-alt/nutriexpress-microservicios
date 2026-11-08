@@ -30,7 +30,6 @@ const CAMPOS = {
       fecha_registro: true,
     },
   },
-  _count: { select: { pedido: true, venta: true } },
 } as const;
 
 export interface FiltroClientes extends DatosPaginacion {

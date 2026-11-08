@@ -23,6 +23,14 @@ export const listarPorCargo = (nombreCargo: string) =>
   });
 
 /** Turno actual del empleado (RF-PED-07). */
+/** HU-23 · Los repartidores activos, con su teléfono (para el tablero de ms-pedidos). */
+export const listarRepartidores = () =>
+  prisma.empleado.findMany({
+    where: { cargo: { nombre: 'Repartidor' }, usuario: { activo: true } },
+    select: { id_empleado: true, usuario: { select: { nombre: true, apellido: true, telefono: true } } },
+    orderBy: { usuario: { apellido: 'asc' } },
+  });
+
 export const obtenerDisponibilidad = (idEmpleado: number) =>
   prisma.empleado.findUniqueOrThrow({
     where: { id_empleado: idEmpleado },
