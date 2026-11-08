@@ -4,7 +4,7 @@
 #   powershell -ExecutionPolicy Bypass -File herramientas\instalar.ps1
 #
 # Comprueba lo que hace falta (Git, Node 22 o más, Docker Desktop encendido, espacio en disco),
-# levanta los once contenedores, prepara el frontend y verifica que todo responda. Se puede
+# levanta los doce contenedores, prepara el frontend y verifica que todo responda. Se puede
 # repetir sin riesgo: no borra datos, y sirve también para ponerse al día después de un `git pull`.
 # Guía completa: INSTALACION.md.
 
@@ -108,9 +108,10 @@ $comprobaciones = [ordered]@{
   "ms-reportes"   = "http://localhost:8080/api/visitas?ruta=/"
   "ms-pedidos"    = "http://localhost:8080/api/pedidos"
   "ms-pagos"      = "http://localhost:8080/api/configuracion/cobro"
+  "ms-ventas"     = "http://localhost:8080/api/ventas"
 }
 # Estos piden sesión: un 401 también prueba que están vivos.
-$conSesion = @("ms-inventario", "ms-pedidos", "ms-pagos")
+$conSesion = @("ms-inventario", "ms-pedidos", "ms-pagos", "ms-ventas")
 foreach ($nombre in $comprobaciones.Keys) {
   $url = $comprobaciones[$nombre]
   if ($conSesion -contains $nombre) {
