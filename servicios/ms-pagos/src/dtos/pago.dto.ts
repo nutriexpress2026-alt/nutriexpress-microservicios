@@ -11,6 +11,14 @@ export const esquemaFiltroPagos = z.object({
 /** Un solo campo a propósito: activar el dinero real es una decisión, no un ajuste más. */
 export const esquemaCambiarModo = z.object({ modo: z.enum(MODOS_COBRO) });
 
+/** HU-18, HU-24 · El efectivo ya recibido, de un pedido o de una venta. */
+export const esquemaEfectivo = z.object({
+  idPedido: z.number().int().positive().optional(),
+  idVenta: z.number().int().positive().optional(),
+  monto: z.number().positive().max(1_000_000),
+  quien: z.string().trim().min(1).max(120),
+});
+
 /** Lo que pide ms-pedidos (o ms-ventas, Sprint 5) por REST interno. */
 export const esquemaSolicitudCobro = z.object({
   idPedido: z.number().int().positive().optional(),

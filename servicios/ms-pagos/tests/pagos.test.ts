@@ -136,6 +136,34 @@ describe('HU-26 · Cobro en línea', () => {
   });
 });
 
+describe('HU-18, HU-19, HU-24 · Efectivo y anulación (Sprint 5)', () => {
+  it('el efectivo de un pedido entregado nace Pagado; repetirlo devuelve el mismo cobro', async () => {
+    const r = await request(app).post('/interno/pagos/efectivo').send({ idPedido: 120, monto: 35, quien: 'Rodrigo Reparto' }).expect(201);
+    expect(r.body).toMatchObject({ metodo: 'Efectivo', estado: 'Pagado', pasarela: 'Mostrador', idPedido: 120, confirmadoEn: expect.any(String) });
+    const otra = await request(app).post('/interno/pagos/efectivo').send({ idPedido: 120, monto: 35, quien: 'Rodrigo Reparto' }).expect(201);
+    expect(otra.body.id).toBe(r.body.id);
+    const evento = await prisma.evento_pago.findFirst({ where: { id_pago: r.body.id } });
+    expect(evento).toMatchObject({ tipo: 'Cobrado contra entrega', cuerpo: 'Recibido por Rodrigo Reparto' });
+  });
+
+  it('anular una venta cobrada deja el reembolso pendiente; una con QR pendiente, Fallido', async () => {
+    await request(app).post('/interno/pagos/efectivo').send({ idVenta: 31, monto: 20, quien: 'Victor Vendedor' }).expect(201);
+    const pagada = await request(app).post('/interno/pagos/venta/31/anular').send({ detalle: 'Anulada: error de cobro' }).expect(200);
+    expect(pagada.body).toEqual({ requiereDevolucion: true });
+    expect((await request(app).get('/interno/pagos/venta/31').expect(200)).body.estado).toBe('Reembolsado');
+
+    const qr = (await request(app).post('/interno/pagos').send({ idVenta: 32, monto: 20, metodo: 'QR', descripcion: 'NutriExpress - Venta 32' })).body;
+    await prisma.pago.update({ where: { id_pago: qr.id }, data: { id_transaccion_ext: null } });
+    const pendiente = await request(app).post('/interno/pagos/venta/32/anular').send({ detalle: 'Anulada' }).expect(200);
+    expect(pendiente.body).toEqual({ requiereDevolucion: false });
+    await aviso((e) => e.tipo === 'PagoFallido' && e.datos.idPago === qr.id);
+  });
+
+  it('el efectivo es de un pedido o de una venta, no de los dos', async () => {
+    await request(app).post('/interno/pagos/efectivo').send({ idPedido: 1, idVenta: 1, monto: 5, quien: 'X' }).expect(400);
+  });
+});
+
 describe('RF-PAG-02 · Aviso de la pasarela', () => {
   it('un aviso de un cobro desconocido se recibe sin hacer nada', async () => {
     const r = await request(app).post('/api/pagos/notificacion').send({ idTransaccion: 'SIM-no-existe', estado: 'Pagado' }).expect(200);

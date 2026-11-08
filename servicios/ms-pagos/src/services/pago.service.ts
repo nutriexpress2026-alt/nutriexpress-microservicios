@@ -427,11 +427,83 @@ export async function cerrarPorPedidoCancelado(idPedido: number): Promise<void> 
 }
 
 /* ------------------------------------------------------------------ */
+/* Efectivo y anulación (Sprint 5)                                     */
+/* ------------------------------------------------------------------ */
+
+/**
+ * HU-18, HU-24 · El efectivo que ya se recibió: una venta de mostrador cobrada en
+ * mano o un pedido que el repartidor entregó («entregar cobra el efectivo»). No
+ * pasa por pasarela: nace Pagado, para que `pago` sea la única respuesta a
+ * «cuánto entró y por qué medio». Repetirlo devuelve el mismo cobro.
+ */
+export async function registrarEfectivo(datos: { idPedido?: number; idVenta?: number; monto: number; quien: string }): Promise<PagoDTO> {
+  if ((datos.idPedido === undefined) === (datos.idVenta === undefined)) {
+    throw new ErrorApp(400, 'El cobro es de un pedido o de una venta');
+  }
+  const previo = await prisma.pago.findFirst({
+    where: { metodo: 'Efectivo', estado: 'Pagado', id_pedido: datos.idPedido ?? null, id_venta: datos.idVenta ?? null },
+    select: { id_pago: true },
+  });
+  if (previo) return aDTO(await exigirPago(previo.id_pago));
+
+  const modo = await modoCobro();
+  const pago = await prisma.$transaction(async (tx: ClientePrisma) => {
+    const creado = await pagoModel.crear(tx, {
+      monto: datos.monto,
+      moneda: MONEDA,
+      metodo: 'Efectivo',
+      estado: 'Pagado',
+      modo,
+      pasarela: 'Mostrador',
+      idPedido: datos.idPedido ?? null,
+      idVenta: datos.idVenta ?? null,
+      fechaConfirmacion: new Date(),
+    });
+    await pagoModel.registrarEvento(tx, {
+      idPago: creado.id_pago,
+      tipo: datos.idPedido !== undefined ? 'Cobrado contra entrega' : 'Cobrado en mostrador',
+      origen: 'Empleado',
+      cuerpo: `Recibido por ${datos.quien}`,
+    });
+    return creado;
+  });
+  return aDTO(await exigirPago(pago.id_pago));
+}
+
+/**
+ * HU-19 · Cierra el cobro de una venta anulada. Uno pendiente pasa a Fallido
+ * (nunca entró el dinero); uno pagado, a Reembolsado, que **registra la deuda, no
+ * la salda**: devolver el dinero es un acto aparte, en la caja o en la pasarela.
+ */
+export async function cerrarPorAnulacionDeVenta(idVenta: number, detalle: string): Promise<{ requiereDevolucion: boolean }> {
+  const pago = await pagoModel.buscarDeVenta(idVenta);
+  if (!pago) return { requiereDevolucion: false };
+  if (pago.estado === 'Pendiente') {
+    await aplicarResultado(pago.id_pago, 'Fallido', 'Empleado', detalle);
+    return { requiereDevolucion: false };
+  }
+  if (pago.estado === 'Pagado') {
+    await prisma.$transaction(async (tx: ClientePrisma) => {
+      await pagoModel.marcarReembolsado(tx, pago.id_pago);
+      await pagoModel.registrarEvento(tx, { idPago: pago.id_pago, tipo: 'Reembolso pendiente de entrega', origen: 'Empleado', cuerpo: detalle });
+    });
+    return { requiereDevolucion: true };
+  }
+  return { requiereDevolucion: false };
+}
+
+/* ------------------------------------------------------------------ */
 /* Consultas                                                           */
 /* ------------------------------------------------------------------ */
 
 export async function listar(filtro: { estado?: string; modo?: string }): Promise<PagoDTO[]> {
   return (await pagoModel.listar(filtro)).map(aDTO);
+}
+
+/** El cobro de una venta, para ms-ventas (REST interno). Pregunta a la pasarela si sigue pendiente. */
+export async function deVenta(idVenta: number): Promise<PagoDTO | null> {
+  const pago = await pagoModel.buscarDeVenta(idVenta);
+  return pago ? obtener(pago.id_pago) : null;
 }
 
 /** El cobro de un pedido, para ms-pedidos (REST interno). Pregunta a la pasarela si sigue pendiente. */
