@@ -20,6 +20,15 @@ export const reservas = new Map<string, { estado: 'Activa' | 'Liberada'; product
 /** Cobros que abrió ms-pedidos, por pedido. `pagosCaido` simula ms-pagos sin responder. */
 export const cobros = new Map<number, { id: number; estado: string; referenciaExterna: string | null; confirmadoEn: string | null }>();
 export const control = { pagosCaido: false };
+
+/** Los empleados de ms-identidad (HU-23): dos repartidores y un vendedor. */
+export const empleados = [
+  { id: 7, nombre: 'Rodrigo', apellido: 'Reparto', cargo: 'Repartidor', activo: true },
+  { id: 8, nombre: 'Rosa', apellido: 'Ruta', cargo: 'Repartidor', activo: true },
+  { id: 3, nombre: 'Victor', apellido: 'Vendedor', cargo: 'Vendedor', activo: true },
+];
+/** Los cobros en efectivo que pidió registrar al entregar. */
+export const efectivos: { idPedido: number; monto: number; quien: string }[] = [];
 let siguienteCobro = 500;
 
 async function cuerpo(req: IncomingMessage): Promise<any> {
@@ -90,6 +99,33 @@ const servidor = createServer(async (req, res) => {
   if (req.method === 'GET' && dePedido) {
     if (control.pagosCaido) return responder(503, { error: 'sin conexión' });
     return responder(200, cobros.get(Number(dePedido[1])) ?? null);
+  }
+
+  // HU-24 · Entregar consume la reserva (nota de egreso por venta).
+  const consumir = /^\/inventario\/interno\/reservas\/([^/]+)\/consumir$/.exec(url.pathname);
+  if (req.method === 'POST' && consumir) {
+    const reserva = reservas.get(decodeURIComponent(consumir[1]));
+    if (!reserva) return responder(404, { error: 'La reserva no existe' });
+    const ya = reserva.estado === 'Consumida';
+    reserva.estado = 'Consumida';
+    return responder(200, { idNotaEgreso: ya ? null : 77, lineas: [], yaConsumida: ya });
+  }
+
+  // HU-24 · El efectivo cobrado al entregar.
+  if (req.method === 'POST' && url.pathname === '/pagos/interno/pagos/efectivo') {
+    const datos = await cuerpo(req);
+    efectivos.push(datos);
+    return responder(201, { id: siguienteCobro++, estado: 'Pagado', metodo: 'Efectivo', idPedido: datos.idPedido });
+  }
+
+  // HU-23 · ms-identidad: los repartidores y el cargo de un empleado.
+  if (url.pathname === '/identidad/interno/repartidores') {
+    return responder(200, empleados.filter((e) => e.cargo === 'Repartidor' && e.activo).map(({ id, nombre, apellido }) => ({ id, nombre, apellido, telefono: null })));
+  }
+  const empleado = /^\/identidad\/interno\/empleados\/(\d+)$/.exec(url.pathname);
+  if (empleado) {
+    const e = empleados.find((x) => x.id === Number(empleado[1]));
+    return e ? responder(200, e) : responder(404, { error: 'El empleado no existe' });
   }
 
   responder(404, { error: `Ruta falsa no encontrada: ${req.method} ${url.pathname}` });

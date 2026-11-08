@@ -16,4 +16,5 @@ export const env = {
   catalogoUrl: process.env.CATALOGO_URL ?? 'http://ms-catalogo:4002',
   inventarioUrl: process.env.INVENTARIO_URL ?? 'http://ms-inventario:4003',
   pagosUrl: process.env.PAGOS_URL ?? 'http://ms-pagos:4005',
+  identidadUrl: process.env.IDENTIDAD_URL ?? 'http://ms-identidad:4001',
 } as const;

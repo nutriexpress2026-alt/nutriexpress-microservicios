@@ -57,7 +57,7 @@ function consolidarItems(items: DatosConfirmarPedido['items']) {
   return [...porProducto].map(([idProducto, cantidad]) => ({ idProducto, cantidad }));
 }
 
-function aDetalleDTO(p: PedidoConDetalle): PedidoDetalleDTO {
+export function aDetalleDTO(p: PedidoConDetalle): PedidoDetalleDTO {
   const estado = p.estado_pedido as EstadoPedido;
   const items: LineaPedidoDTO[] = p.detalle_pedido.map((d) => {
     const precioUnitario = Number(d.precio_unitario);
@@ -92,7 +92,7 @@ function aDetalleDTO(p: PedidoConDetalle): PedidoDetalleDTO {
 }
 
 /** Para ms-reportes (Sprint 6): cada cambio de estado del pedido, con lo que un reporte necesita. */
-function avisarEstado(p: PedidoConDetalle, estado: EstadoPedido, motivo: string | null = null) {
+export function avisarEstado(p: PedidoConDetalle, estado: EstadoPedido, motivo: string | null = null) {
   return avisar('PedidoEstadoCambiado', {
     idPedido: p.id_pedido,
     idUsuario: p.id_usuario,
@@ -111,7 +111,7 @@ function avisarEstado(p: PedidoConDetalle, estado: EstadoPedido, motivo: string 
  * no responde, la reserva se libera igual por REST: el stock no puede quedar
  * congelado por un pedido que ya no existe (RNF-DIS-01).
  */
-async function compensarCancelacion(p: PedidoConDetalle, motivo: MotivoCancelacion): Promise<void> {
+export async function compensarCancelacion(p: PedidoConDetalle, motivo: MotivoCancelacion): Promise<void> {
   try {
     await publicar('PedidoCancelado', { idPedido: p.id_pedido, idReserva: p.id_reserva, motivo });
   } catch {
@@ -261,6 +261,14 @@ export async function seguimiento(sesion: Sesion, id: number): Promise<Seguimien
   const cliente = exigirCliente(sesion, 'seguir sus pedidos');
   const pedido = await pedidoModel.buscarDeCliente(id, cliente.id);
   if (!pedido) throw new ErrorApp(404, 'El pedido no existe');
+  if (pedido.estado_pedido !== 'En camino' || pedido.id_repartidor === null) {
+    return { enCamino: false, repartidor: null, posicion: null };
+  }
+  return seguimientoDe(pedido);
+}
+
+/** HU-25 · Lo que ve quien sigue un pedido en camino: el cliente o el personal. */
+export async function seguimientoDe(pedido: PedidoConDetalle): Promise<SeguimientoDTO> {
   if (pedido.estado_pedido !== 'En camino' || pedido.id_repartidor === null) {
     return { enCamino: false, repartidor: null, posicion: null };
   }

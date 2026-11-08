@@ -78,3 +78,9 @@ model ubicacion {
   fecha_registro DateTime @default(now()) @db.Timestamp(6)
   pedido         pedido[]
 }
+
+model turno_repartidor {
+  id_empleado    Int      @id
+  disponible     Boolean  @default(false)
+  actualizado_en DateTime @default(now()) @db.Timestamp(6)
+}

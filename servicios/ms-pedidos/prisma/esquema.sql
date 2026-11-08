@@ -107,3 +107,13 @@ CREATE TABLE sesion_vigente (
     clave  VARCHAR(30) PRIMARY KEY,  -- 'usuario:5' o 'rol:2'
     desde  TIMESTAMP NOT NULL
 );
+
+-- >>> Posteriores a la primera versión (idempotentes: inicializar.ts las aplica en cada arranque)
+
+-- HU-24 (Sprint 5) · Si el repartidor está de turno: solo a quien está de turno se le
+-- sugieren pedidos. Es del reparto, por eso vive aquí y no en ms-identidad.
+CREATE TABLE IF NOT EXISTS turno_repartidor (
+    id_empleado     INT PRIMARY KEY,
+    disponible      BOOLEAN NOT NULL DEFAULT FALSE,
+    actualizado_en  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);

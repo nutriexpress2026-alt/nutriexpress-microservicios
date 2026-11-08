@@ -67,7 +67,38 @@ export const liberar = (id: string) =>
     metodo: 'POST',
   });
 
+/** HU-24 · Entregar consume la reserva: nota de egreso con motivo Venta. Repetirlo no descuenta dos veces. */
+export const consumir = (id: string, observacion: string, empleado: { id: number; nombre: string; apellido: string }) =>
+  llamar<unknown>(`${env.inventarioUrl}/interno/reservas/${encodeURIComponent(id)}/consumir`, 'inventario', {
+    metodo: 'POST',
+    cuerpo: { observacion, empleado },
+  });
+
+/* --- ms-identidad (HU-23) --- */
+
+export interface Repartidor {
+  id: number;
+  nombre: string;
+  apellido: string;
+  telefono: string | null;
+}
+
+/** Los empleados con cargo Repartidor activos. */
+export const repartidores = () => llamar<Repartidor[]>(`${env.identidadUrl}/interno/repartidores`, 'identidad', { esperaMs: 8000 });
+
+/** Un empleado con su cargo, para validar a quién se asigna un pedido. */
+export const empleado = (id: number) =>
+  llamar<{ id: number; nombre: string; apellido: string; cargo: string; activo: boolean }>(
+    `${env.identidadUrl}/interno/empleados/${id}`,
+    'identidad',
+    { esperaMs: 8000 },
+  );
+
 /* --- ms-pagos (HU-26) --- */
+
+/** HU-24 · «Entregar cobra el efectivo»: el cobro queda registrado en ms-pagos como Pagado. */
+export const registrarEfectivo = (idPedido: number, monto: number, quien: string) =>
+  llamar<Cobro>(`${env.pagosUrl}/interno/pagos/efectivo`, 'pagos', { metodo: 'POST', cuerpo: { idPedido, monto, quien } });
 
 /** El cobro tal como lo devuelve ms-pagos (el frontend lo recibe sin cambios). */
 export interface Cobro {
