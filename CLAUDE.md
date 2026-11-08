@@ -28,9 +28,14 @@ rutas del monolito (`/api/auth`, `/api/usuarios`…) para que el frontend reutil
   por REST o lo recibe por un evento.
 - **Los eventos son idempotentes** (RNF-DIS-03): cada uno lleva un identificador y el consumidor
   ignora los ya procesados.
-- **Definición de terminado**: código en `main` revisado por el otro integrante, criterios de
-  aceptación cumplidos, pruebas que pasan y funcionando con `docker compose up`.
-- Ramas: `main` es estable; cada historia en su rama `hu-XX-descripcion` y entra por *pull request*.
+- **Definición de terminado**: código en `main`, criterios de aceptación cumplidos, pruebas que pasan y
+  funcionando con `docker compose up`.
+- **Sin pull requests (decisión del equipo, 8-nov).** Ni Joseph ni Nilser revisan código: lo programa el
+  Claude de cada uno. Ya no se abren PR. Se trabaja en una rama del sprint (`sprint-N`), se hacen commits
+  por historia y, cuando las pruebas pasan, se fusiona en `main` y se sube (`git merge` y
+  `git push origin main`), sin esperar revisión. Antes de fusionar, `git fetch` y traer lo que el otro haya
+  subido a `main` para no pisarlo. Si algo sale mal, se vuelve atrás con `git revert` (el historial no se
+  pierde). En el informe, la «revisión» de la Sprint Review sigue igual: es la demostración del sprint.
 
 ## Estado (al 7-nov-2026)
 
@@ -41,7 +46,7 @@ rutas del monolito (`/api/auth`, `/api/usuarios`…) para que el frontend reutil
 | 2 | Terminado | ms-catalogo y ms-inventario, con réplicas entre servicios |
 | 3 | Terminado (29-oct al 4-nov) | Eventos por RabbitMQ (HT-03), recetas (HU-09), reservas de stock (HU-17), órdenes de producción (HU-10), permisos en todos los servicios (HU-05) y recuperar la contraseña (HU-06). Revisado por Nilser y en `main` (PR #3 a #13, 4-nov). Diagramas de EA exportados en la computadora de Nilser (el EA de la de Joseph se cuelga al exportar) e `informe.docx` regenerado (92 págs.). En la revisión, las reservas pasaron a 15 s de margen (P2028 en computadoras lentas) |
 | 4 | Terminado (5 al 11-nov) | ms-pedidos (HU-21 carrito y pedido, HU-22 direcciones con una principal, HU-25 mis pedidos, cancelar y seguimiento) y ms-pagos (HU-26 cobro con QR o tarjeta en la pasarela simulada o Libélula, aviso, vencimiento; HU-27 modo de cobro). Saga del pedido: reserva REST en inventario y desenlace del cobro por eventos (`PagoConfirmado`, `PagoFallido`, `PedidoCancelado`). Programado por Nilser en su computadora; documentado con la regla del equipo. Informe: 106 págs. |
-| 5 | Terminado (12 al 18-nov) | Joseph le pidió a Nilser avanzarlo: lo programó Nilser en su computadora el 7-nov (rama `sprint-5`). ms-ventas nuevo (HU-18 venta de mostrador en efectivo o QR, HU-19 comprobante `V-000001` y anulación), en ms-pedidos el tablero y el reparto (HU-23, HU-24, tabla `turno_repartidor`), en ms-identidad la gestión de clientes (HU-20: se quedó ahí porque la ficha ya vivía en identidad). Doce contenedores. Documentado con la regla del equipo. Informe: 122 págs. |
+| 5 | Terminado (12 al 18-nov) | Joseph le pidió a Nilser avanzarlo: lo programó Nilser en su computadora el 7-nov; rama `sprint-5` fusionada en `main` sin PR (8-nov). ms-ventas nuevo (HU-18 venta de mostrador en efectivo o QR, HU-19 comprobante `V-000001` y anulación), en ms-pedidos el tablero y el reparto (HU-23, HU-24, tabla `turno_repartidor`), en ms-identidad la gestión de clientes (HU-20: se quedó ahí porque la ficha ya vivía en identidad). Doce contenedores. Documentado con la regla del equipo. Informe: 122 págs. |
 | 6 | Siguiente (19 al 25-nov) | Ver «Siguiente: Sprint 6» |
 
 Desde el 3-nov el trabajo sigue en la computadora de Joseph (`INSTALACION.md`); los dos suben con la
@@ -75,7 +80,7 @@ Lo que dejó listo el Sprint 5 para este sprint:
 - **Docker en computadoras lentas**: construir las imágenes de a una (`docker compose build <servicio>`);
   las siete a la vez agotan la descarga de npm (`EIDLETIMEOUT`).
 
-Pasos: los mismos del Sprint 5 (rama y PR, pruebas de integración, componentes y punta a punta,
+Pasos: los mismos del Sprint 5 (rama del sprint fusionada en `main` sin PR, pruebas de integración, componentes y punta a punta,
 `capitulo-3-sprint-6.md` con la estructura de `capitulo-3-sprint-5.md` (3.7.1 a 3.7.9), paquete
 «Sprint 6» en `crear-diagramas.ps1`, capturas copiando `herramientas/informe/capturas-sprint5.cjs`,
 sumar el Sprint 6 en `SPRINTS` de `excel_scrum.py` y regenerar el Word). Si el EA de la computadora de
