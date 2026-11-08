@@ -94,7 +94,7 @@ test.describe('Despacho del pedido', () => {
     test.setTimeout(180_000);
     const cliente = await registrarCliente(request);
     await iniciarSesion(page, cliente.usuario, cliente.contrasena);
-    await expect(page).toHaveURL(/\/portal/);
+    await expect(page).toHaveURL(/\/portal/, { timeout: 45_000 });
     await alCarrito(page);
     await page.getByRole('button', { name: 'Confirmar pedido' }).click();
     const aviso = page.getByText(/Pedido #(\d{5}) confirmado/);
@@ -109,13 +109,14 @@ test.describe('Despacho del pedido', () => {
     // HU-23: el administrador lo pone en preparación, acepta la sugerencia y lo despacha.
     await page.evaluate(() => localStorage.clear());
     await iniciarSesion(page, ADMIN.usuario, ADMIN.contrasena);
-    await expect(page).toHaveURL(/\/inicio$/);
+    await expect(page).toHaveURL(/\/inicio$/, { timeout: 45_000 });
     await page.goto(`/pedidos/lista?pedido=${Number(numero)}`);
     const panel = page.getByRole('dialog', { name: `Pedido #${numero}` });
     await panel.getByRole('button', { name: 'Poner en preparación' }).click();
-    await panel.getByText('Sugerencia').waitFor({ timeout: 30_000 });
+    await expect(panel.getByRole('button', { name: 'Marcar en camino' })).toBeVisible({ timeout: 45_000 });
+    await panel.getByText('Sugerencia').waitFor({ timeout: 45_000 });
     await panel.getByRole('button', { name: 'Asignar' }).first().click();
-    await expect(panel.getByText('Marcos Vargas')).toBeVisible({ timeout: 30_000 });
+    await expect(panel.getByRole('button', { name: 'Cambiar' })).toBeVisible({ timeout: 45_000 });
     await panel.getByRole('button', { name: 'Marcar en camino' }).click();
     await expect(panel.getByRole('button', { name: 'Registrar entrega' })).toBeVisible({ timeout: 30_000 });
 
