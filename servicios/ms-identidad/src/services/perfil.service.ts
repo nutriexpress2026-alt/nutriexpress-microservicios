@@ -10,6 +10,7 @@ import type {
   PerfilDTO,
 } from '../dtos/perfil.dto.js';
 import { ErrorApp } from '../errors/error-app.js';
+import { avisarPermisosCambiados } from './aviso.service.js';
 
 /**
  * Autoservicio de la cuenta propia.
@@ -149,6 +150,9 @@ export async function cambiarContrasena(
 
   const hash = await bcrypt.hash(datos.contrasenaNueva, env.bcryptRounds);
   await usuarioModel.cambiarContrasena(idUsuario, hash);
+  // HU-07 · Quien tenga abierta la cuenta en otro dispositivo deja de estar dentro:
+  // los servicios rechazan los tokens anteriores (el mismo aviso de HU-05).
+  await avisarPermisosCambiados({ idUsuario });
 }
 
 /**

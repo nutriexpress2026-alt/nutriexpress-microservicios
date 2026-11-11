@@ -113,6 +113,41 @@ export async function iniciarSesion(nombreUsuario: string, contrasena: string): 
   };
 }
 
+/**
+ * HU-07 · Una sesión nueva para el titular, sin pedirle la contraseña otra vez.
+ * Se usa después de cambiarla: las sesiones anteriores dejan de valer en todos
+ * los servicios (PermisosCambiados) y este navegador sigue dentro con la nueva.
+ */
+export async function sesionNueva(idUsuario: number): Promise<SesionDTO> {
+  const usuario = await usuarioModel.buscarPorId(idUsuario);
+  if (!usuario) throw new ErrorApp(404, 'Usuario no encontrado');
+  const permisos = await permisoModel.permisosDeUsuario(idUsuario);
+  const token = firmarToken({
+    idUsuario: usuario.id_usuario,
+    nombreUsuario: usuario.nombre_usuario,
+    nombre: usuario.nombre,
+    apellido: usuario.apellido,
+    idRol: usuario.id_rol,
+    rol: usuario.rol.nombre,
+    cargo: usuario.empleado?.cargo.nombre ?? null,
+    permisos,
+  });
+  return {
+    token,
+    usuario: {
+      id: usuario.id_usuario,
+      nombre: usuario.nombre,
+      apellido: usuario.apellido,
+      nombreUsuario: usuario.nombre_usuario,
+      email: usuario.email,
+      rol: usuario.rol.nombre,
+      cargo: usuario.empleado?.cargo.nombre ?? null,
+      apariencia: { tema: usuario.tema ?? null, modo: usuario.modo ?? null },
+    },
+    permisos,
+  };
+}
+
 /** Devuelve la sesión vigente a partir del token ya verificado. */
 export async function sesionActual(idUsuario: number): Promise<Omit<SesionDTO, 'token'>> {
   const usuario = await usuarioModel.buscarPorId(idUsuario);

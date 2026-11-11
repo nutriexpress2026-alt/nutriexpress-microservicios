@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { KeyRound, ShieldCheck } from 'lucide-react';
 import { api, ErrorApi } from '@/lib/api';
+import { guardarSesion } from '@/lib/sesion';
+import type { Sesion } from '@/types';
 import { useNotificaciones } from '@/components/ui/Notificaciones';
 import { Campo } from '@/components/ui/Campo';
 import { Boton } from '@/components/ui/Boton';
@@ -43,14 +45,17 @@ export function CambiarContrasena() {
     setEnviando(true);
 
     try {
-      await api.put('/perfil/contrasena', {
+      // HU-07 · Cambiarla cierra las sesiones de los otros dispositivos; esta sigue
+      // con el token nuevo que devuelve el servidor.
+      const nuevaSesion = await api.put<Sesion | undefined>('/perfil/contrasena', {
         contrasenaActual: actual,
         contrasenaNueva: nueva,
       });
+      if (nuevaSesion?.token) guardarSesion(nuevaSesion);
       setActual('');
       setNueva('');
       setRepetida('');
-      notificar('exito', 'Contraseña actualizada. Úsela la próxima vez que inicie sesión.');
+      notificar('exito', 'Contraseña actualizada. Se cerró la sesión en sus otros dispositivos.');
     } catch (e) {
       setError(e instanceof ErrorApi ? e.message : 'No se pudo cambiar la contraseña');
     } finally {

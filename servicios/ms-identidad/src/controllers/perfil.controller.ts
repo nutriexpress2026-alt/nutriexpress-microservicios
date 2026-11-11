@@ -1,3 +1,4 @@
+import * as authService from '../services/auth.service.js';
 import type { Request, Response } from 'express';
 import * as perfilService from '../services/perfil.service.js';
 import { idUsuarioDeSesion } from '../utils/sesion.js';
@@ -19,9 +20,10 @@ export async function actualizar(req: Request, res: Response) {
 }
 
 export async function cambiarContrasena(req: Request, res: Response) {
-  await perfilService.cambiarContrasena(idUsuarioDeSesion(req), req.body);
-  // 204: la operación no devuelve nada, y menos que nada la contraseña.
-  res.status(204).end();
+  const idUsuario = idUsuarioDeSesion(req);
+  await perfilService.cambiarContrasena(idUsuario, req.body);
+  // HU-07 · Las demás sesiones se cerraron: este navegador recibe una nueva.
+  res.json(await authService.sesionNueva(idUsuario));
 }
 
 /** HU-33 · Tema y modo del usuario. */
