@@ -116,7 +116,8 @@ export function CambiarContrasena() {
         <div className="flex items-center justify-between gap-3 border-t border-borde pt-4">
           <p className="flex items-start gap-1.5 text-[11px] leading-relaxed text-tinta-tenue">
             <ShieldCheck className="mt-0.5 size-3 shrink-0" aria-hidden />
-            Las sesiones abiertas en otros dispositivos siguen activas.
+            {/* HU-07 · El servidor cierra las demás sesiones al cambiarla. */}
+            Al cambiarla se cierran las sesiones abiertas en sus otros dispositivos.
           </p>
           <Boton type="submit" variante="primario" cargando={enviando} disabled={!listo}>
             Cambiar

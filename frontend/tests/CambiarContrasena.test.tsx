@@ -100,9 +100,9 @@ describe('CambiarContrasena', () => {
     await waitFor(() => expect(campos().actual).toHaveValue(''));
   });
 
-  /** El usuario debe saber que su otra sesión sigue abierta. */
-  it('advierte que las demás sesiones siguen activas', () => {
+  /** HU-07 · El usuario debe saber que cambiarla cierra sus otras sesiones. */
+  it('avisa que se cierran las sesiones de los otros dispositivos', () => {
     render(<CambiarContrasena />);
-    expect(screen.getByText(/sesiones abiertas en otros dispositivos/i)).toBeInTheDocument();
+    expect(screen.getByText(/se cierran las sesiones abiertas en sus otros dispositivos/i)).toBeInTheDocument();
   });
 });
