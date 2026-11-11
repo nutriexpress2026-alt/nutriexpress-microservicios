@@ -24,6 +24,11 @@ export async function cambiarContrasena(req: Request, res: Response) {
   res.status(204).end();
 }
 
+/** HU-33 · Tema y modo del usuario. */
+export async function cambiarApariencia(req: Request, res: Response) {
+  res.json(await perfilService.cambiarApariencia(idUsuarioDeSesion(req), req.body));
+}
+
 export async function actualizarPreferencias(req: Request, res: Response) {
   res.json(await perfilService.actualizarPreferencias(idUsuarioDeSesion(req), req.body));
 }

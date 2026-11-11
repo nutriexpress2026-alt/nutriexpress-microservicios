@@ -13,6 +13,11 @@ export interface UsuarioSesion {
    * por permisos, como antes.
    */
   cargo?: string | null;
+  /**
+   * HU-33 · El tema y el modo guardados en la cuenta (nulos: manda el navegador).
+   * Opcional por las sesiones guardadas antes del Sprint 6.
+   */
+  apariencia?: { tema: string | null; modo: string | null };
 }
 
 export interface Sesion {
@@ -758,11 +763,17 @@ export interface ReporteVentas {
   hasta: string;
   /** Nulo cuando el reporte abarca todos los productos. */
   producto: string | null;
+  /** HU-28 · Nulo cuando abarca a todos los vendedores. */
+  vendedor?: string | null;
   generadoEn: string;
   resumen: ResumenReporte;
   porProducto: LineaProductoReporte[];
   porMetodoPago: { metodo: string; cantidadVentas: number; total: number }[];
+  /** HU-28 · Por vendedor (desde el Sprint 6). */
+  porVendedor?: { idVendedor: number; vendedor: string; cantidadVentas: number; total: number }[];
   porDia: { dia: string; cantidadVentas: number; total: number }[];
+  /** HU-28 · «Las anuladas no suman»: se cuentan aparte. */
+  anuladas?: { cantidad: number; total: number };
 }
 
 /* --- Paginación de los listados (hallazgo H7) --- */

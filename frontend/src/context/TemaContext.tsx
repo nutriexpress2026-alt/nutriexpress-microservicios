@@ -1,6 +1,8 @@
 'use client';
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { api } from '@/lib/api';
+import { leerSesion } from '@/lib/sesion';
 import {
   CLAVE_MODO,
   CLAVE_TEMA,
@@ -18,8 +20,19 @@ interface ContextoTema {
   preferencia: PreferenciaModo;
   /** Modo realmente aplicado; con `auto` lo decide la hora del cliente. */
   modo: Modo;
-  cambiarTema: (tema: Tema) => void;
-  cambiarPreferencia: (preferencia: PreferenciaModo) => void;
+  /**
+   * Con sesión iniciada, la elección también se guarda en la cuenta (HU-33): se
+   * recuerda en cualquier dispositivo. `enLaCuenta: false` la aplica solo aquí
+   * (es lo que hace el inicio de sesión al traer la de la cuenta).
+   */
+  cambiarTema: (tema: Tema, opciones?: { enLaCuenta?: boolean }) => void;
+  cambiarPreferencia: (preferencia: PreferenciaModo, opciones?: { enLaCuenta?: boolean }) => void;
+}
+
+/** HU-33 · Guarda la elección en la cuenta. Si falla, vale igual en este navegador. */
+function guardarEnLaCuenta(datos: { tema?: Tema; modo?: PreferenciaModo }) {
+  if (!leerSesion()?.token) return;
+  api.put('/perfil/apariencia', datos).catch(() => {});
 }
 
 const Contexto = createContext<ContextoTema | null>(null);
@@ -77,22 +90,24 @@ export function TemaProvider({ children }: { children: React.ReactNode }) {
     document.documentElement.dataset.modo = modo;
   }, [tema, modo]);
 
-  const cambiarTema = useCallback((nuevo: Tema) => {
+  const cambiarTema = useCallback((nuevo: Tema, opciones?: { enLaCuenta?: boolean }) => {
     setTema(nuevo);
     try {
       localStorage.setItem(CLAVE_TEMA, nuevo);
     } catch {
       // La elección seguirá activa en esta sesión aunque no se pueda guardar.
     }
+    if (opciones?.enLaCuenta !== false) guardarEnLaCuenta({ tema: nuevo });
   }, []);
 
-  const cambiarPreferencia = useCallback((nueva: PreferenciaModo) => {
+  const cambiarPreferencia = useCallback((nueva: PreferenciaModo, opciones?: { enLaCuenta?: boolean }) => {
     setPreferencia(nueva);
     try {
       localStorage.setItem(CLAVE_MODO, nueva);
     } catch {
       // Idem.
     }
+    if (opciones?.enLaCuenta !== false) guardarEnLaCuenta({ modo: nueva });
   }, []);
 
   const valor = useMemo(

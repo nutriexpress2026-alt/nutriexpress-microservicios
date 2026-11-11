@@ -106,6 +106,8 @@ export async function iniciarSesion(nombreUsuario: string, contrasena: string): 
       email: usuario.email,
       rol: usuario.rol.nombre,
       cargo: usuario.empleado?.cargo.nombre ?? null,
+      // HU-33 · El navegador aplica el tema y el modo de la cuenta al iniciar sesión.
+      apariencia: { tema: usuario.tema ?? null, modo: usuario.modo ?? null },
     },
     permisos,
   };
@@ -125,6 +127,8 @@ export async function sesionActual(idUsuario: number): Promise<Omit<SesionDTO, '
       email: usuario.email,
       rol: usuario.rol.nombre,
       cargo: usuario.empleado?.cargo.nombre ?? null,
+      // HU-33 · El navegador aplica el tema y el modo de la cuenta al iniciar sesión.
+      apariencia: { tema: usuario.tema ?? null, modo: usuario.modo ?? null },
     },
     permisos,
   };

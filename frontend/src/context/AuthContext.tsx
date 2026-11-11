@@ -6,6 +6,7 @@ import { api } from '@/lib/api';
 import { esPersonalInterno } from '@/lib/dominio';
 import { guardarSesion, leerSesion, borrarSesion } from '@/lib/sesion';
 import type { Sesion } from '@/types';
+import { useTema, type PreferenciaModo, type Tema } from './TemaContext';
 
 interface ContextoAuth {
   sesion: Sesion | null;
@@ -46,6 +47,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [sesion, setSesion] = useState<Sesion | null>(null);
   const [cargando, setCargando] = useState(true);
   const router = useRouter();
+  const { cambiarTema, cambiarPreferencia } = useTema();
+
+  /** HU-33 · Al entrar, el tema y el modo de la cuenta (si los eligió alguna vez). */
+  const aplicarApariencia = useCallback(
+    (s: Sesion) => {
+      const a = s.usuario.apariencia;
+      if (a?.tema) cambiarTema(a.tema as Tema, { enLaCuenta: false });
+      if (a?.modo) cambiarPreferencia(a.modo as PreferenciaModo, { enLaCuenta: false });
+    },
+    [cambiarTema, cambiarPreferencia],
+  );
 
   useEffect(() => {
     setSesion(leerSesion());
@@ -56,8 +68,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const nueva = await api.post<Sesion>('/auth/login', { nombreUsuario, contrasena });
     guardarSesion(nueva);
     setSesion(nueva);
+    aplicarApariencia(nueva);
     router.push(destinoTras(nueva));
-  }, [router]);
+  }, [router, aplicarApariencia]);
 
   const registrarCliente = useCallback(async (datos: DatosRegistro) => {
     const nueva = await api.post<Sesion>('/auth/registro', datos);

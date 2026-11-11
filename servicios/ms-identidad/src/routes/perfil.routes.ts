@@ -4,6 +4,7 @@ import { requiereAutenticacion } from '../middlewares/auth.middleware.js';
 import { validarCuerpo } from '../middlewares/validate.middleware.js';
 import {
   esquemaActualizarPerfil,
+  esquemaApariencia,
   esquemaCambiarContrasena,
 } from '../dtos/perfil.dto.js';
 import { esquemaPreferencias } from '../dtos/cliente.dto.js';
@@ -24,6 +25,7 @@ router.put('/', validarCuerpo(esquemaActualizarPerfil), ctrl.actualizar);
 router.put('/contrasena', validarCuerpo(esquemaCambiarContrasena), ctrl.cambiarContrasena);
 
 /** Solo tiene sentido para clientes; el servicio rechaza al resto. */
+router.put('/apariencia', validarCuerpo(esquemaApariencia), ctrl.cambiarApariencia);
 router.put('/preferencias', validarCuerpo(esquemaPreferencias), ctrl.actualizarPreferencias);
 
 export default router;

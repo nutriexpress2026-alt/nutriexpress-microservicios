@@ -20,6 +20,8 @@ export interface SesionDTO {
      * un turno de reparto.
      */
     cargo: string | null;
+    /** HU-33 · El tema y el modo guardados en la cuenta (nulos: manda el navegador). */
+    apariencia: { tema: string | null; modo: string | null };
   };
   permisos: string[];
 }

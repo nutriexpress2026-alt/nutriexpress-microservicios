@@ -5,6 +5,7 @@ import * as clienteModel from '../models/cliente.model.js';
 import { env } from '../config/env.js';
 import type {
   DatosActualizarPerfil,
+  DatosApariencia,
   DatosCambiarContrasena,
   PerfilDTO,
 } from '../dtos/perfil.dto.js';
@@ -61,7 +62,21 @@ function aDTO(usuario: NonNullable<UsuarioConsultado>): PerfilDTO {
           restriccionDietetica: usuario.cliente.restriccion_dietetica,
         }
       : null,
+    apariencia: {
+      tema: (usuario.tema as PerfilDTO['apariencia']['tema']) ?? null,
+      modo: (usuario.modo as PerfilDTO['apariencia']['modo']) ?? null,
+    },
   };
+}
+
+/** HU-33 · «La elección se recuerda»: en la cuenta, no solo en el navegador. */
+export async function cambiarApariencia(idUsuario: number, datos: DatosApariencia): Promise<PerfilDTO> {
+  await exigirUsuario(idUsuario);
+  await prisma.usuario.update({
+    where: { id_usuario: idUsuario },
+    data: { ...(datos.tema ? { tema: datos.tema } : {}), ...(datos.modo ? { modo: datos.modo } : {}) },
+  });
+  return obtener(idUsuario);
 }
 
 export async function obtener(idUsuario: number): Promise<PerfilDTO> {

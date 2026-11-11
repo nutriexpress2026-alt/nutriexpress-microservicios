@@ -29,6 +29,11 @@ if (!rows[0].existe) {
   const sql = readFileSync(fileURLToPath(new URL('./esquema.sql', import.meta.url)), 'utf8');
   await cliente.query(sql);
   console.log('ms-identidad: tablas creadas');
+} else {
+  // Base que ya existía: solo lo agregado después de la primera versión (idempotente).
+  const sql = readFileSync(fileURLToPath(new URL('./esquema.sql', import.meta.url)), 'utf8');
+  const marca = sql.indexOf('-- >>> Posteriores a la primera versión');
+  if (marca >= 0) await cliente.query(sql.slice(marca));
 }
 await cliente.end();
 

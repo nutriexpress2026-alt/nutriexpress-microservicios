@@ -97,3 +97,16 @@ CREATE INDEX ix_usuario_rol          ON usuario(id_rol);
 CREATE INDEX ix_rolpermiso_permiso   ON rol_permiso(id_permiso);
 CREATE INDEX ix_usuariorolpermiso_rp ON usuario_rol_permiso(id_rol_permiso);
 CREATE INDEX ix_empleado_cargo       ON empleado(id_cargo);
+
+-- >>> Posteriores a la primera versión
+-- Lo que sigue se aplica también a las bases que ya existían (prisma/inicializar.ts):
+-- todo idempotente, sin borrar datos.
+
+-- HU-33 (Sprint 6) · El tema y el modo que eligió cada usuario: se recuerdan en
+-- cualquier dispositivo en que inicie sesión. Nulo = lo que diga el navegador.
+ALTER TABLE usuario ADD COLUMN IF NOT EXISTS tema VARCHAR(10);
+ALTER TABLE usuario ADD COLUMN IF NOT EXISTS modo VARCHAR(5);
+ALTER TABLE usuario DROP CONSTRAINT IF EXISTS ck_usuario_tema;
+ALTER TABLE usuario ADD CONSTRAINT ck_usuario_tema CHECK (tema IS NULL OR tema IN ('ninos','jovenes','adultos'));
+ALTER TABLE usuario DROP CONSTRAINT IF EXISTS ck_usuario_modo;
+ALTER TABLE usuario ADD CONSTRAINT ck_usuario_modo CHECK (modo IS NULL OR modo IN ('dia','noche','auto'));

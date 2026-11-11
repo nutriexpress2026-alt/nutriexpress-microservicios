@@ -96,4 +96,21 @@ export interface PerfilDTO {
   ultimoAcceso: string | null;
   laboral: DatosLaboralesDTO | null;
   preferencias: PreferenciasDTO | null;
+  /** HU-33 · Lo que eligió en «Apariencia»; nulo si nunca eligió (manda el navegador). */
+  apariencia: AparienciaDTO;
 }
+
+export const TEMAS = ['ninos', 'jovenes', 'adultos'] as const;
+export const MODOS = ['dia', 'noche', 'auto'] as const;
+
+export interface AparienciaDTO {
+  tema: (typeof TEMAS)[number] | null;
+  modo: (typeof MODOS)[number] | null;
+}
+
+/** HU-33 · Cambiar el tema o el modo (cada uno es opcional). */
+export const esquemaApariencia = z
+  .object({ tema: z.enum(TEMAS).optional(), modo: z.enum(MODOS).optional() })
+  .refine((d) => d.tema !== undefined || d.modo !== undefined, { message: 'Indique el tema o el modo' });
+
+export type DatosApariencia = z.infer<typeof esquemaApariencia>;

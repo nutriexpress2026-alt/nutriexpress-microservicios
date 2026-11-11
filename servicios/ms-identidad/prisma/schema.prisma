@@ -72,6 +72,8 @@ model usuario {
   fecha_registro          DateTime                  @default(now()) @db.Timestamp(6)
   id_rol                  Int
   ultimo_acceso           DateTime?                 @db.Timestamp(6)
+  tema                    String?                   @db.VarChar(10)
+  modo                    String?                   @db.VarChar(5)
   veces_bloqueado         Int                       @default(0)
   cliente                 cliente?
   empleado                empleado?

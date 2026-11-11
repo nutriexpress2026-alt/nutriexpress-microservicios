@@ -97,7 +97,7 @@ describe('Rutas internas de ms-identidad', () => {
 
   it('da el nombre de un cliente para una venta de mostrador (HU-18)', async () => {
     const r = await request(app).get(`/interno/clientes/${idCliente}`).expect(200);
-    expect(r.body).toMatchObject({ id: idCliente, activo: true, nombreCompleto: expect.stringMatching(/^Cliente /) });
+    expect(r.body).toMatchObject({ id: idCliente, activo: true, nombreCompleto: expect.stringMatching(/^Cliente /), email: expect.stringMatching(/@correo\.bo$/) });
     await request(app).get('/interno/clientes/999999').expect(404);
   });
 

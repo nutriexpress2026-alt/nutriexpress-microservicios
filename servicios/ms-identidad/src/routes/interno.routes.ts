@@ -38,7 +38,13 @@ router.get('/empleados/:id', async (req, res) => {
 router.get('/clientes/:id', async (req, res) => {
   const c = await clienteModel.buscarDetalle(Number(req.params.id));
   if (!c) throw new ErrorApp(404, 'El cliente indicado no existe');
-  res.json({ id: c.id_cliente, nombreCompleto: `${c.usuario.nombre} ${c.usuario.apellido}`, activo: c.usuario.activo });
+  // HU-32 · El correo lo usa ms-reportes para avisarle del estado de su pedido.
+  res.json({
+    id: c.id_cliente,
+    nombreCompleto: `${c.usuario.nombre} ${c.usuario.apellido}`,
+    email: c.usuario.email,
+    activo: c.usuario.activo,
+  });
 });
 
 export default router;
