@@ -872,6 +872,124 @@ try {
   Poner $d $nota 200 660 760 60 | Out-Null
   $diagramas += ,@($d, "3.6.3-entregar-pedido.png")
 
+  # ============================================================ Sprint 6
+  $sprint6 = $modelo.Packages.AddNew("Sprint 6", ""); $sprint6.Update() | Out-Null
+
+  # --- 3.7.3 ms-reportes (MongoDB)
+  $p = $sprint6.Packages.AddNew("3.7.3 Clases de ms-reportes", ""); $p.Update() | Out-Null
+  $d = $p.Diagrams.AddNew("Clases de ms-reportes", "Logical"); $d.Update() | Out-Null
+  $docVenta = Clase "Venta" @("_id: int", "fecha: datetime", "estado: string", "tipoVenta: string", "metodoPago: string",
+    "total: decimal", "cliente: {id, nombre}", "vendedor: {id, nombre}", "actualizadoEn: datetime") 20 40 210
+  $docPedido = Clase "Pedido" @("_id: int", "idUsuario: int", "cliente: string", "fechaPedido: datetime", "estado: string",
+    "estadoPago: string", "motivo: string", "metodoPago: string", "total: decimal", "repartidor: {id, nombre}",
+    "fechaEntrega: datetime", "direccion: string", "actualizadoEn: datetime") 300 40 220
+  $linea = Clase "LineaVendida" @("idProducto: int", "nombre: string", "cantidad: int", "precioUnitario: decimal",
+    "costoUnitario: decimal") 160 330 200
+  $aviso = Clase "AvisoPendiente" @("_id: uuid", "tipo: string", "idUsuario: int", "estado: string", "intentos: int",
+    "ultimoError: string", "creadoEn: datetime", "enviadoEn: datetime", "para: string") 600 40 200
+  $visita = Clase "Visita" @("ruta: string", "total: int") 600 260 160
+  $eventoRep = Clase "EventoProcesado" @("_id: uuid", "tipo: string", "procesadoEn: datetime") 860 40 180
+  $sesionRep = Clase "SesionVigente" @("_id: string", "desde: datetime") 860 180 180
+  # Composición: en EA va de la parte al todo (el rombo queda del lado del todo).
+  foreach ($todo in @($docVenta, $docPedido)) {
+    # Composición = agregación «Strong» en EA (rombo relleno).
+    $c = $linea.Connectors.AddNew("items", "Aggregation"); $c.Subtype = "Strong"; $c.SupplierID = $todo.ElementID
+    $c.ClientEnd.Cardinality = "1..*"; $c.SupplierEnd.Cardinality = "1"; $c.Update() | Out-Null
+  }
+  Asociar $aviso $docPedido "0..*" "1" "foto del pedido"
+  $nota = Nuevo $p "" "Note" -notas ("Base reportes (MongoDB): documentos, no tablas. Venta y Pedido son la última «foto» que " +
+    "publicaron ms-ventas y ms-pedidos (VentaRegistrada, PedidoEstadoCambiado), con sus líneas adentro: listas para " +
+    "consultar por fechas sin leer bases ajenas (RNF-ARQ-02). actualizadoEn impide que una foto vieja pise a una nueva. " +
+    "AvisoPendiente es la bandeja de salida de los correos al cliente (HU-32); Visita, el contador del Sprint 1.")
+  Poner $d $nota 20 470 1020 60 | Out-Null
+  $diagramas += ,@($d, "3.7.3-clases-ms-reportes.png")
+
+  # --- 3.7.3 Aviso al cliente (secuencia)
+  $p = $sprint6.Packages.AddNew("3.7.3 Aviso al cliente", ""); $p.Update() | Out-Null
+  $d = $p.Diagrams.AddNew("Aviso al cliente cuando cambia su pedido", "Sequence"); $d.Update() | Out-Null
+  $L = @{}
+  $x = 40
+  foreach ($v in @(@("Repartidor", "Actor"), @("ms-pedidos", "Sequence"), @("ms-reportes", "Sequence"),
+      @("ms-identidad", "Sequence"), @("Postfix (servidor web)", "Sequence"))) {
+    $e = Nuevo $p $v[0] $v[1]
+    Poner $d $e $x 40 110 640 | Out-Null
+    $L[$v[0]] = $e
+    $x += 240
+  }
+  $mensajes = @(
+    @("Repartidor", "ms-pedidos", "avanzarEstado(Entregado)", "llamada"),
+    @("ms-pedidos", "ms-pedidos", "guardar Entregado y costos", "interna"),
+    @("ms-pedidos", "ms-reportes", "PedidoEstadoCambiado(foto del pedido)", "evento"),
+    @("ms-pedidos", "Repartidor", "pedido Entregado", "retorno"),
+    @("ms-reportes", "ms-reportes", "guardar la foto (si es más nueva)", "interna"),
+    @("ms-reportes", "ms-reportes", "anotar aviso en la bandeja", "interna"),
+    @("ms-reportes", "ms-identidad", "cliente(idUsuario) [REST]", "llamada"),
+    @("ms-identidad", "ms-reportes", "cliente(correo, nombre)", "retorno"),
+    @("ms-reportes", "Postfix (servidor web)", "enviar(comprobante en PDF) [SMTP]", "llamada"),
+    @("ms-reportes", "ms-reportes", "marcar Enviado", "interna")
+  )
+  $n = 1
+  foreach ($m in $mensajes) {
+    $c = $L[$m[0]].Connectors.AddNew($m[2], "Sequence")
+    $c.SupplierID = $L[$m[1]].ElementID
+    $c.SequenceNo = $n
+    $c.Update() | Out-Null
+    $tipo = $m[3]
+    if ($tipo -ne "llamada") { $c.Properties.Item("Kind").Value = "Signal" }
+    $c.Properties.Item("IsAsync").Value = ($tipo -eq "evento")
+    $c.Properties.Item("IsReturn").Value = ($tipo -eq "retorno")
+    $c.Update() | Out-Null
+    $n++
+  }
+  # Subtipo 4 = loop (0 alt, 1 opt, 2 break, 3 par).
+  $loop = Nuevo $p "" "InteractionFragment" 4
+  $op = $loop.Partitions.AddNew("cada 20 s, mientras haya avisos pendientes", "")
+  $loop.Update() | Out-Null
+  Poner $d $loop 20 330 1180 250 | Out-Null
+  $nota = Nuevo $p "" "Note" -notas ("HU-32. ms-pedidos publica y sigue: el correo sale aunque esté ocupado. Si ms-identidad " +
+    "o el correo fallan, el aviso queda en la bandeja y se reintenta; la foto ya quedó guardada y el reporte, al día. " +
+    "Postfix lo entrega al servidor de correo.")
+  Poner $d $nota 200 620 760 60 | Out-Null
+  $diagramas += ,@($d, "3.7.3-aviso-cliente.png")
+
+  # --- 3.7.3 Despliegue (HT-04)
+  $p = $sprint6.Packages.AddNew("3.7.3 Despliegue", ""); $p.Update() | Out-Null
+  $d = $p.Diagrams.AddNew("Despliegue en el VPS", "Deployment"); $d.Update() | Out-Null
+  $navegador = Nuevo $p "Navegador del cliente o del personal" "Node" -estereotipo "dispositivo"
+  Poner $d $navegador 20 260 200 80 | Out-Null
+  $libelula = Nuevo $p "Libélula (pasarela de pago)" "Node" -estereotipo "servicio externo"
+  Poner $d $libelula 20 420 200 70 | Out-Null
+  # El servidor y Docker como límites (Boundary): EA los dibuja siempre al fondo, con sus piezas encima.
+  $vps = Nuevo $p "«servidor» Servidor web (VPS Contabo, Ubuntu)" "Boundary"
+  Poner $d $vps 280 20 620 560 | Out-Null
+  $caddy = Nuevo $p "Caddy (Let's Encrypt)" "Component" -estereotipo "proxy HTTPS"
+  Poner $d $caddy 310 260 150 70 | Out-Null
+  $docker = Nuevo $p "«contenedores» Docker (docker-compose.prod.yml)" "Boundary"
+  Poner $d $docker 500 50 380 420 | Out-Null
+  $gw = Nuevo $p "API Gateway (nginx)" "Component" -estereotipo "127.0.0.1:8090"
+  Poner $d $gw 520 90 160 60 | Out-Null
+  $portal = Nuevo $p "Portal (Next.js)" "Component" -estereotipo "127.0.0.1:3000"
+  Poner $d $portal 700 90 160 60 | Out-Null
+  $mss = Nuevo $p "7 microservicios" "Component" -estereotipo "identidad, catálogo, inventario, ventas, pedidos, pagos, reportes"
+  Poner $d $mss 520 190 340 70 | Out-Null
+  $datos = Nuevo $p "PostgreSQL · MongoDB · Redis · RabbitMQ" "Component" -estereotipo "sin puertos hacia afuera"
+  Poner $d $datos 520 300 340 60 | Out-Null
+  $respaldo = Nuevo $p "Respaldo diario (cron 03:00)" "Component" -estereotipo "7 días"
+  Poner $d $respaldo 520 390 340 50 | Out-Null
+  $postfix = Nuevo $p "Postfix" "Component" -estereotipo "relay SMTP"
+  Poner $d $postfix 310 470 150 60 | Out-Null
+  $correo = Nuevo $p "Servidor de correo (VPS)" "Node" -estereotipo "Postfix + Dovecot + BIND9"
+  Poner $d $correo 960 460 220 80 | Out-Null
+  Unir $navegador $caddy "Dependency" "HTTPS 443" | Out-Null
+  Unir $libelula $caddy "Dependency" "aviso de pago (HTTPS)" | Out-Null
+  Unir $caddy $gw "Dependency" "/api" | Out-Null
+  Unir $caddy $portal "Dependency" "el resto" | Out-Null
+  Unir $gw $mss "Dependency" "" | Out-Null
+  Unir $mss $datos "Dependency" "" | Out-Null
+  Unir $mss $postfix "Dependency" "SMTP 25 (ms-reportes)" | Out-Null
+  Unir $postfix $correo "Dependency" "relayhost" | Out-Null
+  $diagramas += ,@($d, "3.7.3-despliegue.png")
+
   $proyecto = $r.GetProjectInterface()
   foreach ($par in $diagramas) {
     $dd = $par[0]

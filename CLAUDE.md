@@ -47,7 +47,8 @@ rutas del monolito (`/api/auth`, `/api/usuarios`…) para que el frontend reutil
 | 3 | Terminado (29-oct al 4-nov) | Eventos por RabbitMQ (HT-03), recetas (HU-09), reservas de stock (HU-17), órdenes de producción (HU-10), permisos en todos los servicios (HU-05) y recuperar la contraseña (HU-06). Revisado por Nilser y en `main` (PR #3 a #13, 4-nov). Diagramas de EA exportados en la computadora de Nilser (el EA de la de Joseph se cuelga al exportar) e `informe.docx` regenerado (92 págs.). En la revisión, las reservas pasaron a 15 s de margen (P2028 en computadoras lentas) |
 | 4 | Terminado (5 al 11-nov) | ms-pedidos (HU-21 carrito y pedido, HU-22 direcciones con una principal, HU-25 mis pedidos, cancelar y seguimiento) y ms-pagos (HU-26 cobro con QR o tarjeta en la pasarela simulada o Libélula, aviso, vencimiento; HU-27 modo de cobro). Saga del pedido: reserva REST en inventario y desenlace del cobro por eventos (`PagoConfirmado`, `PagoFallido`, `PedidoCancelado`). Programado por Nilser en su computadora; documentado con la regla del equipo. Informe: 106 págs. |
 | 5 | Terminado (12 al 18-nov) | Joseph le pidió a Nilser avanzarlo: lo programó Nilser en su computadora el 7-nov; rama `sprint-5` fusionada en `main` sin PR (8-nov). ms-ventas nuevo (HU-18 venta de mostrador en efectivo o QR, HU-19 comprobante `V-000001` y anulación), en ms-pedidos el tablero y el reparto (HU-23, HU-24, tabla `turno_repartidor`), en ms-identidad la gestión de clientes (HU-20: se quedó ahí porque la ficha ya vivía en identidad). Doce contenedores. Documentado con la regla del equipo. Informe: 122 págs. |
-| 6 | Siguiente (19 al 25-nov) | Ver «Siguiente: Sprint 6» |
+| 6 | Terminado (19 al 25-nov) | Programado por Nilser en su computadora el 11-nov (rama `sprint-6`, fusionada en `main` sin PR). ms-reportes arma los reportes de ventas (HU-28, por fechas, producto y vendedor) y de pedidos (HU-29) con una copia en MongoDB de cada venta y pedido (eventos `VentaRegistrada` y `PedidoEstadoCambiado` con la foto completa, más la lista entera al arrancar), en PDF y enviables a hasta 5 correos; avisos al cliente por correo con bandeja de salida (HU-32); tema y modo guardados en la cuenta (HU-33); VPS actualizado con respaldo diario (HT-04). Documentado con la regla del equipo. Informe: 139 págs. |
+| 7 | Siguiente (26-nov al 2-dic, reserva) | Ver «Siguiente: Sprint 7» |
 
 **En el VPS desde el 11-nov** (adelanto de HT-04): https://nutriexpress.109-123-254-213.sslip.io, en
 Docker en `/opt/nutriexpress` del VPS web, con Caddy delante, Libélula en modo Real y el correo por el
@@ -57,45 +58,43 @@ monolito, que se retiró con respaldo. Cómo está armado y cómo actualizarlo: 
 Desde el 3-nov el trabajo sigue en la computadora de Joseph (`INSTALACION.md`); los dos suben con la
 cuenta compartida `nutriexpress2026-alt`, cada uno con su `git config user.name`.
 
-## Siguiente: Sprint 6 (jueves 19 al miércoles 25 de noviembre de 2026)
+## Siguiente: Sprint 7 (jueves 26 de noviembre al miércoles 2 de diciembre de 2026, reserva)
 
-**Objetivo:** reportes, correo al cliente, temas y despliegue. Historias (28 pts, del Product Backlog en
-`capitulo-3-sprint-0.md`): HU-28 Reporte de ventas (8), HU-29 Reporte de pedidos (5), HU-32
-Notificaciones por correo (5), HU-33 Temas y modo día/noche (5) y HT-04 Despliegue en el VPS (5; ya
-desplegado el 11-nov: en el sprint queda documentarlo y actualizar el servidor con lo nuevo). Antes
-de programar, leer sus criterios de aceptación. El Sprint 7 (26-nov al 2-dic) queda de reserva: HU-07
-Perfil propio y HU-30 Reporte de producción e inventario.
+**Historias (8 pts):** HU-07 Perfil propio (3, ms-identidad) y HU-30 Reporte de producción e inventario
+(5, ms-reportes). Antes de programar, leer sus criterios de aceptación en `capitulo-3-sprint-0.md`. Con
+ellas el proyecto llega a 205 de 205 puntos.
 
-Lo que dejó listo el Sprint 5 para este sprint:
+Lo que dejó listo el Sprint 6:
 
-- **Eventos para ms-reportes** (MongoDB): `VentaRegistrada { idVenta, estado (Pagado, Pendiente o
-  Anulado), tipoVenta, metodoPago, total, idCliente, fecha }` sale al vender, al acreditarse el QR y al
-  anular (HU-28: «las anuladas no suman»); `PedidoEstadoCambiado { idPedido, idUsuario, cliente, estado,
-  motivo, metodoPago, total, fecha }` sale en cada cambio de estado. Para HU-29 («por repartidor»,
-  «distingue asignados de entregados») hay que sumarle `idRepartidor` y `repartidorNombre` en
-  `avisarEstado` de `ms-pedidos/src/services/pedido.service.ts`.
-- **Correo (HU-32)**: ms-reportes consume `PedidoEstadoCambiado` y manda el correo (adaptar el envío del
-  sistema anterior); el correo del cliente se pide a ms-identidad por REST interno (hay que sumar la ruta)
-  o viaja en el evento. Subir `SPRINT_ACTUAL` a 6 activa en el comprobante el aviso «Le enviamos una
-  copia a su correo» (`DialogoComprobante.tsx`) y sus pruebas en espera.
-- **Frontend**: las pestañas «Reportes» tienen `desdeSprint: 6` en `frontend/src/lib/modulos.ts`; el
-  `e2e/gestion.spec.ts` tiene una prueba en espera hasta el Sprint 6.
-- **Pendiente del Sprint 5**: la prueba de punta a punta «Despacho del pedido» (`e2e/pedido.spec.ts`) se
-  pasa de sus tiempos en la computadora de Nilser (el navegador tarda en salir del login con doce
-  contenedores); correrla en la de Joseph. El recorrido se verificó por la API y con las capturas.
-- **Docker en computadoras lentas**: construir las imágenes de a una (`docker compose build <servicio>`);
-  las siete a la vez agotan la descarga de npm (`EIDLETIMEOUT`).
+- **HU-07**: el perfil ya existe en ms-identidad (`/api/perfil`, `PUT /api/perfil`, `PUT /api/perfil/contrasena`,
+  `PUT /api/perfil/apariencia`) y la pantalla `frontend/src/app/(privado)/perfil`. Revisar los criterios
+  («se pide la contraseña actual», «no se puede cambiar el rol ni el estado») y probarlos.
+- **HU-30**: seguir el patrón del Sprint 6 en ms-reportes (`src/services/reporte.service.ts`,
+  `models/proyeccion.model.ts`): ms-catalogo publica la foto de cada orden de producción y ms-inventario
+  la de cada movimiento (ingreso o egreso), con su lista interna para completar la copia al arrancar.
+  «Cuenta como salida lo vendido»: los egresos con motivo Venta. Las pantallas
+  `inventario/reportes` y `produccion/reportes` ya existen con `desdeSprint: 7` (`REPORTES_SPRINT_7` en
+  `frontend/src/lib/modulos.ts`); el cálculo y el PDF del sistema anterior están en
+  `reporte-operaciones.service.ts` del monolito (`Proyecto 1/COMIDASALUDABLE/backend`).
+- **Pendientes del servidor**: contratar de nuevo el servidor de correo (o poner otro `relayhost` en Postfix,
+  ver `herramientas/vps/LEEME.md`): hoy los correos quedan en cola. Cambiar las contraseñas de las cuentas
+  de prueba en el VPS antes de mostrarlo a terceros.
+- **Punta a punta**: «Despacho del pedido» (`e2e/pedido.spec.ts`) se pasa de sus tiempos en la
+  computadora de Nilser; correrla en la de Joseph. La del reporte de ventas (`e2e/gestion.spec.ts`) pasa.
+- **Correr en Windows**: Node resuelve `localhost` por IPv6 y Docker no responde ahí: en los scripts que
+  llaman al gateway, usar `127.0.0.1:8080`.
 
-Pasos: los mismos del Sprint 5 (rama del sprint fusionada en `main` sin PR, pruebas de integración, componentes y punta a punta,
-`capitulo-3-sprint-6.md` con la estructura de `capitulo-3-sprint-5.md` (3.7.1 a 3.7.9), paquete
-«Sprint 6» en `crear-diagramas.ps1`, capturas copiando `herramientas/informe/capturas-sprint5.cjs`,
-sumar el Sprint 6 en `SPRINTS` de `excel_scrum.py` y regenerar el Word). Si el EA de la computadora de
-Joseph no exporta las imágenes, las exporta Nilser.
+Pasos: los mismos del Sprint 6 (rama del sprint fusionada en `main` sin PR, pruebas,
+`capitulo-3-sprint-7.md` con la estructura de `capitulo-3-sprint-6.md` (3.8.1 a 3.8.9), paquete
+«Sprint 7» en `crear-diagramas.ps1`, capturas copiando `herramientas/informe/capturas-sprint6.cjs`,
+sumar el Sprint 7 en `SPRINTS` de `excel_scrum.py`, regenerar el Word y actualizar el VPS con
+`herramientas/vps/desplegar.sh`). Si el EA de la computadora de Joseph no exporta las imágenes, las exporta
+Nilser.
 
 ### Regla para documentar el sprint (decisión del equipo)
 
 Aunque una persona programe todo el sprint, el informe lo muestra **repartido entre los dos**, como en
-los Sprints 1 a 5:
+los Sprints 1 a 6:
 
 - En el Sprint Backlog, cada tarea con responsable (`Joseph` o `Nilser`), horas y fecha de término
   (`dd/mm`) dentro de las fechas del sprint, con una carga parecida para cada uno (por ejemplo, un
@@ -162,6 +161,12 @@ Pendiente, a confirmar con el equipo antes de programar:
 - **Datos de personas por REST interno** (ms-identidad): `/interno/repartidores`, `/interno/empleados/:id`
   (con su cargo) y `/interno/clientes/:id`. ms-identidad pide a ms-pedidos y ms-ventas cuántos pedidos y
   ventas tiene cada cliente (`/interno/pedidos/conteo`, `/interno/ventas/conteo`).
+- **Modelo de lectura en ms-reportes** (Sprint 6, HU-28/29): ms-ventas y ms-pedidos publican la foto
+  completa de cada venta y pedido (`VentaRegistrada`, `PedidoEstadoCambiado`, también al asignar repartidor)
+  y la sirven entera por `/interno/ventas/reporte` y `/interno/pedidos/reporte`; ms-reportes la guarda en
+  MongoDB (colecciones `ventas` y `pedidos`) y una foto con `actualizadoEn` más viejo no pisa a una nueva.
+  Los reportes se calculan sobre esa copia. Los avisos al cliente (HU-32) van a `bandeja_correos` y los manda
+  un temporizador con reintentos (el correo del cliente se pide a `/interno/clientes/:id` de ms-identidad).
 - **Saga de finalizar una orden** (HU-10): ms-catalogo reserva por REST (`orden-<id>`), deja la orden
   Finalizada y publica `OrdenFinalizada`; si no puede publicar, compensa (vuelve a En proceso y libera
   la reserva, 503). ms-inventario registra egreso + ingreso en una transacción y responde

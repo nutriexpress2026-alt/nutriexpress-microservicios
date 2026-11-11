@@ -414,6 +414,7 @@ SPRINTS = [
     (4, '5 al 11 de noviembre de 2026', 'Pedido a domicilio con pago en línea (saga completa).'),
     (5, '12 al 18 de noviembre de 2026', 'Despacho de pedidos, reparto y venta de mostrador.'),
     (6, '19 al 25 de noviembre de 2026', 'Reportes, temas, notificaciones y despliegue.'),
+    (7, '26 de noviembre al 2 de diciembre de 2026', 'Reserva: perfil propio (HU-07), reporte de producción e inventario (HU-30) y cierre del informe.'),
 ]
 
 BIBLIOGRAFIA = [
