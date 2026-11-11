@@ -42,12 +42,30 @@ Desde la PC (Git Bash), en la raíz del repositorio:
 git ls-files -co --exclude-standard | grep -v "^docs/" > /tmp/lista.txt
 tar czf /tmp/nutriexpress.tgz -T /tmp/lista.txt
 scp /tmp/nutriexpress.tgz chatbot-vps:/tmp/
-ssh chatbot-vps 'tar xzf /tmp/nutriexpress.tgz -C /opt/nutriexpress && cd /opt/nutriexpress && sed -i "s/\r$//" herramientas/vps/desplegar.sh && bash herramientas/vps/desplegar.sh'
+ssh chatbot-vps 'tar xzf /tmp/nutriexpress.tgz -C /opt/nutriexpress && cd /opt/nutriexpress && bash herramientas/vps/desplegar.sh'
 ```
+
+Los `.sh` tienen fin de línea LF también en Windows (`.gitattributes`): corren tal cual en el VPS.
 
 `desplegar.sh` reconstruye de a una imagen (todas juntas agotan la descarga de npm), cambia las
 contraseñas de los usuarios de PostgreSQL por las del `.env` y levanta todo. No borra datos. Los
-contenedores vuelven solos si el VPS se reinicia (`restart: unless-stopped`).
+contenedores vuelven solos si el VPS se reinicia (`restart: unless-stopped`). El gateway se reinicia en
+cada despliegue, para que lea su `nginx.conf` nuevo.
+
+## Respaldos (RNF-DIS-02)
+
+Todos los días a las 03:00 (`/etc/cron.d/nutriexpress-respaldo`) `herramientas/vps/respaldar.sh`
+guarda las seis bases de PostgreSQL (`pg_dumpall`) y la de MongoDB (`mongodump`) en
+`/opt/respaldos-nutriexpress/AAAA-MM-DD/`, y borra los de más de 7 días. Registro:
+`/tmp/nutriexpress-respaldo.log`.
+
+Restaurar (en `/opt/nutriexpress`, con los contenedores levantados):
+
+```bash
+C="docker compose -f docker-compose.yml -f docker-compose.prod.yml"
+zcat /opt/respaldos-nutriexpress/AAAA-MM-DD/postgres.sql.gz | $C exec -T postgres psql -U postgres
+$C exec -T mongo mongorestore --archive --gzip --drop < /opt/respaldos-nutriexpress/AAAA-MM-DD/mongo-reportes.archive.gz
+```
 
 ## El monolito que había antes
 

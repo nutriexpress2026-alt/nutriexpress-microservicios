@@ -65,8 +65,10 @@ for par in identidad:IDENTIDAD_CLAVE_BD catalogo:CATALOGO_CLAVE_BD inventario:IN
   "${COMPOSE[@]}" exec -T postgres psql -q -U postgres -c "ALTER ROLE $rol PASSWORD '${!variable}'"
 done
 
-# 4. Todo lo demás.
+# 4. Todo lo demás. El gateway se reinicia siempre: su configuración es un archivo
+#    montado, y al reemplazarlo (tar) el contenedor seguía leyendo el anterior.
 "${COMPOSE[@]}" up -d
+"${COMPOSE[@]}" restart gateway
 
 # 5. Respaldo diario a las 03:00 (RNF-DIS-02). Repetirlo deja el mismo archivo.
 if [ -d /etc/cron.d ]; then
