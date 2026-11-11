@@ -1,3 +1,4 @@
+import * as reporteService from '../services/reporte.service.js';
 import { Router } from 'express';
 import * as productoModel from '../models/producto.model.js';
 import * as insumoModel from '../models/insumo.model.js';
@@ -106,6 +107,18 @@ router.post('/reservas/:id/liberar', async (req, res) => {
 /** HU-09 · Todos los insumos, para que ms-catalogo reconstruya su réplica al arrancar. */
 router.get('/insumos', async (_req, res) => {
   res.json(await insumoModel.paraReplica());
+});
+
+/** HU-30 · Los movimientos del período y la existencia de cada ítem, para el reporte de ms-reportes. */
+router.get('/movimientos/reporte', async (req, res) => {
+  const fecha = (v: unknown) => (typeof v === 'string' && !Number.isNaN(Date.parse(v)) ? new Date(v) : null);
+  const id = (v: unknown) => (Number.isInteger(Number(v)) && Number(v) > 0 ? Number(v) : undefined);
+  const desde = fecha(req.query.desde);
+  const hasta = fecha(req.query.hasta);
+  if (!desde || !hasta) throw new ErrorApp(400, 'Indique desde y hasta (fechas ISO)');
+  const filtro = { desde, hasta, idIngrediente: id(req.query.idIngrediente), idProducto: id(req.query.idProducto) };
+  const [datos, item] = await Promise.all([reporteService.movimientosDelPeriodo(filtro), reporteService.nombreDeItem(filtro)]);
+  res.json({ ...datos, item });
 });
 
 export default router;

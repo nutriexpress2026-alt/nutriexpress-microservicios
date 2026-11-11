@@ -12,6 +12,7 @@ export default defineConfig({
       // Sprint 6 · Identidad, catálogo, ventas y pedidos los imita un servidor local (tests/servicios-falsos.ts).
       IDENTIDAD_URL: 'http://127.0.0.1:4996/identidad',
       CATALOGO_URL: 'http://127.0.0.1:4996/catalogo',
+      INVENTARIO_URL: 'http://127.0.0.1:4996/inventario',
       VENTAS_URL: 'http://127.0.0.1:4996/ventas',
       PEDIDOS_URL: 'http://127.0.0.1:4996/pedidos',
     },

@@ -96,6 +96,19 @@ describe('HU-19 · Devolver lo de una venta anulada', () => {
     expect(await stock()).toBe(3);
   });
 
+  it('HU-30 · los movimientos del período cuentan lo vendido como salida y dan la existencia de hoy', async () => {
+    const desde = new Date(Date.now() - 3600_000).toISOString();
+    const hasta = new Date(Date.now() + 3600_000).toISOString();
+    const r = await request(app).get(`/interno/movimientos/reporte?desde=${desde}&hasta=${hasta}&idProducto=${ID_PRODUCTO}`).expect(200);
+    expect(r.body.item).toBe('Tarta de prueba');
+    const motivos = r.body.movimientos.map((m: { tipo: string; motivo: string }) => `${m.tipo} ${m.motivo}`);
+    expect(motivos).toContain('Ingreso Ajuste');
+    expect(motivos).toContain('Egreso Venta');
+    expect(r.body.movimientos.every((m: { idItem: number }) => m.idItem === ID_PRODUCTO)).toBe(true);
+    expect(r.body.existencias).toEqual([{ tipoItem: 'Producto', idItem: ID_PRODUCTO, existencia: await stock() }]);
+    await request(app).get('/interno/movimientos/reporte?desde=ayer').expect(400);
+  });
+
   it('estas rutas no se alcanzan desde fuera del gateway', async () => {
     await request(app).post('/interno/devoluciones').set('X-Forwarded-For', '1.2.3.4').send({}).expect(404);
   });

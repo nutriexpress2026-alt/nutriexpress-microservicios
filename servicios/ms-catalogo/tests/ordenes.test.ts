@@ -355,6 +355,20 @@ describe('HU-10 · Iniciar, cancelar y finalizar', () => {
     expect(r).toMatchObject({ notas: { egreso: 77, ingreso: 78 }, costoEstimado: 17, costoUnitario: 3.4 });
   });
 
+  it('HU-30 · ms-reportes pide las órdenes finalizadas del período con lo que consumió cada una', async () => {
+    const o = await ordenEnProceso(4);
+    await accion(o.id, 'finalizar', { cantidadObtenida: 3 }).expect(200);
+    const desde = new Date(Date.now() - 3600_000).toISOString();
+    const hasta = new Date(Date.now() + 3600_000).toISOString();
+    const r = await request(app).get(`/interno/ordenes/reporte?desde=${desde}&hasta=${hasta}&idProducto=${idProducto}`).expect(200);
+    const fila = r.body.ordenes.find((x: { idOrden: number }) => x.idOrden === o.id);
+    expect(fila).toMatchObject({ idProducto, cantidad: 4, cantidadObtenida: 3, receta: 'Rinde 4' });
+    expect(fila.insumos.map((i: { idInsumo: number }) => i.idInsumo).sort()).toEqual([9101, 9102]);
+    expect(r.body.ordenes.every((x: { idOrden: number }) => typeof x.idOrden === 'number')).toBe(true);
+    await request(app).get('/interno/ordenes/reporte').expect(400);
+    await request(app).get(`/interno/ordenes/reporte?desde=${desde}&hasta=${hasta}`).set('X-Forwarded-For', '1.2.3.4').expect(404);
+  });
+
   it('se cancela Pendiente o En proceso (y se libera lo que hubiera reservado); una Finalizada no', async () => {
     const pendiente = (await ordenes({ idReceta: recetaActiva.id, cantidad: 4 }).expect(201)).body;
     const c = await accion(pendiente.id, 'cancelar').expect(200);

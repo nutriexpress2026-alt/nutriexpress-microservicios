@@ -12,6 +12,7 @@ export const env = {
    */
   identidadUrl: process.env.IDENTIDAD_URL ?? 'http://ms-identidad:4001',
   catalogoUrl: process.env.CATALOGO_URL ?? 'http://ms-catalogo:4002',
+  inventarioUrl: process.env.INVENTARIO_URL ?? 'http://ms-inventario:4003',
   pedidosUrl: process.env.PEDIDOS_URL ?? 'http://ms-pedidos:4004',
   ventasUrl: process.env.VENTAS_URL ?? 'http://ms-ventas:4006',
   /** Cada cuánto se revisa la bandeja de salida de correos (HU-32). */

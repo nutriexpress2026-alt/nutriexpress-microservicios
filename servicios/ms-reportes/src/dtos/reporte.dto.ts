@@ -203,3 +203,87 @@ export interface ComprobantePedidoDTO {
   total: number;
   soporte: string;
 }
+
+/* ------------------------------------------------------------------ */
+/* HU-30 (Sprint 7) · Producción e inventario                          */
+/* ------------------------------------------------------------------ */
+
+/** «Filtra por fechas e ítem». */
+export const esquemaReporteProduccion = z
+  .object({ ...rango, idProducto: id })
+  .refine(rangoOrdenado, MENSAJE_ORDEN)
+  .refine(rangoAcotado, MENSAJE_TOPE);
+
+export const esquemaReporteInventario = z
+  .object({ ...rango, idIngrediente: id, idProducto: id })
+  .refine(rangoOrdenado, MENSAJE_ORDEN)
+  .refine(rangoAcotado, MENSAJE_TOPE)
+  .refine((f) => !(f.idIngrediente && f.idProducto), {
+    message: 'Filtre por un insumo o por un producto, no por ambos a la vez',
+    path: ['idProducto'],
+  });
+
+export type FiltroProduccion = z.infer<typeof esquemaReporteProduccion>;
+export type FiltroInventario = z.infer<typeof esquemaReporteInventario>;
+
+export interface LineaCorridaDTO {
+  idOrden: number;
+  fecha: string;
+  producto: string;
+  receta: string;
+  /** Lo obtenido, no lo planificado: es lo que de verdad entró al almacén. */
+  cantidad: number;
+  /** Planificado menos obtenido. */
+  merma: number;
+  /** En microservicios no hay producción al instante en el mostrador: siempre falso. */
+  instantanea: boolean;
+  costo: number;
+  costoUnitario: number;
+}
+
+export interface ReporteProduccionDTO {
+  desde: string;
+  hasta: string;
+  producto: string | null;
+  generadoEn: string;
+  resumen: { corridas: number; unidades: number; merma: number; costoTotal: number; costoUnitarioPromedio: number };
+  porProducto: { producto: string; corridas: number; unidades: number; costo: number }[];
+  insumosConsumidos: { insumo: string; unidad: string; cantidad: number; costo: number }[];
+  corridas: LineaCorridaDTO[];
+}
+
+export type TipoItemInventario = 'Insumo' | 'Producto';
+
+export interface LineaMovimientoReporteDTO {
+  fecha: string;
+  tipo: 'Ingreso' | 'Egreso';
+  motivo: string;
+  tipoItem: TipoItemInventario;
+  item: string;
+  unidad: string;
+  cantidad: number;
+  costo: number | null;
+  referencia: string | null;
+}
+
+export interface ItemReporteInventarioDTO {
+  tipo: TipoItemInventario;
+  item: string;
+  unidad: string;
+  entradas: number;
+  salidas: number;
+  /** Entradas menos salidas en el período (no es la existencia). */
+  neto: number;
+  /** Lo que hay hoy en todos los almacenes. */
+  existencia: number;
+}
+
+export interface ReporteInventarioDTO {
+  desde: string;
+  hasta: string;
+  filtro: string | null;
+  generadoEn: string;
+  resumen: { ingresos: number; egresos: number; costoIngresado: number };
+  porItem: ItemReporteInventarioDTO[];
+  movimientos: LineaMovimientoReporteDTO[];
+}

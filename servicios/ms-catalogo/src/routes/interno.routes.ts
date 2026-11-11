@@ -2,6 +2,7 @@ import { Router } from 'express';
 import * as productoModel from '../models/producto.model.js';
 import * as insumoModel from '../models/insumo.model.js';
 import { soloRedInterna } from '../middlewares/auth.middleware.js';
+import { prisma } from '../config/prisma.js';
 
 /**
  * Rutas internas: solo para otros microservicios dentro de la red de Docker.
@@ -45,6 +46,54 @@ router.get('/productos/precios', async (req, res) => {
  */
 router.get('/insumos/:id/recetas', async (req, res) => {
   res.json({ recetas: await insumoModel.contarRecetasQueLoUsan(Number(req.params.id)) });
+});
+
+/**
+ * HU-30 · Las órdenes de producción finalizadas en un período, para el reporte
+ * que arma ms-reportes (composición por API). Lleva lo que consumió cada una,
+ * guardado al finalizarla (HU-10): el costo no cambia si después sube un insumo.
+ */
+router.get('/ordenes/reporte', async (req, res) => {
+  const fecha = (v: unknown) => (typeof v === 'string' && !Number.isNaN(Date.parse(v)) ? new Date(v) : null);
+  const desde = fecha(req.query.desde);
+  const hasta = fecha(req.query.hasta);
+  if (!desde || !hasta) {
+    res.status(400).json({ error: 'Indique desde y hasta (fechas ISO)' });
+    return;
+  }
+  const idProducto = Number(req.query.idProducto) > 0 ? Number(req.query.idProducto) : undefined;
+  const ordenes = await prisma.orden_produccion.findMany({
+    where: {
+      estado: 'Finalizada',
+      fecha_finalizacion: { gte: desde, lte: hasta },
+      ...(idProducto ? { receta: { id_producto: idProducto } } : {}),
+    },
+    orderBy: { fecha_finalizacion: 'asc' },
+    include: { receta: { include: { producto: { select: { id_producto: true, nombre: true } } } }, detalle_orden_insumo: true },
+  });
+  const producto = idProducto
+    ? ((await prisma.producto.findUnique({ where: { id_producto: idProducto }, select: { nombre: true } }))?.nombre ?? null)
+    : null;
+  res.json({
+    producto,
+    ordenes: ordenes.map((o) => ({
+      idOrden: o.id_orden_produccion,
+      fecha: (o.fecha_finalizacion ?? o.fecha).toISOString(),
+      idProducto: o.receta.producto.id_producto,
+      producto: o.receta.producto.nombre,
+      receta: o.receta.nombre,
+      cantidad: o.cantidad,
+      cantidadObtenida: o.cantidad_obtenida ?? o.cantidad,
+      costoTotal: o.costo_total === null ? null : Number(o.costo_total),
+      insumos: o.detalle_orden_insumo.map((d) => ({
+        idInsumo: d.id_ingrediente,
+        insumo: d.nombre,
+        unidad: d.unidad,
+        cantidad: Number(d.cantidad),
+        costoUnitario: Number(d.costo_unitario),
+      })),
+    })),
+  });
 });
 
 export default router;
