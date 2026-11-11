@@ -1,0 +1,78 @@
+# NutriExpress en el servidor (HT-04). Se usa ENCIMA de docker-compose.yml:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# (herramientas/vps/desplegar.sh lo hace todo). Qué cambia respecto del desarrollo:
+#
+# - Ningún gestor de datos publica puertos. Docker abre los puertos que publica
+#   saltándose el firewall del servidor: con el docker-compose.yml de desarrollo,
+#   PostgreSQL, MongoDB y el panel de RabbitMQ quedarían abiertos a internet.
+# - El gateway y el portal escuchan solo por dentro (127.0.0.1). Desde afuera se
+#   entra por Caddy, que tiene el certificado HTTPS y reparte: /api al gateway y
+#   el resto al portal.
+# - Todo vuelve a arrancar solo si el servidor se reinicia.
+# - Las contraseñas salen del .env del servidor (nunca al repositorio).
+# - El correo sale por el Postfix del servidor web, que lo reenvía al servidor de
+#   correo, como en el monolito.
+
+services:
+  postgres:
+    ports: !reset []
+    restart: unless-stopped
+
+  mongo:
+    ports: !reset []
+    restart: unless-stopped
+
+  redis:
+    ports: !reset []
+    restart: unless-stopped
+
+  rabbitmq:
+    ports: !reset []
+    restart: unless-stopped
+
+  ms-identidad:
+    restart: unless-stopped
+
+  ms-catalogo:
+    restart: unless-stopped
+
+  ms-inventario:
+    restart: unless-stopped
+
+  ms-pedidos:
+    restart: unless-stopped
+
+  ms-pagos:
+    restart: unless-stopped
+
+  ms-ventas:
+    restart: unless-stopped
+
+  ms-reportes:
+    restart: unless-stopped
+    environment:
+      # El Postfix del servidor web (fuera de Docker): host-gateway es la máquina anfitriona.
+      SMTP_HOST: ${SMTP_HOST:-host.docker.internal}
+      SMTP_PUERTO: ${SMTP_PUERTO:-25}
+      # Contenedor → Postfix de la misma máquina: no sale del servidor (ver ms-reportes/src/config/env.ts).
+      SMTP_SIN_TLS: "true"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  gateway:
+    ports: !override
+      - "127.0.0.1:${PUERTO_GATEWAY:-8090}:80"
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_URL: ${URL_PUBLICA:?falta URL_PUBLICA en .env}/api
+    ports:
+      - "127.0.0.1:${PUERTO_PORTAL:-3000}:3000"
+    depends_on:
+      - gateway
+    restart: unless-stopped

@@ -24,6 +24,7 @@ const transporte = enviaDeVerdad
       port: env.correo.puerto,
       // 465 cifra desde el inicio; 587 empieza en claro y pasa a TLS (STARTTLS).
       secure: env.correo.puerto === 465,
+      ignoreTLS: env.correo.sinTls,
       auth: env.correo.usuario ? { user: env.correo.usuario, pass: env.correo.clave } : undefined,
     })
   : null;

@@ -37,7 +37,7 @@ rutas del monolito (`/api/auth`, `/api/usuarios`…) para que el frontend reutil
   subido a `main` para no pisarlo. Si algo sale mal, se vuelve atrás con `git revert` (el historial no se
   pierde). En el informe, la «revisión» de la Sprint Review sigue igual: es la demostración del sprint.
 
-## Estado (al 7-nov-2026)
+## Estado (al 11-nov-2026)
 
 | Sprint | Estado | Qué quedó |
 |---|---|---|
@@ -49,6 +49,11 @@ rutas del monolito (`/api/auth`, `/api/usuarios`…) para que el frontend reutil
 | 5 | Terminado (12 al 18-nov) | Joseph le pidió a Nilser avanzarlo: lo programó Nilser en su computadora el 7-nov; rama `sprint-5` fusionada en `main` sin PR (8-nov). ms-ventas nuevo (HU-18 venta de mostrador en efectivo o QR, HU-19 comprobante `V-000001` y anulación), en ms-pedidos el tablero y el reparto (HU-23, HU-24, tabla `turno_repartidor`), en ms-identidad la gestión de clientes (HU-20: se quedó ahí porque la ficha ya vivía en identidad). Doce contenedores. Documentado con la regla del equipo. Informe: 122 págs. |
 | 6 | Siguiente (19 al 25-nov) | Ver «Siguiente: Sprint 6» |
 
+**En el VPS desde el 11-nov** (adelanto de HT-04): https://nutriexpress.109-123-254-213.sslip.io, en
+Docker en `/opt/nutriexpress` del VPS web, con Caddy delante, Libélula en modo Real y el correo por el
+Postfix del VPS web hacia el VPS de correo (hoy dado de baja: los correos quedan en cola). Reemplaza al
+monolito, que se retiró con respaldo. Cómo está armado y cómo actualizarlo: `herramientas/vps/LEEME.md`.
+
 Desde el 3-nov el trabajo sigue en la computadora de Joseph (`INSTALACION.md`); los dos suben con la
 cuenta compartida `nutriexpress2026-alt`, cada uno con su `git config user.name`.
 
@@ -56,7 +61,8 @@ cuenta compartida `nutriexpress2026-alt`, cada uno con su `git config user.name`
 
 **Objetivo:** reportes, correo al cliente, temas y despliegue. Historias (28 pts, del Product Backlog en
 `capitulo-3-sprint-0.md`): HU-28 Reporte de ventas (8), HU-29 Reporte de pedidos (5), HU-32
-Notificaciones por correo (5), HU-33 Temas y modo día/noche (5) y HT-04 Despliegue en el VPS (5). Antes
+Notificaciones por correo (5), HU-33 Temas y modo día/noche (5) y HT-04 Despliegue en el VPS (5; ya
+desplegado el 11-nov: en el sprint queda documentarlo y actualizar el servidor con lo nuevo). Antes
 de programar, leer sus criterios de aceptación. El Sprint 7 (26-nov al 2-dic) queda de reserva: HU-07
 Perfil propio y HU-30 Reporte de producción e inventario.
 
