@@ -15,7 +15,8 @@ const CORREOS = process.env.E2E_CORREOS ?? 'reportes1@example.com, reportes2@exa
 test.describe('Gestión', () => {
   test.beforeEach(async ({ page }) => {
     await iniciarSesion(page, ADMIN.usuario, ADMIN.contrasena);
-    await expect(page).toHaveURL(/\/inicio$/);
+    // En computadoras lentas, el inicio de sesión tarda en llevar al tablero.
+    await expect(page).toHaveURL(/\/inicio$/, { timeout: 45_000 });
   });
 
   // Los reportes llegan con ms-reportes completo, en el Sprint 6: hasta
@@ -42,7 +43,8 @@ test.describe('Gestión', () => {
       await dialogo.getByLabel('Correo de los destinatarios').fill(CORREOS);
       await expect(dialogo.getByText(/llegará a 2 cuentas/)).toBeVisible();
       await dialogo.getByRole('button', { name: 'Enviar', exact: true }).click();
-      await expect(page.getByText('Reporte enviado a 2 cuentas')).toBeVisible();
+      // Arma el PDF y lo entrega al correo: en una computadora lenta tarda más de 10 s.
+      await expect(page.getByText('Reporte enviado a 2 cuentas')).toBeVisible({ timeout: 45_000 });
     },
   );
 

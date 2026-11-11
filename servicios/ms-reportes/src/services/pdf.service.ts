@@ -143,7 +143,10 @@ function notas(doc: Documento, textos: string[]) {
 function tabla(doc: Documento, seccion: SeccionReporte) {
   if (doc.y > LIMITE_PAGINA - 60) doc.addPage();
 
-  doc.fillColor(TINTA).fontSize(11).font('Helvetica-Bold').text(seccion.titulo);
+  // Desde el margen: la tabla anterior deja la posición en su última columna, y el
+  // título de la siguiente salía corrido a la derecha (venía así del sistema anterior).
+  doc.x = MARGEN;
+  doc.fillColor(TINTA).fontSize(11).font('Helvetica-Bold').text(seccion.titulo, MARGEN, doc.y, { width: ANCHO_UTIL });
   doc.moveDown(0.4);
 
   if (seccion.filas.length === 0) {
