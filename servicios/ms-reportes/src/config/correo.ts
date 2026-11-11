@@ -9,11 +9,21 @@ import { env } from './env.js';
  * `buzonLocal` y se muestra en el registro del servicio, para poder seguir el
  * flujo completo sin una cuenta de correo.
  */
+export interface Adjunto {
+  nombre: string;
+  contenido: Buffer;
+  tipo: string;
+}
+
 export interface Correo {
-  para: string;
+  /** Uno o varios (HU-28: el reporte se manda a varios correos). */
+  para: string | string[];
   asunto: string;
   texto: string;
   html: string;
+  /** Dirección de respuesta: el soporte del negocio (el remitente no lo lee nadie). */
+  responderA?: string;
+  adjuntos?: Adjunto[];
 }
 
 export const enviaDeVerdad = env.correo.host !== null;
@@ -37,16 +47,18 @@ export async function enviarCorreo(correo: Correo): Promise<void> {
     await transporte.sendMail({
       from: env.correo.remitente,
       to: correo.para,
+      replyTo: correo.responderA,
       subject: correo.asunto,
       text: correo.texto,
       html: correo.html,
+      attachments: correo.adjuntos?.map((a) => ({ filename: a.nombre, content: a.contenido, contentType: a.tipo })),
     });
     return;
   }
   buzonLocal.push(correo);
   if (buzonLocal.length > 50) buzonLocal.shift();
   console.log(
-    `ms-reportes: sin SMTP configurado, el correo no se envía.\n  Para: ${correo.para}\n  Asunto: ${correo.asunto}\n${correo.texto
+    `ms-reportes: sin SMTP configurado, el correo no se envía.\n  Para: ${[correo.para].flat().join(', ')}\n  Asunto: ${correo.asunto}${correo.adjuntos?.length ? `\n  Adjuntos: ${correo.adjuntos.map((a) => a.nombre).join(', ')}` : ''}\n${correo.texto
       .split('\n')
       .map((l) => `  | ${l}`)
       .join('\n')}`,

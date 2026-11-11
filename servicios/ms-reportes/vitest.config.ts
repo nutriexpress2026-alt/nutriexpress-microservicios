@@ -9,6 +9,11 @@ export default defineConfig({
     env: {
       MONGO_URL: 'mongodb://127.0.0.1:27018/reportes_test',
       RABBITMQ_URL: 'amqp://nutriexpress:nutriexpress@127.0.0.1:5673/pruebas',
+      // Sprint 6 · Identidad, catálogo, ventas y pedidos los imita un servidor local (tests/servicios-falsos.ts).
+      IDENTIDAD_URL: 'http://127.0.0.1:4996/identidad',
+      CATALOGO_URL: 'http://127.0.0.1:4996/catalogo',
+      VENTAS_URL: 'http://127.0.0.1:4996/ventas',
+      PEDIDOS_URL: 'http://127.0.0.1:4996/pedidos',
     },
     globalSetup: ['./tests/rabbit-de-pruebas.ts'],
     // En serie: comparten la base de pruebas y una vacía lo que la otra escribe.

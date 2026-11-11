@@ -2,6 +2,11 @@ import express from 'express';
 import helmet from 'helmet';
 import rutas from './routes/index.js';
 import { manejadorErrores, rutaNoEncontrada } from './middlewares/error.middleware.js';
+import { alAutenticar } from './middlewares/auth.middleware.js';
+import { exigirSesionVigente } from './middlewares/sesiones-vigentes.js';
+
+// HU-05 · Un token anterior a un cambio de permisos ya no vale (también aquí, desde el Sprint 6).
+alAutenticar.unshift(exigirSesionVigente);
 
 export const app = express();
 
