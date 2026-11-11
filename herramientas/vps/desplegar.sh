@@ -67,4 +67,11 @@ done
 
 # 4. Todo lo demás.
 "${COMPOSE[@]}" up -d
+
+# 5. Respaldo diario a las 03:00 (RNF-DIS-02). Repetirlo deja el mismo archivo.
+if [ -d /etc/cron.d ]; then
+  sudo mkdir -p /opt/respaldos-nutriexpress && sudo chown "$(id -un)" /opt/respaldos-nutriexpress
+  echo "0 3 * * * $(id -un) bash $(pwd)/herramientas/vps/respaldar.sh >> /tmp/nutriexpress-respaldo.log 2>&1" \
+    | sudo tee /etc/cron.d/nutriexpress-respaldo >/dev/null
+fi
 "${COMPOSE[@]}" ps --format "table {{.Service}}\t{{.State}}\t{{.Status}}"
