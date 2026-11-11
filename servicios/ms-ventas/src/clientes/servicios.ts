@@ -73,6 +73,8 @@ export interface LineaVendida {
   idAlmacen: number;
   almacen: string;
   cantidad: number;
+  /** HU-28 · Costo promedio al salir del almacén (para la ganancia del reporte). */
+  costoUnitario?: number;
 }
 
 /** RF-VEN-04 · «Al confirmar se descuenta el stock»: la reserva se consume con una nota de egreso por venta. */

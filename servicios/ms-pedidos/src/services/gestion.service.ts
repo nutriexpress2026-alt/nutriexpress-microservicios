@@ -171,6 +171,8 @@ export async function asignarRepartidor(sesion: Sesion, id: number, idRepartidor
   }
   if (!empleado.activo) throw new ErrorApp(409, 'El repartidor indicado está dado de baja');
   await pedidoModel.asignarRepartidor(id, idRepartidor, `${empleado.nombre} ${empleado.apellido}`);
+  // HU-29 · «Distingue asignados de entregados»: el reporte sabe a quién se asignó.
+  await avisarEstado(pedido);
   return aGestionDTO(await exigirPedido(id));
 }
 
@@ -213,7 +215,10 @@ export async function avanzarEstado(sesion: Sesion, id: number, destino: EstadoP
     const empleado = { id: sesion.idUsuario, nombre: sesion.nombre, apellido: sesion.apellido };
     // Primero lo que puede fallar en otro servicio; los dos son idempotentes, así
     // que si el cambio de estado falla después, reintentar no descuenta ni cobra dos veces.
-    await servicios.consumir(pedido.id_reserva, `Pedido #${pedido.id_pedido} entregado`, empleado);
+    const salida = await servicios.consumir(pedido.id_reserva, `Pedido #${pedido.id_pedido} entregado`, empleado);
+    const costos = new Map(
+      (salida?.lineas ?? []).filter((l) => l.costoUnitario !== undefined).map((l) => [l.idProducto, Number(l.costoUnitario)]),
+    );
     const cobraEfectivo = pedido.metodo_pago === 'Efectivo' && pedido.estado_pago !== 'Pagado';
     if (cobraEfectivo) await servicios.registrarEfectivo(pedido.id_pedido, Number(pedido.total), nombreDe(sesion));
 
@@ -223,7 +228,10 @@ export async function avanzarEstado(sesion: Sesion, id: number, destino: EstadoP
         fechaEntrega: new Date(),
         ...(cobraEfectivo ? { estadoPago: 'Pagado' } : {}),
       });
-      if (ok) await olvidarSiTermino(pedido.id_repartidor, tx);
+      if (ok) {
+        await pedidoModel.guardarCostos(tx, id, costos);
+        await olvidarSiTermino(pedido.id_repartidor, tx);
+      }
       return ok;
     });
     if (!aplicado) throw new ErrorApp(409, 'El pedido cambió de estado mientras tanto: vuelva a mirarlo');

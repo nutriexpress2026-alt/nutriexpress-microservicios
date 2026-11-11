@@ -19,6 +19,7 @@ const admin = cabecera({ idUsuario: 1, rol: 'Administrador', cargo: 'Administrad
 const direccion = { calle: 'Avenida Banzer', numero: '1200', referencia: 'Portón verde, frente al parque' };
 let conexion: ChannelModel;
 const cancelados: Evento<{ idPedido: number; idReserva: string; motivo: string }>[] = [];
+const fotos: Evento<{ idPedido: number; estado: string; repartidor: { id: number; nombre: string } | null; fechaEntrega: string | null; items: { costoUnitario: number | null }[] }>[] = [];
 
 async function esperar<T>(buscar: () => T | undefined): Promise<T> {
   for (let i = 0; i < 50; i++) {
@@ -47,6 +48,10 @@ beforeAll(async () => {
   const { queue } = await canal.assertQueue('', { exclusive: true, autoDelete: true });
   await canal.bindQueue(queue, INTERCAMBIO, 'PedidoCancelado');
   await canal.consume(queue, (m) => m && cancelados.push(JSON.parse(m.content.toString())), { noAck: true });
+  // HU-29, HU-32 · La foto que recibe ms-reportes.
+  const fotosCola = (await canal.assertQueue('', { exclusive: true, autoDelete: true })).queue;
+  await canal.bindQueue(fotosCola, INTERCAMBIO, 'PedidoEstadoCambiado');
+  await canal.consume(fotosCola, (m) => m && fotos.push(JSON.parse(m.content.toString())), { noAck: true });
 });
 
 afterAll(async () => {
@@ -144,6 +149,25 @@ describe('HU-24 · Mis entregas', () => {
   it('el administrador puede cerrar la entrega de otro (PEDIDO_CERRAR_AJENO)', async () => {
     const p = await enCamino(rosa, 8);
     await avanzar(admin, p.id, 'Entregado').expect(200);
+  });
+
+  it('la foto para ms-reportes lleva el repartidor al asignarlo y el costo al entregar (HU-29)', async () => {
+    const p = await pedido();
+    await avanzar(vendedor, p.id, 'En preparacion').expect(200);
+    await request(app).put(`/api/gestion/pedidos/${p.id}/repartidor`).set(vendedor).send({ idRepartidor: 7 }).expect(200);
+    const asignado = await esperar(() => fotos.find((e) => e.datos.idPedido === p.id && e.datos.repartidor !== null));
+    expect(asignado.datos).toMatchObject({ estado: 'En preparacion', repartidor: { id: 7, nombre: 'Rodrigo Reparto' } });
+    await avanzar(vendedor, p.id, 'En camino').expect(200);
+    await avanzar(rodrigo, p.id, 'Entregado').expect(200);
+    const entregado = await esperar(() => fotos.find((e) => e.datos.idPedido === p.id && e.datos.estado === 'Entregado'));
+    expect(entregado.datos.fechaEntrega).toEqual(expect.any(String));
+    expect(entregado.datos.items[0].costoUnitario).toBe(21.5);
+  });
+
+  it('ms-reportes puede pedir todos los pedidos (REST interno)', async () => {
+    const r = await request(app).get('/interno/pedidos/reporte').expect(200);
+    expect(r.body.length).toBe(await prisma.pedido.count());
+    await request(app).get('/interno/pedidos/reporte').set('X-Forwarded-For', '1.2.3.4').expect(404);
   });
 
   it('cuenta los pedidos de cada cliente para su ficha (REST interno)', async () => {

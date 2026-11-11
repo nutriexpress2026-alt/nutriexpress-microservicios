@@ -108,7 +108,9 @@ const servidor = createServer(async (req, res) => {
     if (!reserva) return responder(404, { error: 'La reserva no existe' });
     const ya = reserva.estado === 'Consumida';
     reserva.estado = 'Consumida';
-    return responder(200, { idNotaEgreso: ya ? null : 77, lineas: [], yaConsumida: ya });
+    // HU-29 · Con el costo promedio de cada producto, para la ganancia del reporte.
+    const lineas = ya ? [] : ((reserva as { productos?: { idProducto: number; cantidad: number }[] }).productos ?? []).map((l) => ({ ...l, idAlmacen: 2, almacen: 'Camara Refrigerada', costoUnitario: 21.5 }));
+    return responder(200, { idNotaEgreso: ya ? null : 77, lineas, yaConsumida: ya });
   }
 
   // HU-24 · El efectivo cobrado al entregar.

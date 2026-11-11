@@ -68,8 +68,15 @@ export const liberar = (id: string) =>
   });
 
 /** HU-24 · Entregar consume la reserva: nota de egreso con motivo Venta. Repetirlo no descuenta dos veces. */
+/** Lo que salió del almacén al entregar, con su costo (HU-29: ganancia del reporte). */
+export interface SalidaDeEntrega {
+  idNotaEgreso: number | null;
+  lineas: { idProducto: number; cantidad: number; costoUnitario?: number }[];
+  yaConsumida: boolean;
+}
+
 export const consumir = (id: string, observacion: string, empleado: { id: number; nombre: string; apellido: string }) =>
-  llamar<unknown>(`${env.inventarioUrl}/interno/reservas/${encodeURIComponent(id)}/consumir`, 'inventario', {
+  llamar<SalidaDeEntrega>(`${env.inventarioUrl}/interno/reservas/${encodeURIComponent(id)}/consumir`, 'inventario', {
     metodo: 'POST',
     cuerpo: { observacion, empleado },
   });

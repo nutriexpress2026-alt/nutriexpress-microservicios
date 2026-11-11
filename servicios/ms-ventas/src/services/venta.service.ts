@@ -70,17 +70,44 @@ function consolidarItems(items: DatosCrearVenta['items']) {
   return [...porProducto].map(([idProducto, cantidad]) => ({ idProducto, cantidad }));
 }
 
-/** Para el evento que alimentará los reportes de ventas (Sprint 6). */
-const avisarVenta = (v: VentaConsultada, estado: EstadoPagoVenta) =>
-  avisar('VentaRegistrada', {
+/**
+ * HU-28 · La «foto» completa de una venta para ms-reportes: viaja en
+ * `VentaRegistrada` (al vender, al acreditarse el QR y al anular) y la pide
+ * entera ms-reportes al arrancar (`GET /interno/ventas/reporte`). Lleva el
+ * momento en que se tomó: ms-reportes no deja que una foto vieja pise una nueva.
+ */
+export function fotoDeVenta(v: VentaConsultada, estado: EstadoPagoVenta = v.estado_pago as EstadoPagoVenta) {
+  const porProducto = new Map<number, { idProducto: number; nombre: string; cantidad: number; precioUnitario: number; costo: number | null }>();
+  for (const d of v.detalle_venta) {
+    const actual = porProducto.get(d.id_producto) ?? { idProducto: d.id_producto, nombre: d.nombre_producto, cantidad: 0, precioUnitario: Number(d.precio_unitario), costo: 0 };
+    actual.cantidad += d.cantidad;
+    actual.costo = actual.costo === null || d.costo_unitario === null ? null : actual.costo + d.cantidad * Number(d.costo_unitario);
+    porProducto.set(d.id_producto, actual);
+  }
+  return {
     idVenta: v.id_venta,
+    fecha: v.fecha.toISOString(),
     estado,
     tipoVenta: v.tipo_venta,
     metodoPago: v.metodo_pago,
     total: Number(v.total),
     idCliente: v.id_cliente,
-    fecha: v.fecha.toISOString(),
-  });
+    cliente: v.id_cliente ? { id: v.id_cliente, nombre: v.cliente_nombre ?? '' } : null,
+    vendedor: { id: v.id_empleado, nombre: `${v.empleado_nombre} ${v.empleado_apellido}`.trim() },
+    items: [...porProducto.values()].map(({ costo, ...l }) => ({
+      ...l,
+      costoUnitario: costo === null ? null : Math.round((costo / l.cantidad) * 100) / 100,
+    })),
+    actualizadoEn: new Date().toISOString(),
+  };
+}
+
+const avisarVenta = (v: VentaConsultada, estado: EstadoPagoVenta) => avisar('VentaRegistrada', fotoDeVenta(v, estado));
+
+/** HU-28 · Todas las ventas, para que ms-reportes complete su copia al arrancar. */
+export async function fotosParaReportes() {
+  return (await ventaModel.todas()).map((v) => fotoDeVenta(v));
+}
 
 /* ------------------------------------------------------------------ */
 /* HU-18 · Registrar la venta                                          */

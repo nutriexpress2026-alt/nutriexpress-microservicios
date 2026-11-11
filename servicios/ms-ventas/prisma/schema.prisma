@@ -15,6 +15,7 @@ model detalle_venta {
   nombre_almacen  String  @db.VarChar(100)
   cantidad        Int
   precio_unitario Decimal @db.Decimal(10, 2)
+  costo_unitario  Decimal? @db.Decimal(10, 2)
   venta           venta   @relation(fields: [id_venta], references: [id_venta], onDelete: NoAction, onUpdate: NoAction, map: "fk_detventa_venta")
 
   @@id([id_venta, id_producto, id_almacen])

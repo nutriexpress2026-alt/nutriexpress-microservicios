@@ -91,18 +91,54 @@ export function aDetalleDTO(p: PedidoConDetalle): PedidoDetalleDTO {
   };
 }
 
-/** Para ms-reportes (Sprint 6): cada cambio de estado del pedido, con lo que un reporte necesita. */
-export function avisarEstado(p: PedidoConDetalle, estado: EstadoPedido, motivo: string | null = null) {
-  return avisar('PedidoEstadoCambiado', {
+/**
+ * HU-29, HU-32 · La «foto» completa de un pedido para ms-reportes: con ella arma
+ * el reporte de pedidos y avisa al cliente por correo. Viaja en
+ * `PedidoEstadoCambiado` y ms-reportes la pide entera al arrancar
+ * (`GET /interno/pedidos/reporte`). `actualizadoEn` evita que una foto vieja
+ * pise una nueva.
+ */
+export function fotoDePedido(p: PedidoConDetalle, motivo: string | null = p.motivo_cancelacion) {
+  const ahora = new Date().toISOString();
+  return {
     idPedido: p.id_pedido,
     idUsuario: p.id_usuario,
     cliente: p.cliente_nombre,
-    estado,
+    fechaPedido: p.fecha.toISOString(),
+    estado: p.estado_pedido,
+    estadoPago: p.estado_pago,
     motivo,
     metodoPago: p.metodo_pago,
     total: Number(p.total),
-    fecha: new Date().toISOString(),
-  });
+    referenciaPago: p.referencia_pago,
+    repartidor: p.id_repartidor === null ? null : { id: p.id_repartidor, nombre: p.repartidor_nombre ?? '' },
+    fechaEntrega: p.fecha_entrega?.toISOString() ?? null,
+    direccion: [p.ubicacion.calle, p.ubicacion.numero].filter(Boolean).join(' '),
+    items: p.detalle_pedido.map((d) => ({
+      idProducto: d.id_producto,
+      nombre: d.nombre_producto,
+      cantidad: d.cantidad,
+      precioUnitario: Number(d.precio_unitario),
+      costoUnitario: d.costo_unitario === null ? null : Number(d.costo_unitario),
+    })),
+    fecha: ahora,
+    actualizadoEn: ahora,
+  };
+}
+
+/**
+ * Publica la foto del pedido **después** del cambio: se vuelve a leer, así lleva
+ * el estado, el repartidor y la fecha de entrega ya guardados. También sale al
+ * asignar repartidor (el estado no cambia y ms-reportes no manda correo).
+ */
+export async function avisarEstado(p: PedidoConDetalle, _estado?: EstadoPedido, motivo: string | null = null) {
+  const actual = (await pedidoModel.buscarPorId(p.id_pedido)) ?? p;
+  return avisar('PedidoEstadoCambiado', fotoDePedido(actual, motivo ?? actual.motivo_cancelacion));
+}
+
+/** HU-29 · Todos los pedidos, para que ms-reportes complete su copia al arrancar. */
+export async function fotosParaReportes() {
+  return (await pedidoModel.todos()).map((p) => fotoDePedido(p));
 }
 
 /**

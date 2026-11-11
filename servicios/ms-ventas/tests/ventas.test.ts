@@ -7,6 +7,8 @@ import { cerrarEventos, conectarEventos, eventosListos, publicar } from '../src/
 import { registrarSuscripciones } from '../src/suscripciones.js';
 import { registroDeEventos } from '../src/models/evento.model.js';
 import { prisma } from '../src/config/prisma.js';
+import amqp, { type ChannelModel } from 'amqplib';
+import { INTERCAMBIO, type Evento } from '../src/config/eventos.js';
 
 /** HU-18 venta de mostrador, HU-19 comprobante y anulación. */
 const vendedor = cabecera({
@@ -30,13 +32,24 @@ async function esperar<T>(buscar: () => T | undefined | Promise<T | undefined>):
   throw new Error('no ocurrió lo esperado');
 }
 
+let conexion: ChannelModel;
+const fotos: Evento<{ idVenta: number; estado: string; vendedor: { id: number; nombre: string }; items: { idProducto: number; costoUnitario: number | null }[] }>[] = [];
+
 beforeAll(async () => {
   registrarSuscripciones();
   await conectarEventos({ servicio: 'ms-ventas', registro: registroDeEventos });
   await eventosListos();
+  // HU-28 · Lo que ms-reportes recibe: la foto de cada venta.
+  conexion = await amqp.connect(process.env.RABBITMQ_URL!);
+  const canal = await conexion.createChannel();
+  await canal.assertExchange(INTERCAMBIO, 'topic', { durable: true });
+  const { queue } = await canal.assertQueue('', { exclusive: true, autoDelete: true });
+  await canal.bindQueue(queue, INTERCAMBIO, 'VentaRegistrada');
+  await canal.consume(queue, (m) => m && fotos.push(JSON.parse(m.content.toString())), { noAck: true });
 });
 
 afterAll(async () => {
+  await conexion.close();
   await cerrarEventos();
   await cerrarServiciosFalsos();
   await cerrarServidorDeClave();
@@ -107,6 +120,27 @@ describe('HU-18 · Venta de mostrador', () => {
     expect(r.body).toMatchObject({ puedeVenderse: false, requiereProduccion: false });
     expect(r.body.lineas[0]).toMatchObject({ idProducto: 2, solicitado: 100, faltante: 100 - productos.get(2)!.stock });
     await request(app).post('/api/ventas/con-produccion').set(vendedor).send({}).expect(409);
+  });
+});
+
+describe('HU-28 · La venta para los reportes', () => {
+  it('guarda el costo de lo vendido y publica la foto completa', async () => {
+    const { body } = await vender({ metodoPago: 'Efectivo', items: [{ idProducto: 1, cantidad: 1 }, { idProducto: 2, cantidad: 2 }] }).expect(201);
+    const detalle = await prisma.detalle_venta.findMany({ where: { id_venta: body.id }, orderBy: { id_producto: 'asc' } });
+    expect(detalle.map((d) => Number(d.costo_unitario))).toEqual([20, 6]);
+    const foto = await esperar(() => fotos.find((e) => e.datos.idVenta === body.id));
+    expect(foto.datos).toMatchObject({ estado: 'Pagado', vendedor: { id: 3, nombre: 'Victor Vendedor' } });
+    expect(foto.datos.items).toEqual([
+      expect.objectContaining({ idProducto: 1, costoUnitario: 20 }),
+      expect.objectContaining({ idProducto: 2, costoUnitario: 6 }),
+    ]);
+  });
+
+  it('ms-reportes puede pedir todas las ventas (REST interno)', async () => {
+    const r = await request(app).get('/interno/ventas/reporte').expect(200);
+    expect(r.body.length).toBe(await prisma.venta.count());
+    expect(r.body[0]).toMatchObject({ idVenta: expect.any(Number), vendedor: { id: 3 }, actualizadoEn: expect.any(String) });
+    await request(app).get('/interno/ventas/reporte').set('X-Forwarded-For', '1.2.3.4').expect(404);
   });
 });
 

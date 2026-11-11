@@ -233,13 +233,13 @@ describe('HU-25 · Mis pedidos, cancelar y seguimiento', () => {
 
     // Lo que hará el Sprint 5: asignar un repartidor que comparte su ubicación.
     await prisma.posicion_repartidor.upsert({
-      where: { id_empleado: 7 },
-      create: { id_empleado: 7, latitud: -17.7801, longitud: -63.1802, precision_m: 12 },
+      where: { id_empleado: 70 },
+      create: { id_empleado: 70, latitud: -17.7801, longitud: -63.1802, precision_m: 12 },
       update: {},
     });
     await prisma.pedido.update({
       where: { id_pedido: body.id },
-      data: { estado_pedido: 'En camino', id_repartidor: 7, repartidor_nombre: 'Rodrigo Reparto' },
+      data: { estado_pedido: 'En camino', id_repartidor: 70, repartidor_nombre: 'Rodrigo Reparto' },
     });
     const r = await request(app).get(`/api/pedidos/${body.id}/seguimiento`).set(camila).expect(200);
     expect(r.body).toMatchObject({ enCamino: true, repartidor: 'Rodrigo', posicion: { latitud: -17.7801, longitud: -63.1802, precision: 12 } });

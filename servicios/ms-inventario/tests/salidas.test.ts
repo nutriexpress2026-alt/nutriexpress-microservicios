@@ -63,7 +63,7 @@ describe('HU-18, HU-24 · Consumir la reserva de una venta', () => {
   it('descuenta el stock con una nota de egreso por Venta, del almacén que lo tiene', async () => {
     const { id, salida } = await reservarYConsumir(2);
     expect(salida).toMatchObject({ yaConsumida: false, idNotaEgreso: expect.any(Number) });
-    expect(salida.lineas).toEqual([{ idProducto: ID_PRODUCTO, idAlmacen: camara, almacen: expect.any(String), cantidad: 2 }]);
+    expect(salida.lineas).toEqual([{ idProducto: ID_PRODUCTO, idAlmacen: camara, almacen: expect.any(String), cantidad: 2, costoUnitario: 4 }]);
     expect(await stock()).toBe(4);
     const nota = await prisma.nota_egreso.findUnique({ where: { id_nota_egreso: salida.idNotaEgreso } });
     expect(nota).toMatchObject({ motivo: 'Venta', observacion: 'Venta de mostrador' });

@@ -55,7 +55,7 @@ const servidor = createServer(async (req, res) => {
     if (r.estado === 'Consumida') return responder(200, { idNotaEgreso: null, lineas: [], yaConsumida: true });
     r.estado = 'Consumida';
     for (const l of r.productos) productos.get(l.idProducto)!.stock -= l.cantidad;
-    return responder(200, { idNotaEgreso: 90, lineas: r.productos.map((l) => ({ ...l, idAlmacen: 2, almacen: 'Camara Refrigerada' })), yaConsumida: false });
+    return responder(200, { idNotaEgreso: 90, lineas: r.productos.map((l) => ({ ...l, idAlmacen: 2, almacen: 'Camara Refrigerada', costoUnitario: l.idProducto === 1 ? 20 : 6 })), yaConsumida: false });
   }
   const liberar = /^\/inventario\/interno\/reservas\/([^/]+)\/liberar$/.exec(ruta);
   if (req.method === 'POST' && liberar) {

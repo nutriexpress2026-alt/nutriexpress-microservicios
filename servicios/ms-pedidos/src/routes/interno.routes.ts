@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import * as pedidoModel from '../models/pedido.model.js';
+import { fotosParaReportes } from '../services/pedido.service.js';
 import { soloRedInterna } from '../middlewares/auth.middleware.js';
 
 /**
@@ -17,6 +18,11 @@ router.get('/pedidos/conteo', async (req, res) => {
     .filter((n) => Number.isInteger(n) && n > 0);
   const filas = ids.length === 0 ? [] : await pedidoModel.contarPorCliente(ids);
   res.json(Object.fromEntries(filas.map((f) => [f.id_usuario, f._count._all])));
+});
+
+/** HU-29 · La foto de todos los pedidos: ms-reportes completa con ella su copia al arrancar. */
+router.get('/pedidos/reporte', async (_req, res) => {
+  res.json(await fotosParaReportes());
 });
 
 export default router;

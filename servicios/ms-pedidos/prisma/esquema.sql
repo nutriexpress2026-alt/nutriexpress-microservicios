@@ -117,3 +117,7 @@ CREATE TABLE IF NOT EXISTS turno_repartidor (
     disponible      BOOLEAN NOT NULL DEFAULT FALSE,
     actualizado_en  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+-- HU-29 (Sprint 6) · El costo de lo entregado (costo promedio de inventario al salir),
+-- para la ganancia del reporte de pedidos. Nulo hasta que el pedido se entrega.
+ALTER TABLE detalle_pedido ADD COLUMN IF NOT EXISTS costo_unitario NUMERIC(10,2);

@@ -13,6 +13,16 @@ const INCLUIR = {
   detalle_pedido: { orderBy: { nombre_producto: 'asc' as const } },
 };
 
+/** HU-29 · Todos, con su detalle: ms-reportes los pide al arrancar. */
+export const todos = () => prisma.pedido.findMany({ include: INCLUIR, orderBy: { id_pedido: 'asc' } });
+
+/** HU-29 · El costo de lo entregado, por producto (lo dice ms-inventario al consumir la reserva). */
+export async function guardarCostos(tx: ClientePrisma, idPedido: number, costos: Map<number, number>): Promise<void> {
+  for (const [idProducto, costo] of costos) {
+    await tx.detalle_pedido.updateMany({ where: { id_pedido: idPedido, id_producto: idProducto }, data: { costo_unitario: costo } });
+  }
+}
+
 export type PedidoConDetalle = NonNullable<Awaited<ReturnType<typeof buscarPorId>>>;
 
 export const buscarPorId = (id: number, tx: ClientePrisma = prisma) =>

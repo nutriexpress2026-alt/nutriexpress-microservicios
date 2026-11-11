@@ -14,6 +14,7 @@ model detalle_pedido {
   nombre_producto String  @db.VarChar(100)
   cantidad        Int
   precio_unitario Decimal @db.Decimal(10, 2)
+  costo_unitario  Decimal? @db.Decimal(10, 2)
   pedido          pedido  @relation(fields: [id_pedido], references: [id_pedido], onDelete: NoAction, onUpdate: NoAction, map: "fk_detpedido_pedido")
 
   @@id([id_pedido, id_producto])

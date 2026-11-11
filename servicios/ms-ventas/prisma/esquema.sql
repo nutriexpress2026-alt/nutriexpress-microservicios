@@ -66,3 +66,11 @@ CREATE TABLE sesion_vigente (
     clave  VARCHAR(30) PRIMARY KEY,  -- 'usuario:5' o 'rol:2'
     desde  TIMESTAMP NOT NULL
 );
+
+-- >>> Posteriores a la primera versión
+-- Lo que sigue se aplica también a las bases que ya existían (prisma/inicializar.ts):
+-- todo con IF NOT EXISTS, sin borrar datos.
+
+-- HU-28 · El costo de lo vendido (costo promedio de inventario al salir), para la
+-- ganancia del reporte de ventas. Nulo en las ventas anteriores a esta columna.
+ALTER TABLE detalle_venta ADD COLUMN IF NOT EXISTS costo_unitario NUMERIC(10,2);

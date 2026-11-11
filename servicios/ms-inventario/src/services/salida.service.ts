@@ -33,6 +33,7 @@ export interface LineaSalida {
 
 /** Lo que devuelve la salida: con el nombre del almacén, que el comprobante muestra. */
 export interface LineaVendida extends LineaSalida {
+  costoUnitario: number;
   almacen: string;
 }
 
@@ -91,6 +92,8 @@ export async function consumirParaVenta(idReserva: string, datos: { observacion:
           idAlmacen: l.idAlmacen,
           almacen: nombreDe.get(l.idAlmacen) ?? '',
           cantidad: l.cantidad,
+          // HU-28 · El costo promedio al salir: con él, los reportes calculan la ganancia.
+          costoUnitario: Number(l.costoUnitario),
         })),
         yaConsumida: false,
       };

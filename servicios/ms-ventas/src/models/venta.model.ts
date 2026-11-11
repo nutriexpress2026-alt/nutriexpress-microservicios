@@ -49,7 +49,7 @@ export const crear = (
     empleado: { id: number; nombre: string; apellido: string };
     idReserva: string;
     idNotaEgreso: number | null;
-    lineas: { idProducto: number; idAlmacen: number; nombre: string; almacen: string; cantidad: number; precioUnitario: number }[];
+    lineas: { idProducto: number; idAlmacen: number; nombre: string; almacen: string; cantidad: number; precioUnitario: number; costoUnitario?: number }[];
   },
 ) =>
   tx.venta.create({
@@ -73,11 +73,15 @@ export const crear = (
           nombre_almacen: l.almacen,
           cantidad: l.cantidad,
           precio_unitario: l.precioUnitario,
+          costo_unitario: l.costoUnitario ?? null,
         })),
       },
     },
     include: INCLUIR,
   });
+
+/** HU-28 · Todas, con su detalle: ms-reportes las pide al arrancar. */
+export const todas = () => prisma.venta.findMany({ include: INCLUIR, orderBy: { id_venta: 'asc' } });
 
 export const registrarCobro = (id: number, idPago: number) => prisma.venta.update({ where: { id_venta: id }, data: { id_pago: idPago } });
 
