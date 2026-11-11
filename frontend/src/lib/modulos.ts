@@ -43,7 +43,7 @@ export interface Seccion {
  * Sprint en curso del proyecto de microservicios. Las pestañas cuyo servicio
  * llega en un sprint posterior no se muestran todavía (`desdeSprint`).
  */
-export const SPRINT_ACTUAL = 6;
+export const SPRINT_ACTUAL = 7;
 
 export interface Modulo {
   /** Nombre corto, para la barra lateral. */
@@ -77,7 +77,7 @@ export interface Modulo {
 }
 
 const REPORTES = { etiqueta: 'Reportes', icono: ChartColumn, alias: 'informe pdf periodo', desdeSprint: 6 };
-/** HU-30 (producción e inventario) es del Sprint 7, de reserva: sus reportes esperan. */
+/** HU-30 (producción e inventario) llegó en el Sprint 7, el de reserva. */
 const REPORTES_SPRINT_7 = { ...REPORTES, desdeSprint: 7 };
 
 export const MODULOS: Modulo[] = [
