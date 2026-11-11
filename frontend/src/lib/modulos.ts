@@ -43,7 +43,7 @@ export interface Seccion {
  * Sprint en curso del proyecto de microservicios. Las pestañas cuyo servicio
  * llega en un sprint posterior no se muestran todavía (`desdeSprint`).
  */
-export const SPRINT_ACTUAL = 5;
+export const SPRINT_ACTUAL = 6;
 
 export interface Modulo {
   /** Nombre corto, para la barra lateral. */
@@ -77,6 +77,8 @@ export interface Modulo {
 }
 
 const REPORTES = { etiqueta: 'Reportes', icono: ChartColumn, alias: 'informe pdf periodo', desdeSprint: 6 };
+/** HU-30 (producción e inventario) es del Sprint 7, de reserva: sus reportes esperan. */
+const REPORTES_SPRINT_7 = { ...REPORTES, desdeSprint: 7 };
 
 export const MODULOS: Modulo[] = [
   {
@@ -144,7 +146,7 @@ export const MODULOS: Modulo[] = [
         icono: Warehouse,
         alias: 'deposito camara',
       },
-      { ruta: '/inventario/reportes', ...REPORTES },
+      { ruta: '/inventario/reportes', ...REPORTES_SPRINT_7 },
     ],
   },
   {
@@ -224,7 +226,7 @@ export const MODULOS: Modulo[] = [
         alias: 'producir cocina orden de produccion',
         desdeSprint: 3,
       },
-      { ruta: '/produccion/reportes', ...REPORTES, permiso: 'ORDEN_PRODUCCION_GESTIONAR' },
+      { ruta: '/produccion/reportes', ...REPORTES_SPRINT_7, permiso: 'ORDEN_PRODUCCION_GESTIONAR' },
     ],
   },
 ];

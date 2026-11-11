@@ -32,8 +32,15 @@ export default function PaginaReportes() {
 function Reportes() {
   const [idProducto, setIdProducto] = useState<number | null>(null);
   const [productos, setProductos] = useState<ProductoCatalogo[]>([]);
+  const [idVendedor, setIdVendedor] = useState<number | null>(null);
+  const [vendedores, setVendedores] = useState<{ id: number; nombre: string }[]>([]);
 
   useEffect(() => {
+    // HU-28 · Los vendedores que vendieron alguna vez (los conoce ms-reportes).
+    api
+      .get<{ id: number; nombre: string }[]>('/reportes/ventas/vendedores')
+      .then(setVendedores)
+      .catch(() => {});
     api
       .get<ProductoCatalogo[]>('/catalogo')
       .then(setProductos)
@@ -48,18 +55,31 @@ function Reportes() {
       titulo="Reporte de ventas"
       descripcion="Cuánto se vendió, cuánto se ganó y por qué medio se cobró"
       recurso="ventas"
-      filtros={{ idProducto: idProducto ?? undefined }}
+      filtros={{ idProducto: idProducto ?? undefined, idVendedor: idVendedor ?? undefined }}
       controles={
-        <Selector<number>
-          etiqueta="Producto"
-          valor={idProducto}
-          marcador="Todos los productos"
-          onCambiar={(v) => setIdProducto(v === -1 ? null : v)}
-          opciones={[
-            { valor: -1, etiqueta: 'Todos los productos' },
-            ...productos.map((p) => ({ valor: p.id, etiqueta: p.nombre })),
-          ]}
-        />
+        // HU-28 · «Por fechas, producto y vendedor»: los dos filtros en su propia fila.
+        <div className="grid gap-4 sm:col-span-2 sm:grid-cols-2 lg:col-span-3">
+          <Selector<number>
+            etiqueta="Producto"
+            valor={idProducto}
+            marcador="Todos los productos"
+            onCambiar={(v) => setIdProducto(v === -1 ? null : v)}
+            opciones={[
+              { valor: -1, etiqueta: 'Todos los productos' },
+              ...productos.map((p) => ({ valor: p.id, etiqueta: p.nombre })),
+            ]}
+          />
+          <Selector<number>
+            etiqueta="Vendedor"
+            valor={idVendedor}
+            marcador="Todos los vendedores"
+            onCambiar={(v) => setIdVendedor(v === -1 ? null : v)}
+            opciones={[
+              { valor: -1, etiqueta: 'Todos los vendedores' },
+              ...vendedores.map((v) => ({ valor: v.id, etiqueta: v.nombre })),
+            ]}
+          />
+        </div>
       }
       vacio={(r) => r.resumen.cantidadVentas === 0}
       tituloVacio="Sin ventas en el período"
@@ -78,6 +98,13 @@ function Reportes() {
 
           <CifrasGanancia ganancia={reporte.resumen} />
 
+          {reporte.anuladas && reporte.anuladas.cantidad > 0 && (
+            <p className="text-sm text-tinta-suave">
+              {reporte.anuladas.cantidad} venta(s) anulada(s) por {formatearBs(reporte.anuladas.total)} no
+              suman en el total.
+            </p>
+          )}
+
           <TablaReporte
             titulo="Por producto"
             filas={reporte.porProducto}
@@ -94,6 +121,19 @@ function Reportes() {
               ...columnasGanancia<LineaProductoReporte>(),
             ]}
           />
+
+          {reporte.porVendedor && (
+            <TablaReporte
+              titulo="Por vendedor"
+              filas={reporte.porVendedor}
+              clave={(v) => v.idVendedor}
+              columnas={[
+                { titulo: 'Vendedor', celda: (v) => v.vendedor },
+                { titulo: 'Ventas', numerica: true, celda: (v) => v.cantidadVentas },
+                { titulo: 'Total', numerica: true, celda: (v) => formatearBs(v.total) },
+              ]}
+            />
+          )}
 
           <TablaReporte
             titulo="Por método de pago"
