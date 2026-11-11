@@ -114,6 +114,7 @@ SPRINTS = {
     4: (date(2026, 11, 5), date(2026, 11, 11), 'Pedido a domicilio con pago en línea (saga completa).'),
     5: (date(2026, 11, 12), date(2026, 11, 18), 'Despacho de pedidos, reparto y venta de mostrador.'),
     6: (date(2026, 11, 19), date(2026, 11, 25), 'Reportes, correo al cliente, temas y despliegue.'),
+    7: (date(2026, 11, 26), date(2026, 12, 2), 'Reserva: perfil propio, reporte de producción e inventario y cierre del proyecto.'),
 }
 DAILY = []
 for n in list(SPRINTS):
@@ -167,8 +168,13 @@ for i, (orden, id_, elem, ms, pts, prio, spr) in enumerate(BACKLOG, 2):
     celda(pb, i, 4, ms, ajustar=True)
     celda(pb, i, 5, int(pts))
     celda(pb, i, 6, prio)
-    celda(pb, i, 7, int(spr) if spr.isdigit() else spr)
-    estado = 'Hecho' if spr in {str(n) for n in SPRINTS} else ('En curso' if id_ == 'HT-05' else 'Pendiente')
+    # HT-05 (pruebas) corre en los sprints 1 a 6 y se cierra con el último: hasta entonces
+    # queda «En curso»; al cerrarse cuenta en el sprint 7 (así el burnup llega a 205).
+    final = id_ == 'HT-05' and 7 in SPRINTS
+    c_spr = celda(pb, i, 7, 7 if final else (int(spr) if spr.isdigit() else spr))
+    if final:
+        c_spr.comment = Comment(f'Planificada en los sprints {spr}; se cierra con el último.', 'Equipo')
+    estado = 'Hecho' if spr in {str(n) for n in SPRINTS} or final else ('En curso' if id_ == 'HT-05' else 'Pendiente')
     c = celda(pb, i, 8, estado, editable=True)
     dv_pb.add(c)
 ult = len(BACKLOG) + 1
@@ -186,7 +192,7 @@ cerrado = celda(pb, pb_fila - 2, 3, max(SPRINTS), editable=True)
 cerrado.comment = Comment('Al cerrar cada sprint, sumar 1. La línea de puntos hechos llega hasta aquí.', 'Equipo')
 CERRADO = f'$C${pb_fila - 2}'
 cabecera_fila = pb_fila
-for j, t in enumerate(['Sprint', 'Alcance', 'Hechos (acum.)', 'Ideal'], 1):
+for j, t in enumerate(['Sprint', 'Alcance', 'Hechos (acum.)', 'Ideal', 'Restantes', 'Ideal restante'], 1):
     c = pb.cell(row=cabecera_fila, column=j, value=t)
     c.font, c.fill, c.border = CAB, NEGRO, BORDE
 for k in range(0, 8):
@@ -196,6 +202,9 @@ for k in range(0, 8):
     # Puntos de historias hechas cuyo sprint es <= k (las de sprint "1–6" cuentan al final).
     celda(pb, f, 3, f'=IF(A{f}>{CERRADO},NA(),SUMIFS($E$2:$E${ult},$H$2:$H${ult},"Hecho",$G$2:$G${ult},"<="&A{f}))')
     celda(pb, f, 4, f'=ROUND($E${ult + 2}*A{f}/7,0)')
+    # Burndown del proyecto: lo que falta al cierre de cada sprint.
+    celda(pb, f, 5, f'=IF(A{f}>{CERRADO},NA(),B{f}-C{f})')
+    celda(pb, f, 6, f'=B{f}-D{f}')
 graf = LineChart()
 graf.title = 'Burnup del proyecto'
 graf.y_axis.title = 'Puntos de historia'
@@ -205,7 +214,17 @@ graf.add_data(datos, titles_from_data=True)
 graf.set_categories(Reference(pb, min_col=1, min_row=cabecera_fila + 1, max_row=cabecera_fila + 8))
 graf.height, graf.width = 8, 16
 ejes_visibles(graf)
-pb.add_chart(graf, f'F{pb_fila}')
+pb.add_chart(graf, f'H{pb_fila}')
+
+graf_bd = LineChart()
+graf_bd.title = 'Burndown del proyecto'
+graf_bd.y_axis.title = 'Puntos de historia restantes'
+graf_bd.x_axis.title = 'Sprint'
+graf_bd.add_data(Reference(pb, min_col=5, max_col=6, min_row=cabecera_fila, max_row=cabecera_fila + 8), titles_from_data=True)
+graf_bd.set_categories(Reference(pb, min_col=1, min_row=cabecera_fila + 1, max_row=cabecera_fila + 8))
+graf_bd.height, graf_bd.width = 8, 16
+ejes_visibles(graf_bd)
+pb.add_chart(graf_bd, f'H{pb_fila + 18}')
 
 # ------------------------------------------------------------------ Hojas de sprint
 for n, (ini, fin, objetivo, tareas) in SPRINTS.items():

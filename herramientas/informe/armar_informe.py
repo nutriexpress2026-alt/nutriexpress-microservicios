@@ -432,7 +432,15 @@ BIBLIOGRAFIA = [
 ]
 
 
-def resto_del_indice(listas, documentados):
+def cierre(nombre, listas, figuras):
+    """El contenido de una sección de cierre, si ya tiene su .md (docs/informe/<nombre>); si no, None."""
+    ruta = os.path.join(DOCS, nombre)
+    if not os.path.exists(ruta):
+        return None
+    return convertir(open(ruta, encoding='utf8').read(), listas, figuras)
+
+
+def resto_del_indice(listas, documentados, figuras=None):
     out = []
     for n, fechas, objetivo in SPRINTS:
         if n in documentados:  # ese sprint ya tiene su capitulo-3-sprint-N.md
@@ -444,6 +452,28 @@ def resto_del_indice(listas, documentados):
             out.append(titulo(3, f'3.{sec}.{k} {nombre}'))
             out.append(pendiente(f'Pendiente: se completa durante el Sprint {n}.'))
     a = len(SPRINTS) + 2
+    # Al cerrar el proyecto, cada sección final tiene su .md: capitulo-3-artefactos.md,
+    # conclusiones.md, recomendaciones.md y anexos.md (con su propio título).
+    artefactos = cierre('capitulo-3-artefactos.md', listas, figuras)
+    if artefactos is not None:
+        out.append(artefactos)
+        for nombre, titulo_txt in [('conclusiones.md', 'CONCLUSIONES'), ('recomendaciones.md', 'RECOMENDACIONES')]:
+            contenido = cierre(nombre, listas, figuras)
+            if contenido is None:
+                out.append(titulo(1, titulo_txt, salto=True))
+                out.append(pendiente('Pendiente: se redactan al terminar el proyecto.'))
+            else:
+                out.append(contenido)
+        out.append(titulo(1, 'BIBLIOGRAFÍA', salto=True))
+        for ref in BIBLIOGRAFIA:
+            out.append(parrafo(runs(ref), jc='left', extra='<w:ind w:left="720" w:hanging="720"/>'))
+        anexos = cierre('anexos.md', listas, figuras)
+        if anexos is None:
+            out.append(titulo(1, 'ANEXOS', salto=True))
+            out.append(pendiente('Pendiente: manual de usuario, capturas y evidencias de los sprints.'))
+        else:
+            out.append(anexos)
+        return ''.join(out)
     out.append(titulo(2, f'3.{a} ARTEFACTOS (DIAGRAMA DE COMPONENTES)'))
     out.append(pendiente('Pendiente: se completa al cerrar el último sprint.'))
     for k, nombre in enumerate(['Product Backlog final',
@@ -555,7 +585,7 @@ def main():
     for nombre in ['capitulo-1-perfil.md', 'capitulo-2-organizacion.md'] + [f for _, f in sprints]:
         md = open(os.path.join(DOCS, nombre), encoding='utf8').read()
         contenido.append(convertir(md, listas, figuras))
-    contenido.append(resto_del_indice(listas, {n for n, _ in sprints}))
+    contenido.append(resto_del_indice(listas, {n for n, _ in sprints}, figuras))
 
     seccion = ('<w:sectPr><w:footerReference w:type="default" r:id="rIdPie1"/>'
                '<w:pgSz w:w="12240" w:h="15840" w:code="1"/>'

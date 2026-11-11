@@ -990,6 +990,168 @@ try {
   Unir $postfix $correo "Dependency" "relayhost" | Out-Null
   $diagramas += ,@($d, "3.7.3-despliegue.png")
 
+  # ============================================================ Sprint 7
+  $sprint7 = $modelo.Packages.AddNew("Sprint 7", ""); $sprint7.Update() | Out-Null
+
+  # --- 3.8.3 Reporte por composición de API (secuencia)
+  $p = $sprint7.Packages.AddNew("3.8.3 Reporte de producción", ""); $p.Update() | Out-Null
+  $d = $p.Diagrams.AddNew("Reporte de producción por composición de API", "Sequence"); $d.Update() | Out-Null
+  $L = @{}
+  $x = 40
+  foreach ($v in @(@("Administrador", "Actor"), @("ms-reportes", "Sequence"), @("ms-catalogo", "Sequence"),
+      @("ms-inventario", "Sequence"))) {
+    $e = Nuevo $p $v[0] $v[1]
+    Poner $d $e $x 40 110 600 | Out-Null
+    $L[$v[0]] = $e
+    $x += 280
+  }
+  $mensajes = @(
+    @("Administrador", "ms-reportes", "reporteProduccion(desde, hasta, producto)", "llamada"),
+    @("ms-reportes", "ms-catalogo", "ordenesFinalizadas(desde, hasta) [REST]", "llamada"),
+    @("ms-catalogo", "ms-reportes", "órdenes con lo que consumió cada una", "retorno"),
+    @("ms-reportes", "ms-reportes", "sumar obtenido, merma, costo e insumos", "interna"),
+    @("ms-reportes", "Administrador", "reporte (o PDF)", "retorno"),
+    @("Administrador", "ms-reportes", "reporteInventario(desde, hasta, ítem)", "llamada"),
+    @("ms-reportes", "ms-inventario", "movimientos(desde, hasta) [REST]", "llamada"),
+    @("ms-inventario", "ms-reportes", "movimientos y existencia de hoy", "retorno"),
+    @("ms-reportes", "Administrador", "reporte, o 503 si inventario no responde", "retorno")
+  )
+  $n = 1
+  foreach ($m in $mensajes) {
+    $c = $L[$m[0]].Connectors.AddNew($m[2], "Sequence")
+    $c.SupplierID = $L[$m[1]].ElementID
+    $c.SequenceNo = $n
+    $c.Update() | Out-Null
+    $tipo = $m[3]
+    if ($tipo -ne "llamada") { $c.Properties.Item("Kind").Value = "Signal" }
+    $c.Properties.Item("IsReturn").Value = ($tipo -eq "retorno")
+    $c.Update() | Out-Null
+    $n++
+  }
+  $nota = Nuevo $p "" "Note" -notas ("HU-30. Composición por API: ms-reportes no guarda copia de producción ni de inventario; " +
+    "pregunta al momento por REST interno y arma el reporte. Lo consumido por cada orden quedó guardado al finalizarla " +
+    "(HU-10). «Cuenta como salida lo vendido»: las ventas y entregas dejan su nota de egreso con motivo Venta.")
+  Poner $d $nota 160 640 760 60 | Out-Null
+  $diagramas += ,@($d, "3.8.3-reporte-produccion.png")
+
+  # ============================================================ Artefactos (cierre del proyecto)
+  $cierre = $modelo.Packages.AddNew("Artefactos", ""); $cierre.Update() | Out-Null
+
+  # --- 3.9 Diagrama de componentes
+  $p = $cierre.Packages.AddNew("3.9 Componentes", ""); $p.Update() | Out-Null
+  $d = $p.Diagrams.AddNew("Componentes del sistema", "Component"); $d.Update() | Out-Null
+  $comp = @{}
+  $piezas = @(
+    @("Portal web (Next.js)", "frontend", 440, 20, 220, 60),
+    @("API Gateway (nginx)", "entrada única", 440, 130, 220, 60),
+    @("ms-identidad", "microservicio", 20, 250, 150, 60),
+    @("ms-catalogo", "microservicio", 190, 250, 150, 60),
+    @("ms-inventario", "microservicio", 360, 250, 150, 60),
+    @("ms-ventas", "microservicio", 530, 250, 150, 60),
+    @("ms-pedidos", "microservicio", 700, 250, 150, 60),
+    @("ms-pagos", "microservicio", 870, 250, 150, 60),
+    @("ms-reportes", "microservicio", 1040, 250, 150, 60),
+    @("RabbitMQ", "eventos", 440, 380, 220, 60),
+    @("PostgreSQL 16", "6 bases, una por servicio", 160, 500, 300, 60),
+    @("MongoDB", "reportes y visitas", 860, 500, 200, 60),
+    @("Redis", "complemento en memoria", 20, 500, 120, 60),
+    @("Libélula", "pasarela de pago", 870, 380, 150, 60),
+    @("Postfix y servidor de correo", "SMTP", 1040, 380, 180, 60)
+  )
+  foreach ($q in $piezas) {
+    $e = Nuevo $p $q[0] "Component" -estereotipo $q[1]
+    Poner $d $e $q[2] $q[3] $q[4] $q[5] | Out-Null
+    $comp[$q[0]] = $e
+  }
+  Unir $comp["Portal web (Next.js)"] $comp["API Gateway (nginx)"] "Dependency" "HTTPS /api" | Out-Null
+  foreach ($ms in @("ms-identidad", "ms-catalogo", "ms-inventario", "ms-ventas", "ms-pedidos", "ms-pagos", "ms-reportes")) {
+    Unir $comp["API Gateway (nginx)"] $comp[$ms] "Dependency" "" | Out-Null
+    Unir $comp[$ms] $comp["RabbitMQ"] "Dependency" "" | Out-Null
+  }
+  foreach ($ms in @("ms-identidad", "ms-catalogo", "ms-inventario", "ms-ventas", "ms-pedidos", "ms-pagos")) {
+    Unir $comp[$ms] $comp["PostgreSQL 16"] "Dependency" "" | Out-Null
+  }
+  Unir $comp["ms-reportes"] $comp["MongoDB"] "Dependency" "" | Out-Null
+  Unir $comp["ms-identidad"] $comp["Redis"] "Dependency" "" | Out-Null
+  Unir $comp["ms-pagos"] $comp["Libélula"] "Dependency" "cobro" | Out-Null
+  Unir $comp["ms-reportes"] $comp["Postfix y servidor de correo"] "Dependency" "correo" | Out-Null
+  $nota = Nuevo $p "" "Note" -notas ("El navegador solo habla con el gateway (RNF-ARQ-04). Cada microservicio tiene su base " +
+    "(RNF-ARQ-02) y se comunica con los demás por REST interno (/interno, cuando necesita la respuesta en el momento) " +
+    "o por eventos en RabbitMQ (cuando avisa algo que ya pasó).")
+  Poner $d $nota 20 600 1180 50 | Out-Null
+  $diagramas += ,@($d, "3.9-componentes.png")
+
+  # --- 3.9.2 Paquetes
+  $p = $cierre.Packages.AddNew("3.9.2 Paquetes", ""); $p.Update() | Out-Null
+  $d = $p.Diagrams.AddNew("Arquitectura del sistema (paquetes)", "Package"); $d.Update() | Out-Null
+  function Paquete($nombre, $notas, $l, $t, $w, $h) {
+    $np = $p.Packages.AddNew($nombre, ""); $np.Update() | Out-Null
+    if ($notas) { $np.Element.Notes = $notas; $np.Element.Update() | Out-Null }
+    Poner $d $np.Element $l $t $w $h | Out-Null
+    return $np.Element
+  }
+  $pFront = Paquete "frontend (Next.js)" "" 420 20 260 70
+  $pGw = Paquete "gateway (nginx)" "" 420 130 260 70
+  $pSrv = @{}
+  $x = 20
+  foreach ($ms in @("ms-identidad", "ms-catalogo", "ms-inventario", "ms-ventas", "ms-pedidos", "ms-pagos", "ms-reportes")) {
+    $pSrv[$ms] = Paquete $ms "" $x 250 150 60
+    Unir $pGw $pSrv[$ms] "Dependency" "" | Out-Null
+    $x += 165
+  }
+  Unir $pFront $pGw "Dependency" "HTTP" | Out-Null
+  $pComp = Paquete "compartido" "" 420 370 260 70
+  foreach ($ms in $pSrv.Keys) { Unir $pSrv[$ms] $pComp "Dependency" "copia" | Out-Null }
+  $capas = Nuevo $p "Capas de cada microservicio" "Class" -estereotipo "estructura"
+  foreach ($a in @("routes: rutas /api y /interno", "controllers: leen la petición", "services: reglas de negocio",
+      "models: acceso a su base (Prisma o MongoDB)", "dtos: validación (Zod)", "clientes: REST a otros servicios",
+      "config: entorno, eventos y base")) {
+    $at = $capas.Attributes.AddNew($a, ""); $at.Update() | Out-Null
+  }
+  $capas.Attributes.Refresh()
+  Poner $d $capas 760 370 330 150 | Out-Null
+  $nota = Nuevo $p "" "Note" -notas ("frontend: app (pantallas), components, context (sesión, tema, carrito) y lib (api, módulos). " +
+    "compartido: auth.middleware, eventos y sesiones-vigentes, copiados en cada servicio para que cada uno se construya solo.")
+  Poner $d $nota 20 470 680 50 | Out-Null
+  $diagramas += ,@($d, "3.9.2-paquetes.png")
+
+  # --- 3.9.3 Modelo conceptual de datos
+  $p = $cierre.Packages.AddNew("3.9.3 Modelo conceptual", ""); $p.Update() | Out-Null
+  $d = $p.Diagrams.AddNew("Modelo conceptual de datos", "Logical"); $d.Update() | Out-Null
+  $ent = @{}
+  $limites = @(
+    @("ms-identidad", 20, 20, 300, 230, @(@("Usuario", 40, 60), @("Rol", 180, 60), @("Permiso", 180, 130), @("Cliente", 40, 140), @("Empleado", 180, 200))),
+    @("ms-catalogo", 340, 20, 300, 230, @(@("Producto", 360, 60), @("Receta", 500, 60), @("Insumo (réplica)", 500, 160), @("OrdenProduccion", 360, 160))),
+    @("ms-inventario", 660, 20, 340, 230, @(@("Almacen", 680, 60), @("Ingrediente", 840, 60), @("NotaIngreso", 680, 130), @("NotaEgreso", 840, 130), @("Reserva", 680, 195), @("Producto (réplica) ", 840, 195))),
+    @("ms-ventas", 20, 290, 300, 160, @(@("Venta", 40, 330), @("DetalleVenta", 40, 400))),
+    @("ms-pedidos", 340, 290, 300, 160, @(@("Pedido", 360, 330), @("DetallePedido", 360, 400), @("Ubicacion", 500, 400))),
+    @("ms-pagos", 660, 290, 170, 160, @(@("Pago", 680, 330), @("EventoPago", 680, 400))),
+    @("ms-reportes (MongoDB)", 850, 290, 150, 160, @(@("Visita", 865, 330), @("Fotos de venta y pedido", 865, 400)))
+  )
+  foreach ($b in $limites) {
+    $lim = Nuevo $p $b[0] "Boundary"
+    Poner $d $lim $b[1] $b[2] $b[3] $b[4] | Out-Null
+    foreach ($en in $b[5]) {
+      $e = Nuevo $p $en[0] "Class"
+      Poner $d $e $en[1] $en[2] 125 32 | Out-Null
+      $ent[$en[0]] = $e
+    }
+  }
+  foreach ($par in @(@("Usuario", "Rol"), @("Rol", "Permiso"), @("Cliente", "Usuario"), @("Empleado", "Usuario"),
+      @("Receta", "Producto"), @("Receta", "Insumo (réplica)"), @("OrdenProduccion", "Receta"),
+      @("NotaIngreso", "Ingrediente"), @("NotaEgreso", "Ingrediente"), @("Ingrediente", "Almacen"), @("Reserva", "Producto (réplica) "),
+      @("DetalleVenta", "Venta"), @("DetallePedido", "Pedido"), @("Pedido", "Ubicacion"), @("EventoPago", "Pago"))) {
+    Unir $ent[$par[0]] $ent[$par[1]] "Association" "" | Out-Null
+  }
+  foreach ($par in @(@("Pedido", "Cliente"), @("Venta", "Cliente"), @("Pago", "Pedido"))) {
+    Unir $ent[$par[0]] $ent[$par[1]] "Dependency" "por id" | Out-Null
+  }
+  $nota = Nuevo $p "" "Note" -notas ("Cada recuadro es la base de un microservicio. Las líneas llenas son relaciones dentro de " +
+    "una base (claves foráneas); las punteadas «por id» cruzan servicios: se guarda solo el número, sin clave foránea " +
+    "(RNF-ARQ-02); Pago guarda el número del pedido o de la venta. «réplica»: copia local mínima que se mantiene por eventos.")
+  Poner $d $nota 20 470 980 50 | Out-Null
+  $diagramas += ,@($d, "3.9.3-modelo-conceptual.png")
+
   $proyecto = $r.GetProjectInterface()
   foreach ($par in $diagramas) {
     $dd = $par[0]

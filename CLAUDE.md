@@ -37,7 +37,7 @@ rutas del monolito (`/api/auth`, `/api/usuarios`…) para que el frontend reutil
   subido a `main` para no pisarlo. Si algo sale mal, se vuelve atrás con `git revert` (el historial no se
   pierde). En el informe, la «revisión» de la Sprint Review sigue igual: es la demostración del sprint.
 
-## Estado (al 11-nov-2026)
+## Estado (al 2-dic-2026: proyecto cerrado)
 
 | Sprint | Estado | Qué quedó |
 |---|---|---|
@@ -48,7 +48,7 @@ rutas del monolito (`/api/auth`, `/api/usuarios`…) para que el frontend reutil
 | 4 | Terminado (5 al 11-nov) | ms-pedidos (HU-21 carrito y pedido, HU-22 direcciones con una principal, HU-25 mis pedidos, cancelar y seguimiento) y ms-pagos (HU-26 cobro con QR o tarjeta en la pasarela simulada o Libélula, aviso, vencimiento; HU-27 modo de cobro). Saga del pedido: reserva REST en inventario y desenlace del cobro por eventos (`PagoConfirmado`, `PagoFallido`, `PedidoCancelado`). Programado por Nilser en su computadora; documentado con la regla del equipo. Informe: 106 págs. |
 | 5 | Terminado (12 al 18-nov) | Joseph le pidió a Nilser avanzarlo: lo programó Nilser en su computadora el 7-nov; rama `sprint-5` fusionada en `main` sin PR (8-nov). ms-ventas nuevo (HU-18 venta de mostrador en efectivo o QR, HU-19 comprobante `V-000001` y anulación), en ms-pedidos el tablero y el reparto (HU-23, HU-24, tabla `turno_repartidor`), en ms-identidad la gestión de clientes (HU-20: se quedó ahí porque la ficha ya vivía en identidad). Doce contenedores. Documentado con la regla del equipo. Informe: 122 págs. |
 | 6 | Terminado (19 al 25-nov) | Programado por Nilser en su computadora el 11-nov (rama `sprint-6`, fusionada en `main` sin PR). ms-reportes arma los reportes de ventas (HU-28, por fechas, producto y vendedor) y de pedidos (HU-29) con una copia en MongoDB de cada venta y pedido (eventos `VentaRegistrada` y `PedidoEstadoCambiado` con la foto completa, más la lista entera al arrancar), en PDF y enviables a hasta 5 correos; avisos al cliente por correo con bandeja de salida (HU-32); tema y modo guardados en la cuenta (HU-33); VPS actualizado con respaldo diario (HT-04). Documentado con la regla del equipo. Informe: 139 págs. |
-| 7 | Siguiente (26-nov al 2-dic, reserva) | Ver «Siguiente: Sprint 7» |
+| 7 | Terminado (26-nov al 2-dic, reserva) | Programado por Nilser el 11-nov (rama `sprint-7`, fusionada en `main` sin PR). HU-07 perfil propio con pruebas (cambiar la contraseña cierra las demás sesiones vía `PermisosCambiados` y devuelve un token nuevo) y HU-30 reportes de producción e inventario por **composición de API** (ms-reportes pregunta a `/interno/ordenes/reporte` de ms-catalogo y `/interno/movimientos/reporte` de ms-inventario). HT-05 cerrada: 205 de 205 puntos. Informe cerrado: Artefactos (3.9), Conclusiones, Recomendaciones y Anexos (167 págs.). |
 
 **En el VPS desde el 11-nov** (adelanto de HT-04): https://nutriexpress.109-123-254-213.sslip.io, en
 Docker en `/opt/nutriexpress` del VPS web, con Caddy delante, Libélula en modo Real y el correo por el
@@ -58,43 +58,31 @@ monolito, que se retiró con respaldo. Cómo está armado y cómo actualizarlo: 
 Desde el 3-nov el trabajo sigue en la computadora de Joseph (`INSTALACION.md`); los dos suben con la
 cuenta compartida `nutriexpress2026-alt`, cada uno con su `git config user.name`.
 
-## Siguiente: Sprint 7 (jueves 26 de noviembre al miércoles 2 de diciembre de 2026, reserva)
+## Proyecto cerrado (Sprint 7, 2-dic-2026)
 
-**Historias (8 pts):** HU-07 Perfil propio (3, ms-identidad) y HU-30 Reporte de producción e inventario
-(5, ms-reportes). Antes de programar, leer sus criterios de aceptación en `capitulo-3-sprint-0.md`. Con
-ellas el proyecto llega a 205 de 205 puntos.
+El Product Backlog está completo (39 de 39, 205 puntos) y el informe tiene todas sus secciones. Las
+secciones de cierre se escriben en `docs/informe/capitulo-3-artefactos.md`, `conclusiones.md`,
+`recomendaciones.md` y `anexos.md`: `armar_informe.py` las usa si existen (si no, deja «Pendiente»). Las
+tablas del diseño lógico (3.9.3) las genera `herramientas/informe/diseno_datos.py` desde los
+`schema.prisma`: volver a correrlo si cambia un esquema.
 
-Lo que dejó listo el Sprint 6:
+Quedan fuera del alcance, como recomendaciones del informe:
 
-- **HU-07**: el perfil ya existe en ms-identidad (`/api/perfil`, `PUT /api/perfil`, `PUT /api/perfil/contrasena`,
-  `PUT /api/perfil/apariencia`) y la pantalla `frontend/src/app/(privado)/perfil`. Revisar los criterios
-  («se pide la contraseña actual», «no se puede cambiar el rol ni el estado») y probarlos.
-- **HU-30**: seguir el patrón del Sprint 6 en ms-reportes (`src/services/reporte.service.ts`,
-  `models/proyeccion.model.ts`): ms-catalogo publica la foto de cada orden de producción y ms-inventario
-  la de cada movimiento (ingreso o egreso), con su lista interna para completar la copia al arrancar.
-  «Cuenta como salida lo vendido»: los egresos con motivo Venta. Las pantallas
-  `inventario/reportes` y `produccion/reportes` ya existen con `desdeSprint: 7` (`REPORTES_SPRINT_7` en
-  `frontend/src/lib/modulos.ts`); el cálculo y el PDF del sistema anterior están en
-  `reporte-operaciones.service.ts` del monolito (`Proyecto 1/COMIDASALUDABLE/backend`).
-- **Pendientes del servidor**: contratar de nuevo el servidor de correo (o poner otro `relayhost` en Postfix,
-  ver `herramientas/vps/LEEME.md`): hoy los correos quedan en cola. Cambiar las contraseñas de las cuentas
-  de prueba en el VPS antes de mostrarlo a terceros.
+- **Correo**: contratar de nuevo el servidor de correo (o poner otro `relayhost` en el Postfix del VPS,
+  ver `herramientas/vps/LEEME.md`); hoy los avisos quedan en cola.
+- **Cuentas de prueba**: cambiar sus contraseñas en el VPS antes de mostrarlo a terceros.
+- **Búsqueda con errores de tipeo** con `pg_trgm` (ver «Gestores de bases de datos»).
 - **Punta a punta**: «Despacho del pedido» (`e2e/pedido.spec.ts`) se pasa de sus tiempos en la
   computadora de Nilser; correrla en la de Joseph. La del reporte de ventas (`e2e/gestion.spec.ts`) pasa.
 - **Correr en Windows**: Node resuelve `localhost` por IPv6 y Docker no responde ahí: en los scripts que
-  llaman al gateway, usar `127.0.0.1:8080`.
-
-Pasos: los mismos del Sprint 6 (rama del sprint fusionada en `main` sin PR, pruebas,
-`capitulo-3-sprint-7.md` con la estructura de `capitulo-3-sprint-6.md` (3.8.1 a 3.8.9), paquete
-«Sprint 7» en `crear-diagramas.ps1`, capturas copiando `herramientas/informe/capturas-sprint6.cjs`,
-sumar el Sprint 7 en `SPRINTS` de `excel_scrum.py`, regenerar el Word y actualizar el VPS con
-`herramientas/vps/desplegar.sh`). Si el EA de la computadora de Joseph no exporta las imágenes, las exporta
-Nilser.
+  llaman al gateway, usar `127.0.0.1:8080`. Con los doce contenedores encendidos en una PC de 8 GB, las
+  pruebas de integración no alcanzan a preparar su base: apagar los servicios (`docker compose stop
+  gateway ms-...`) y dejar solo PostgreSQL, MongoDB, Redis y RabbitMQ.
 
 ### Regla para documentar el sprint (decisión del equipo)
 
 Aunque una persona programe todo el sprint, el informe lo muestra **repartido entre los dos**, como en
-los Sprints 1 a 6:
+los Sprints 1 a 7:
 
 - En el Sprint Backlog, cada tarea con responsable (`Joseph` o `Nilser`), horas y fecha de término
   (`dd/mm`) dentro de las fechas del sprint, con una carga parecida para cada uno (por ejemplo, un
@@ -161,6 +149,9 @@ Pendiente, a confirmar con el equipo antes de programar:
 - **Datos de personas por REST interno** (ms-identidad): `/interno/repartidores`, `/interno/empleados/:id`
   (con su cargo) y `/interno/clientes/:id`. ms-identidad pide a ms-pedidos y ms-ventas cuántos pedidos y
   ventas tiene cada cliente (`/interno/pedidos/conteo`, `/interno/ventas/conteo`).
+- **Composición por API en ms-reportes** (Sprint 7, HU-30): para producción e inventario no hay copia;
+  ms-reportes pregunta al momento por REST interno y, si el servicio no responde, devuelve 503 diciendo
+  cuál falta. Conviene cuando los datos cambian por muchos caminos y se consultan poco.
 - **Modelo de lectura en ms-reportes** (Sprint 6, HU-28/29): ms-ventas y ms-pedidos publican la foto
   completa de cada venta y pedido (`VentaRegistrada`, `PedidoEstadoCambiado`, también al asignar repartidor)
   y la sirven entera por `/interno/ventas/reporte` y `/interno/pedidos/reporte`; ms-reportes la guarda en
