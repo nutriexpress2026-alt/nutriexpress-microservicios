@@ -35,6 +35,10 @@ configuración original: `/etc/postfix/main.cf.original` y `master.cf.original`.
 
 ## Leer el correo
 
+**Dirección corta, como en el sistema anterior:** el servidor también recibe `usuario@correotecnoweb`
+(está en `mydestination`), y NutriExpress la acepta al enviar un reporte (`gerencia@correotecnoweb`,
+`ventas@correotecnoweb`). Roundcube no acepta dominios sin punto: ahí se escribe la dirección completa.
+
 El primer nombre fue `nutriexpress.45-140-200-61.sslip.io`; se cambió el mismo 25-nov y se sigue
 recibiendo correo dirigido a él (está en `mydestination`).
 
@@ -72,7 +76,8 @@ recibiendo correo dirigido a él (está en `mydestination`).
 | Reintentar ya la cola | `postqueue -f` |
 | Correos que llegaron a un buzón | `ls /home/soporte/Maildir/new` |
 | Mandar una prueba | `echo "Hola" \| mail -s "Prueba" soporte@correotecnoweb.45-140-200-61.sslip.io` |
-| Crear otro buzón (por ejemplo `cocina`) | `adduser --disabled-password --gecos "" --shell /usr/sbin/nologin cocina` y después `passwd cocina` |
+| Crear otro buzón (por ejemplo `cocina`); con eso ya entra a Roundcube | `adduser --disabled-password --gecos "" --shell /usr/sbin/nologin cocina` y después `passwd cocina` |
+| Quitar un buzón (borra sus correos) | `deluser --remove-home cocina` |
 | Una lista que reparte a varios buzones | agregar `todos: soporte, ventas, gerencia` en `/etc/aliases` y correr `newaliases` |
 
 En el VPS web, `sudo mailq` muestra lo que espera salir hacia el servidor de correo.

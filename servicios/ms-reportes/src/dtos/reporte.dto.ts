@@ -83,6 +83,16 @@ export const esquemaReportePedidos = z
 /** Un tope: el reporte lleva un PDF y la cuota de envío es limitada. */
 const TOPE_DESTINATARIOS = 5;
 
+/**
+ * Un correo `usuario@dominio`. El dominio puede ser de una sola palabra
+ * (`gerencia@correotecnoweb`), como en el sistema anterior: el servidor de
+ * correo del laboratorio recibe ese nombre corto como propio (HT-04).
+ */
+const correo = z
+  .string()
+  .regex(/^[A-Za-z0-9._%+-]+@[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)*$/, 'indique correos válidos')
+  .max(254, 'indique correos válidos');
+
 /** «Enviable a varios correos»: separados por coma o en una lista. */
 export const destinatariosDeReporte = z
   .union([z.string(), z.array(z.string())])
@@ -93,7 +103,7 @@ export const destinatariosDeReporte = z
   )
   .pipe(
     z
-      .array(z.email('indique correos válidos'))
+      .array(correo)
       .min(1, 'indique al menos un destinatario')
       .max(TOPE_DESTINATARIOS, `No se puede enviar a más de ${TOPE_DESTINATARIOS} correos`),
   );

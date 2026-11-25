@@ -133,6 +133,10 @@ describe('HU-28 · Reporte de ventas', () => {
     expect(buzonLocal.at(-1)).toMatchObject({ para: ['gerencia@tecnologia.web', 'ventas@tecnologia.web'], asunto: 'Reporte de ventas · NutriExpress' });
     expect(buzonLocal.at(-1)!.adjuntos![0]).toMatchObject({ nombre: `ventas-${HOY}-a-${HOY}.pdf`, tipo: 'application/pdf' });
     await request(app).post('/api/reportes/ventas/enviar').set(admin).send({ desde: HOY, hasta: HOY, para: 'no-es-un-correo' }).expect(400);
+    // HT-04 · Como en el sistema anterior: el dominio corto del laboratorio de correo.
+    const corto = await request(app).post('/api/reportes/ventas/enviar').set(admin).send({ desde: HOY, hasta: HOY, para: 'gerencia@correotecnoweb' }).expect(200);
+    expect(corto.body).toMatchObject({ enviado: true, para: ['gerencia@correotecnoweb'] });
+    await request(app).post('/api/reportes/ventas/enviar').set(admin).send({ desde: HOY, hasta: HOY, para: 'gerencia@correo..web' }).expect(400);
   });
 
   it('solo el personal con permiso lo ve', async () => {
