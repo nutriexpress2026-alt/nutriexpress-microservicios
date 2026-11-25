@@ -52,7 +52,9 @@ rutas del monolito (`/api/auth`, `/api/usuarios`…) para que el frontend reutil
 
 **En el VPS desde el 11-nov** (adelanto de HT-04): https://nutriexpress.109-123-254-213.sslip.io, en
 Docker en `/opt/nutriexpress` del VPS web, con Caddy delante, Libélula en modo Real y el correo por el
-Postfix del VPS web hacia el VPS de correo (hoy dado de baja: los correos quedan en cola). Reemplaza al
+Postfix del VPS web hacia el VPS de correo (desde el 25-nov, `45.140.200.61`, alias `saas-vps`, dominio
+`nutriexpress.45-140-200-61.sslip.io`, Postfix + Dovecot fuera de Docker junto al proyecto `americanescarbar`,
+que no se toca; ver `herramientas/vps/CORREO.md`). Reemplaza al
 monolito, que se retiró con respaldo. Cómo está armado y cómo actualizarlo: `herramientas/vps/LEEME.md`.
 
 Desde el 3-nov el trabajo sigue en la computadora de Joseph (`INSTALACION.md`); los dos suben con la
@@ -68,8 +70,8 @@ tablas del diseño lógico (3.9.3) las genera `herramientas/informe/diseno_datos
 
 Quedan fuera del alcance, como recomendaciones del informe:
 
-- **Correo**: contratar de nuevo el servidor de correo (o poner otro `relayhost` en el Postfix del VPS,
-  ver `herramientas/vps/LEEME.md`); hoy los avisos quedan en cola.
+- **Correo hacia Gmail/Outlook**: el servidor de correo funciona (25-nov), pero sslip.io no permite
+  registros TXT (SPF, DKIM): para que no vaya a spam hace falta un dominio propio (`herramientas/vps/CORREO.md`).
 - **Cuentas de prueba**: cambiar sus contraseñas en el VPS antes de mostrarlo a terceros.
 - **Búsqueda con errores de tipeo** con `pg_trgm` (ver «Gestores de bases de datos»).
 - **Punta a punta**: «Despacho del pedido» (`e2e/pedido.spec.ts`) se pasa de sus tiempos en la

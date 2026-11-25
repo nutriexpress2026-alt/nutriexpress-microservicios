@@ -109,3 +109,4 @@ Al terminar, `nx ps` para confirmar que todo quedó encendido (o `nx up -d`).
 | Respaldo del monolito retirado | `/opt/respaldos-manuales/monolito-nutriexpress-20261111/` (solo root) |
 | Caddy (HTTPS) | `/etc/caddy/Caddyfile` |
 | Más detalle del despliegue | `herramientas/vps/LEEME.md` |
+| Servidor de correo (otro VPS, `45.140.200.61`) | `herramientas/vps/CORREO.md` |
