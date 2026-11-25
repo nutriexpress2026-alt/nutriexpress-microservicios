@@ -53,8 +53,8 @@ rutas del monolito (`/api/auth`, `/api/usuarios`…) para que el frontend reutil
 **En el VPS desde el 11-nov** (adelanto de HT-04): https://nutriexpress.109-123-254-213.sslip.io, en
 Docker en `/opt/nutriexpress` del VPS web, con Caddy delante, Libélula en modo Real y el correo por el
 Postfix del VPS web hacia el VPS de correo (desde el 25-nov, `45.140.200.61`, alias `saas-vps`, dominio
-`nutriexpress.45-140-200-61.sslip.io`, Postfix + Dovecot fuera de Docker junto al proyecto `americanescarbar`,
-que no se toca; ver `herramientas/vps/CORREO.md`). Reemplaza al
+`correotecnoweb.45-140-200-61.sslip.io`, Postfix + Dovecot fuera de Docker junto al proyecto `americanescarbar`,
+que no se toca; webmail Roundcube en https://correotecnoweb.45-140-200-61.sslip.io; ver `herramientas/vps/CORREO.md`). Reemplaza al
 monolito, que se retiró con respaldo. Cómo está armado y cómo actualizarlo: `herramientas/vps/LEEME.md`.
 
 Desde el 3-nov el trabajo sigue en la computadora de Joseph (`INSTALACION.md`); los dos suben con la
