@@ -200,8 +200,9 @@ export interface FilaLote {
  *
  * Viven en dos tablas y la lista se ordena y pagina entera, así que se unen en
  * SQL: traer las dos y mezclarlas en memoria obligaría a cargar todas para
- * mostrar veinte. Lo buscado viaja como parámetro (`contieneTodas`), y el
- * producto se busca también por su categoría, como en su listado.
+ * mostrar veinte. Lo buscado viaja como parámetro (`contieneTodas`). El
+ * producto se busca solo por su nombre: la categoría vive en ms-catalogo y la
+ * réplica local no la tiene (RNF-ARQ-02).
  */
 function lineasComoLotes(filtro: FiltroLotes): Prisma.Sql {
   const rango = rangoDeFechas(filtro);
@@ -241,9 +242,8 @@ function lineasComoLotes(filtro: FiltroLotes): Prisma.Sql {
       FROM detalle_ingreso_producto d
       JOIN nota_ingreso n ON n.id_nota_ingreso = d.id_nota_ingreso
       JOIN producto p     ON p.id_producto = d.id_producto
-      JOIN categoria c    ON c.id_categoria = p.id_categoria
       JOIN almacen a      ON a.id_almacen = d.id_almacen
-     WHERE ${comunes} AND ${contieneTodas(Prisma.sql`concat_ws(' ', p.nombre, c.nombre)`, termino)}`;
+     WHERE ${comunes} AND ${contieneTodas(Prisma.sql`p.nombre`, termino)}`;
 
   if (filtro.tipo === 'insumo') return insumos;
   if (filtro.tipo === 'producto') return productos;
