@@ -5,9 +5,17 @@ import { api } from '@/lib/api';
 import { Selector } from '@/components/ui/Selector';
 import { Insignia } from '@/components/ui/Insignia';
 import { MarcoReporte } from '@/components/reportes/MarcoReporte';
-import { Cifra, Cifras, TablaReporte } from '@/components/reportes/PiezasReporte';
+import { Cifra, Cifras, TablaDatos, TablaReporte } from '@/components/reportes/PiezasReporte';
+import {
+  BarrasRanking,
+  COLOR_SERIE,
+  ColumnasEnElTiempo,
+  Tablero,
+  TarjetaGrafico,
+} from '@/components/reportes/Graficos';
 import type { ExistenciaStock, ReporteInventario } from '@/types';
 import { formatearBs, formatearCantidad } from '@/lib/formato';
+import { agruparEnElTiempo, diaDe, esPorMes, ranking } from '@/lib/series';
 import { ETIQUETA_MOTIVO } from '@/lib/inventario';
 
 /** Valor del selector: todos los ítems, o un insumo o producto concreto. */
@@ -125,6 +133,8 @@ function CuerpoReporte({ reporte, unItem }: { reporte: ReporteInventario; unItem
         />
       </Cifras>
 
+      <TableroInventario reporte={reporte} unico={unico} />
+
       <TablaReporte
         titulo="Movimiento por ítem"
         filas={reporte.porItem}
@@ -214,5 +224,119 @@ function CuerpoReporte({ reporte, unItem }: { reporte: ReporteInventario; unItem
         ]}
       />
     </>
+  );
+}
+
+/**
+ * Los gráficos del reporte, cada uno con su tabla a un botón.
+ *
+ * Con todos los ítems no se pueden sumar kilos con litros, así que el gráfico
+ * en el tiempo cuenta **movimientos**; con un ítem elegido muestra **cantidades**
+ * en su unidad. Lo que sí se compara entre ítems es el dinero: en qué se invirtió.
+ */
+function TableroInventario({
+  reporte,
+  unico,
+}: {
+  reporte: ReporteInventario;
+  unico: ReporteInventario['porItem'][number] | null;
+}) {
+  const dias = agruparEnElTiempo(
+    reporte.desde,
+    reporte.hasta,
+    reporte.movimientos.map((m) => {
+      const cuanto = unico ? m.cantidad : 1;
+      const entra = m.tipo === 'Ingreso';
+      return {
+        dia: diaDe(m.fecha),
+        valores: {
+          entradas: entra ? cuanto : 0,
+          salidas: entra ? 0 : cuanto,
+          costo: entra ? (m.costo ?? 0) : 0,
+        },
+      };
+    }),
+    { entradas: 0, salidas: 0, costo: 0 },
+  );
+  const periodo = esPorMes(dias) ? 'mes' : 'día';
+  const formatear = unico
+    ? (n: number) => `${formatearCantidad(n)} ${unico.unidad}`
+    : (n: number) => String(n);
+
+  // Lo que costó lo que entró de cada ítem: en bolivianos sí se comparan todos.
+  const inversion = new Map<string, { valor: number; tipo: string }>();
+  for (const m of reporte.movimientos) {
+    if (m.tipo !== 'Ingreso' || m.costo === null) continue;
+    const previo = inversion.get(m.item) ?? { valor: 0, tipo: m.tipoItem };
+    previo.valor = Math.round((previo.valor + m.costo) * 100) / 100;
+    inversion.set(m.item, previo);
+  }
+  const invertido = [...inversion].map(([item, d]) => ({ item, ...d }));
+  type FilaInversion = (typeof invertido)[number];
+
+  return (
+    <Tablero>
+      <TarjetaGrafico
+        ancho
+        titulo={`¿Qué entró y qué salió cada ${periodo}?`}
+        descripcion={
+          unico
+            ? `Cantidades de ${unico.item}, en ${unico.unidad}: las entradas suben y las salidas bajan`
+            : `Movimientos por ${periodo}: las entradas suben y las salidas bajan. Elija un ítem para ver cantidades`
+        }
+        tabla={
+          <TablaDatos
+            filas={dias.filter((d) => d.entradas > 0 || d.salidas > 0)}
+            clave={(d) => d.clave}
+            columnas={[
+              { titulo: periodo === 'mes' ? 'Mes' : 'Día', celda: (d) => d.etiquetaLarga },
+              { titulo: 'Entradas', numerica: true, celda: (d) => formatear(d.entradas) },
+              { titulo: 'Salidas', numerica: true, celda: (d) => formatear(d.salidas) },
+              { titulo: 'Costo ingresado', numerica: true, celda: (d) => formatearBs(d.costo) },
+            ]}
+          />
+        }
+      >
+        <ColumnasEnElTiempo
+          datos={dias}
+          series={[
+            { clave: 'entradas', nombre: 'Entradas', color: COLOR_SERIE[0] },
+            { clave: 'salidas', nombre: 'Salidas', color: COLOR_SERIE[1], haciaAbajo: true },
+          ]}
+          formatear={formatear}
+          enteros={!unico}
+          notas={(d) => (d.costo > 0 ? [`Costo ingresado ${formatearBs(d.costo)}`] : [])}
+          etiqueta={`Columnas: entradas y salidas por ${periodo}`}
+        />
+      </TarjetaGrafico>
+
+      {invertido.length > 1 && (
+        // Es la única de su fila: a lo ancho, para no dejar media tarjeta vacía.
+        <TarjetaGrafico
+          ancho
+          titulo="¿En qué se invirtió más?"
+          descripcion="Lo que costó lo que entró de cada ítem, en bolivianos"
+          tabla={
+            <TablaDatos
+              filas={[...invertido].sort((a, b) => b.valor - a.valor)}
+              clave={(f: FilaInversion) => f.item}
+              columnas={[
+                { titulo: 'Ítem', celda: (f) => f.item },
+                { titulo: 'Tipo', celda: (f) => f.tipo },
+                { titulo: 'Costo ingresado', numerica: true, celda: (f) => formatearBs(f.valor) },
+              ]}
+            />
+          }
+        >
+          <BarrasRanking
+            barras={ranking(
+              invertido.map((f) => ({ nombre: f.item, valor: f.valor, detalle: [f.tipo] })),
+            )}
+            formatear={formatearBs}
+            etiqueta="Barras: costo ingresado por ítem, de mayor a menor"
+          />
+        </TarjetaGrafico>
+      )}
+    </Tablero>
   );
 }

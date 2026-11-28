@@ -5,8 +5,23 @@ import { api } from '@/lib/api';
 import { RequierePermiso } from '@/components/RequierePermiso';
 import { Selector } from '@/components/ui/Selector';
 import { MarcoReporte } from '@/components/reportes/MarcoReporte';
-import { Cifra, Cifras, TablaReporte } from '@/components/reportes/PiezasReporte';
+import {
+  Cifra,
+  Cifras,
+  TablaDatos,
+  TablaReporte,
+  type ColumnaTabla,
+} from '@/components/reportes/PiezasReporte';
 import { CifrasGanancia, columnasGanancia } from '@/components/reportes/Ganancia';
+import {
+  BarrasRanking,
+  COLOR_MARCA,
+  ColumnasEnElTiempo,
+  ListaAvance,
+  Tablero,
+  TarjetaGrafico,
+} from '@/components/reportes/Graficos';
+import { agruparEnElTiempo, diaDe, esPorMes, extremos, plural, ranking } from '@/lib/series';
 import type {
   LineaProductoReporte,
   ProductoCatalogo,
@@ -131,49 +146,7 @@ function ReportePedidosPantalla() {
           {/* Como el total: sin los cancelados, cuyo stock volvió al almacén. */}
           <CifrasGanancia ganancia={reporte.resumen} />
 
-          <TablaReporte
-            titulo="Por producto"
-            filas={reporte.porProducto}
-            clave={(p) => p.idProducto}
-            columnas={[
-              { titulo: 'Producto', celda: (p) => p.nombre },
-              { titulo: 'Unidades', numerica: true, celda: (p) => p.unidades },
-              { titulo: 'Importe', numerica: true, celda: (p) => formatearBs(p.importe) },
-              {
-                titulo: '% del total',
-                numerica: true,
-                celda: (p) => formatearPorcentaje(p.participacion),
-              },
-              ...columnasGanancia<LineaProductoReporte>(),
-            ]}
-          />
-
-          <TablaReporte
-            titulo="Por estado"
-            filas={reporte.porEstado}
-            clave={(e) => e.estado}
-            columnas={[
-              { titulo: 'Estado', celda: (e) => e.estado },
-              { titulo: 'Pedidos', numerica: true, celda: (e) => e.cantidad },
-              { titulo: 'Total', numerica: true, celda: (e) => formatearBs(e.total) },
-            ]}
-          />
-
-          <TablaReporte
-            titulo="Por repartidor"
-            filas={reporte.porRepartidor}
-            clave={(r) => r.repartidor}
-            columnas={[
-              { titulo: 'Repartidor', celda: (r) => r.repartidor },
-              { titulo: 'Asignados', numerica: true, celda: (r) => r.asignados },
-              { titulo: 'Entregados', numerica: true, celda: (r) => r.entregas },
-              {
-                titulo: 'Tiempo promedio',
-                numerica: true,
-                celda: (r) => minutos(r.minutosPromedio),
-              },
-            ]}
-          />
+          <TableroPedidos reporte={reporte} />
 
           <TablaReporte
             titulo="Detalle de pedidos"
@@ -203,5 +176,206 @@ function ReportePedidosPantalla() {
         </>
       )}
     </MarcoReporte>
+  );
+}
+
+type FilaEstado = ReportePedidos['porEstado'][number];
+type FilaRepartidor = ReportePedidos['porRepartidor'][number];
+
+/** El orden del recorrido de un pedido: así se lee dónde se acumulan. */
+const ORDEN_ESTADO = Object.keys(ETIQUETA_ESTADO);
+const etiquetaEstado = (estado: string) =>
+  ETIQUETA_ESTADO[estado as keyof typeof ETIQUETA_ESTADO] ?? estado;
+
+/**
+ * Los gráficos del reporte, cada uno con su tabla a un botón. Un gráfico de una
+ * sola barra no dice más que la cifra: en ese caso va la tabla.
+ */
+function TableroPedidos({ reporte }: { reporte: ReportePedidos }) {
+  const dias = agruparEnElTiempo(
+    reporte.desde,
+    reporte.hasta,
+    reporte.pedidos.map((p) => {
+      const cancelado = p.estado === 'Cancelado';
+      return {
+        dia: diaDe(p.fecha),
+        valores: { pedidos: 1, total: cancelado ? 0 : p.total, cancelados: cancelado ? 1 : 0 },
+      };
+    }),
+    { pedidos: 0, total: 0, cancelados: 0 },
+  );
+  const periodo = esPorMes(dias) ? 'mes' : 'día';
+
+  const productos = {
+    filas: reporte.porProducto,
+    clave: (p: LineaProductoReporte) => p.idProducto,
+    columnas: [
+      { titulo: 'Producto', celda: (p) => p.nombre },
+      { titulo: 'Unidades', numerica: true, celda: (p) => p.unidades },
+      { titulo: 'Importe', numerica: true, celda: (p) => formatearBs(p.importe) },
+      {
+        titulo: '% del total',
+        numerica: true,
+        celda: (p) => formatearPorcentaje(p.participacion),
+      },
+      ...columnasGanancia<LineaProductoReporte>(),
+    ] as ColumnaTabla<LineaProductoReporte>[],
+  };
+  const conCosto = reporte.porProducto.filter((p) => p.ganancia !== null);
+
+  const estadosOrdenados = [...reporte.porEstado].sort(
+    (a, b) => ORDEN_ESTADO.indexOf(a.estado) - ORDEN_ESTADO.indexOf(b.estado),
+  );
+  const estados = {
+    filas: estadosOrdenados,
+    clave: (e: FilaEstado) => e.estado,
+    columnas: [
+      { titulo: 'Estado', celda: (e) => etiquetaEstado(e.estado) },
+      { titulo: 'Pedidos', numerica: true, celda: (e) => e.cantidad },
+      { titulo: 'Total', numerica: true, celda: (e) => formatearBs(e.total) },
+    ] as ColumnaTabla<FilaEstado>[],
+  };
+
+  const repartidores = {
+    filas: reporte.porRepartidor,
+    clave: (r: FilaRepartidor) => r.repartidor,
+    columnas: [
+      { titulo: 'Repartidor', celda: (r) => r.repartidor },
+      { titulo: 'Asignados', numerica: true, celda: (r) => r.asignados },
+      { titulo: 'Entregados', numerica: true, celda: (r) => r.entregas },
+      {
+        titulo: 'Tiempo promedio',
+        numerica: true,
+        celda: (r) => minutos(r.minutosPromedio),
+      },
+    ] as ColumnaTabla<FilaRepartidor>[],
+  };
+
+  return (
+    <Tablero>
+      <TarjetaGrafico
+        ancho
+        titulo={`¿Cuántos pedidos entraron cada ${periodo}?`}
+        descripcion={`Pedidos por ${periodo}, contados todos sus estados. El monto del recuadro no suma los cancelados`}
+        tabla={
+          <TablaDatos
+            filas={dias.filter((d) => d.pedidos > 0)}
+            clave={(d) => d.clave}
+            columnas={[
+              { titulo: periodo === 'mes' ? 'Mes' : 'Día', celda: (d) => d.etiquetaLarga },
+              { titulo: 'Pedidos', numerica: true, celda: (d) => d.pedidos },
+              { titulo: 'Cancelados', numerica: true, celda: (d) => d.cancelados },
+              { titulo: 'Total sin cancelados', numerica: true, celda: (d) => formatearBs(d.total) },
+            ]}
+          />
+        }
+      >
+        <ColumnasEnElTiempo
+          datos={dias}
+          series={[{ clave: 'pedidos', nombre: 'pedidos', color: COLOR_MARCA }]}
+          formatear={(n) => String(n)}
+          enteros
+          notas={(d) => [
+            `${formatearBs(d.total)} sin cancelados`,
+            ...(d.cancelados > 0 ? [plural(d.cancelados, 'cancelado', 'cancelados')] : []),
+          ]}
+          etiqueta={`Columnas: pedidos por ${periodo}`}
+        />
+      </TarjetaGrafico>
+
+      {estados.filas.length > 1 ? (
+        <TarjetaGrafico
+          titulo="¿En qué estado están?"
+          descripcion="Pedidos del período según hasta dónde llegaron, en el orden del recorrido"
+          tabla={<TablaDatos {...estados} />}
+        >
+          <BarrasRanking
+            barras={estadosOrdenados.map((e) => ({
+              nombre: etiquetaEstado(e.estado),
+              valor: e.cantidad,
+              detalle: [`${formatearBs(e.total)} en total`],
+            }))}
+            formatear={(n) => String(n)}
+            etiqueta="Barras: pedidos por estado, en el orden del recorrido"
+          />
+        </TarjetaGrafico>
+      ) : (
+        <TablaReporte titulo="Por estado" {...estados} />
+      )}
+
+      {reporte.porRepartidor.length > 0 ? (
+        <TarjetaGrafico
+          titulo="¿Cómo rinden los repartidores?"
+          descripcion="Cuántos de sus pedidos asignados entregó cada uno, y en cuánto tiempo"
+          tabla={<TablaDatos {...repartidores} />}
+        >
+          <ListaAvance
+            filas={reporte.porRepartidor.map((r) => ({
+              nombre: r.repartidor,
+              hecho: r.entregas,
+              total: r.asignados,
+              cifra: `${r.entregas} de ${r.asignados} entregados${
+                r.minutosPromedio === null ? '' : ` · ${r.minutosPromedio} min en promedio`
+              }`,
+            }))}
+            etiqueta="Pedidos entregados de los asignados, por repartidor"
+          />
+        </TarjetaGrafico>
+      ) : (
+        <TablaReporte titulo="Por repartidor" {...repartidores} />
+      )}
+
+      {reporte.porProducto.length > 1 ? (
+        <TarjetaGrafico
+          titulo="¿Qué productos se piden más?"
+          descripcion="Lo vendido de cada producto en los pedidos no cancelados, en bolivianos"
+          tabla={<TablaDatos {...productos} />}
+        >
+          <BarrasRanking
+            barras={ranking(
+              reporte.porProducto.map((p) => ({
+                nombre: p.nombre,
+                valor: p.importe,
+                detalle: [
+                  plural(p.unidades, 'unidad', 'unidades'),
+                  `${formatearPorcentaje(p.participacion)} de lo vendido`,
+                ],
+              })),
+            )}
+            formatear={formatearBs}
+            etiqueta="Barras: importe por producto, de mayor a menor"
+          />
+        </TarjetaGrafico>
+      ) : (
+        // Siete columnas no caben en media pantalla: a lo ancho.
+        <div className="lg:col-span-2">
+          <TablaReporte titulo="Por producto" {...productos} />
+        </div>
+      )}
+
+      {conCosto.length > 1 && (
+        <TarjetaGrafico
+          titulo="¿Qué productos dejan ganancia?"
+          descripcion="Cobrado menos costo, en bolivianos. En rojo, lo vendido bajo su costo"
+          tabla={<TablaDatos {...productos} />}
+        >
+          <BarrasRanking
+            barras={extremos(
+              conCosto.map((p) => ({
+                nombre: p.nombre,
+                valor: p.ganancia ?? 0,
+                detalle: [
+                  `Cobrado ${formatearBs(p.importe)}`,
+                  `Costó ${formatearBs(p.costo ?? 0)}`,
+                  `Margen ${p.margen === null ? '—' : formatearPorcentaje(p.margen)}`,
+                ],
+              })),
+            )}
+            formatear={formatearBs}
+            etiqueta="Barras: ganancia por producto; las pérdidas van a la izquierda del cero"
+          />
+        </TarjetaGrafico>
+      )}
+    </Tablero>
   );
 }

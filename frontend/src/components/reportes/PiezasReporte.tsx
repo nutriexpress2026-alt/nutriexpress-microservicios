@@ -54,29 +54,37 @@ export interface ColumnaTabla<F> {
   celda: (fila: F) => ReactNode;
 }
 
+interface PropsTabla<F> {
+  columnas: ColumnaTabla<F>[];
+  filas: F[];
+  clave: (fila: F, indice: number) => string | number;
+}
+
 /**
  * Tabla del detalle.
  *
  * Envuelta en su propio desplazamiento horizontal: una tabla ancha no debe
  * arrastrar la página entera en un teléfono.
  */
-export function TablaReporte<F>({
-  titulo,
-  columnas,
-  filas,
-  clave,
-}: {
-  titulo: string;
-  columnas: ColumnaTabla<F>[];
-  filas: F[];
-  clave: (fila: F, indice: number) => string | number;
-}) {
+export function TablaReporte<F>({ titulo, ...tabla }: PropsTabla<F> & { titulo: string }) {
   return (
     <section className="superficie-tarjeta overflow-hidden rounded-2xl">
       <h2 className="border-b border-borde px-5 py-3.5 text-sm font-medium text-tinta">
         {titulo}
       </h2>
+      <TablaDatos {...tabla} />
+    </section>
+  );
+}
 
+/**
+ * La tabla sola, sin su tarjeta: la usan `TablaReporte` y la vista «Tabla» de
+ * cada gráfico, que muestra las mismas cifras sin depender de los colores ni
+ * de pasar el ratón por encima.
+ */
+export function TablaDatos<F>({ columnas, filas, clave }: PropsTabla<F>) {
+  return (
+    <>
       {filas.length === 0 ? (
         <p className="px-5 py-4 text-sm text-tinta-tenue">
           Sin datos en el período seleccionado.
@@ -119,6 +127,6 @@ export function TablaReporte<F>({
           </table>
         </div>
       )}
-    </section>
+    </>
   );
 }

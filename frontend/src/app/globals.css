@@ -399,6 +399,29 @@ input[type="number"] {
   --sombra-boton-hover: 0 2px 8px rgba(64, 48, 20, 0.25);
 }
 
+/* --- Colores de los gráficos de los reportes --- */
+
+/*
+ * Para lo que tiene identidad propia (los métodos de pago, entradas y salidas).
+ * Lo que es una sola serie usa el color de marca del tema. Son los mismos cuatro
+ * tonos en los tres temas, uno por modo, y en este orden: así los distingue
+ * también quien no ve bien los colores (validados de a pares contra las
+ * superficies de los seis temas; en modo día van con su cifra escrita al lado).
+ */
+:root {
+  --grafico-1: #338ced;
+  --grafico-2: #e76624;
+  --grafico-3: #00a888;
+  --grafico-4: #d28e05;
+}
+
+:root[data-modo='dia'] {
+  --grafico-1: #257de0;
+  --grafico-2: #f47230;
+  --grafico-3: #00b894;
+  --grafico-4: #f2a600;
+}
+
 /* --- Lo que el modo día cambia en todos los temas --- */
 
 /* En modo día las superficies son claras: el degradado de luz cenital debe
