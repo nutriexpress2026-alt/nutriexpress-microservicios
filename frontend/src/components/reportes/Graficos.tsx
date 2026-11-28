@@ -15,36 +15,37 @@ import {
 } from 'recharts';
 import { ChartColumn, Table2 } from 'lucide-react';
 import type { BarraRanking, PuntoTiempo } from '@/lib/series';
-import { formatearPorcentaje } from '@/lib/formato';
 
 /**
- * Los gráficos de los reportes (Recharts).
+ * Los gráficos de los reportes (Recharts): la tarjeta, las piezas comunes y los
+ * gráficos de barras. Los estadísticos (ojiva, Pareto, histograma, burbujas,
+ * torta, radar, embudo, mapa de árbol) están en `GraficosEstadisticos.tsx`.
  *
- * Cuatro formas, una por pregunta, y ninguna más:
- *
- * - **Columnas en el tiempo**: cómo fue cada día del período.
+ * - **Columnas en el tiempo**: cómo fue cada día del período, apiladas cuando
+ *   el día se divide en partes (entregados, en curso, cancelados).
  * - **Ranking**: qué vendió o costó más, de mayor a menor. Con valores negativos
  *   (la ganancia) las barras crecen a los dos lados del cero.
- * - **Barra repartida**: cómo se divide un total en pocas partes (los métodos de
- *   pago). Reemplaza a la torta: las partes se leen mejor una al lado de otra.
  * - **Lista de avance**: cuánto de lo suyo cumplió cada uno (los repartidores).
  *
- * Todas van en una `TarjetaGrafico`, que tiene al lado la vista de tabla con
+ * Todos van en una `TarjetaGrafico`, que tiene al lado la vista de tabla con
  * las mismas cifras: lo que dice el gráfico se puede leer también sin ver los
  * colores y sin pasar el ratón por encima.
  *
- * Los colores salen del tema (`--color-marca-400` y `--grafico-1..4`, ver
+ * Los colores salen del tema (`--color-marca-400` y `--grafico-1..8`, ver
  * `globals.css`): el gráfico cambia con el tema y el modo de la cuenta.
  */
 
 /** El color de una serie sola: el de la marca del tema. */
 export const COLOR_MARCA = 'var(--color-marca-400)';
-const COLOR_PERDIDA = 'var(--color-peligro)';
-const COLOR_OTROS = 'var(--color-tinta-tenue)';
-const TEXTO_EJE = { fill: 'var(--color-tinta-suave)', fontSize: 11 };
+export const COLOR_PERDIDA = 'var(--color-peligro)';
+export const COLOR_OTROS = 'var(--color-tinta-tenue)';
+export const TEXTO_EJE = { fill: 'var(--color-tinta-suave)', fontSize: 11 };
 
-/** Los colores de lo que tiene identidad propia, en su orden fijo. */
-export const COLOR_SERIE = ['var(--grafico-1)', 'var(--grafico-2)', 'var(--grafico-3)', 'var(--grafico-4)'];
+/**
+ * Los colores de lo que tiene identidad propia, en su orden fijo (validado de a
+ * pares vecinos). Pasado el octavo, lo que sobra se suma en «Otros».
+ */
+export const COLOR_SERIE = [1, 2, 3, 4, 5, 6, 7, 8].map((n) => `var(--grafico-${n})`);
 
 /**
  * Cada método de pago con su color, siempre el mismo: si un filtro deja solo
@@ -74,7 +75,7 @@ function suscribirMovimiento(avisar: () => void) {
 }
 
 /** Quien pidió menos movimiento al sistema ve los gráficos sin animación. */
-function useMovimientoReducido(): boolean {
+export function useMovimientoReducido(): boolean {
   return useSyncExternalStore(
     suscribirMovimiento,
     () => window.matchMedia?.(consultaMovimiento).matches ?? false,
@@ -89,7 +90,7 @@ function useMovimientoReducido(): boolean {
  * cada tecla en el diálogo del correo). Para Recharts un arreglo nuevo es un
  * dato nuevo: vuelve a animar las barras y esconde las cifras mientras tanto.
  */
-function useEstable<T>(valor: T): T {
+export function useEstable<T>(valor: T): T {
   const clave = JSON.stringify(valor);
   // eslint-disable-next-line react-hooks/exhaustive-deps -- se compara por contenido
   return useMemo(() => valor, [clave]);
@@ -104,7 +105,7 @@ function suscribirAncho(avisar: () => void) {
 }
 
 /** En un teléfono los nombres se cortan antes, para que quede lugar a las barras. */
-function useAngosto(): boolean {
+export function useAngosto(): boolean {
   return useSyncExternalStore(
     suscribirAncho,
     () => window.matchMedia?.(consultaAngosta).matches ?? false,
@@ -118,6 +119,7 @@ function useAngosto(): boolean {
 
 export function TarjetaGrafico({
   titulo,
+  tipo,
   descripcion,
   tabla,
   ancho = false,
@@ -125,6 +127,8 @@ export function TarjetaGrafico({
 }: {
   /** La pregunta que responde, en palabras de quien la hace. */
   titulo: string;
+  /** El nombre del gráfico («Ojiva», «Diagrama de Pareto»), al lado del título. */
+  tipo?: string;
   /** Qué se mide y en qué unidad. */
   descripcion?: string;
   /** Las mismas cifras en una tabla (`TablaDatos`). */
@@ -146,7 +150,14 @@ export function TarjetaGrafico({
           teléfono el botón baja, para que el título no quede en una tira angosta. */}
       <header className="flex flex-wrap items-start justify-between gap-3 border-b border-borde px-5 py-3.5 sm:flex-nowrap">
         <div className="min-w-0 flex-1">
-          <h2 className="text-sm font-medium text-tinta">{titulo}</h2>
+          <h2 className="text-sm font-medium text-tinta">
+            {titulo}
+            {tipo && (
+              <span className="ml-2 inline-block rounded-md border border-borde px-1.5 py-px align-middle text-[10px] font-normal uppercase tracking-wider text-tinta-tenue">
+                {tipo}
+              </span>
+            )}
+          </h2>
           {descripcion && <p className="mt-0.5 text-xs text-tinta-tenue">{descripcion}</p>}
         </div>
         <div
@@ -192,14 +203,14 @@ export function Tablero({ children }: { children: ReactNode }) {
 /* ------------------------------------------------------------------ */
 
 /** Una fila del recuadro: primero la cifra, que es lo que se busca. */
-interface FilaRecuadro {
+export interface FilaRecuadro {
   valor: string;
   nombre: string;
   /** Color de la serie: se marca con una rayita, no con el texto. */
   color?: string;
 }
 
-function Recuadro({ titulo, filas, notas }: { titulo: string; filas: FilaRecuadro[]; notas?: string[] }) {
+export function Recuadro({ titulo, filas, notas }: { titulo: string; filas: FilaRecuadro[]; notas?: string[] }) {
   return (
     <div className="min-w-40 rounded-xl border border-borde-fuerte bg-superficie-alta px-3 py-2 text-xs shadow-xl">
       <p className="mb-1.5 font-medium text-tinta-suave first-letter:uppercase">{titulo}</p>
@@ -224,12 +235,21 @@ function Recuadro({ titulo, filas, notas }: { titulo: string; filas: FilaRecuadr
 }
 
 /** Leyenda: un cuadrito del color de la barra y el nombre en el color del texto. */
-function Leyenda({ series }: { series: { nombre: string; color: string }[] }) {
+export function Leyenda({
+  series,
+}: {
+  /** `linea`: la serie se dibuja como línea (el acumulado, el polígono); la marca de la leyenda también. */
+  series: { nombre: string; color: string; forma?: 'cuadro' | 'linea' }[];
+}) {
   return (
     <ul className="mb-2 flex flex-wrap gap-x-4 gap-y-1 px-2 text-xs text-tinta-suave">
       {series.map((s) => (
         <li key={s.nombre} className="flex items-center gap-1.5">
-          <span aria-hidden className="size-2.5 rounded-[3px]" style={{ background: s.color }} />
+          {s.forma === 'linea' ? (
+            <span aria-hidden className="h-0.5 w-3.5 rounded-full" style={{ background: s.color }} />
+          ) : (
+            <span aria-hidden className="size-2.5 rounded-[3px]" style={{ background: s.color }} />
+          )}
           {s.nombre}
         </li>
       ))}
@@ -238,7 +258,7 @@ function Leyenda({ series }: { series: { nombre: string; color: string }[] }) {
 }
 
 /** Lo que Recharts entrega a una forma o a una etiqueta: interesa el rectángulo. */
-interface Rectangulo {
+export interface Rectangulo {
   x?: number;
   y?: number;
   width?: number;
@@ -246,7 +266,7 @@ interface Rectangulo {
 }
 
 /** El rectángulo con ancho y alto positivos (para los negativos, Recharts los da al revés). */
-function normalizar({ x = 0, y = 0, width = 0, height = 0 }: Rectangulo) {
+export function normalizar({ x = 0, y = 0, width = 0, height = 0 }: Rectangulo) {
   return {
     x: width < 0 ? x + width : x,
     y: height < 0 ? y + height : y,
@@ -258,8 +278,15 @@ function normalizar({ x = 0, y = 0, width = 0, height = 0 }: Rectangulo) {
 /**
  * Barra con la punta redondeada (4 px) del lado del dato y recta del lado del
  * cero, de donde crece. En las negativas la punta queda del otro lado.
+ *
+ * `separada`: en una columna apilada, cada parte lleva un borde del color de la
+ * tarjeta, que deja 2 px de aire entre una parte y la siguiente.
  */
-function formaBarra(orientacion: 'columna' | 'barra', esNegativa: (dato: unknown) => boolean) {
+export function formaBarra(
+  orientacion: 'columna' | 'barra',
+  esNegativa: (dato: unknown) => boolean,
+  separada = false,
+) {
   return function FormaBarra(props: unknown): ReactElement {
     const p = props as Rectangulo & { fill?: string; payload?: unknown };
     const { x, y, w, h } = normalizar(p);
@@ -278,7 +305,11 @@ function formaBarra(orientacion: 'columna' | 'barra', esNegativa: (dato: unknown
         ? `M${x1},${y} H${x + r} Q${x},${y} ${x},${y + r} V${y1 - r} Q${x},${y1} ${x + r},${y1} H${x1} Z`
         : `M${x},${y} H${x1 - r} Q${x1},${y} ${x1},${y + r} V${y1 - r} Q${x1},${y1} ${x1 - r},${y1} H${x} Z`;
     }
-    return <path d={d} fill={p.fill} />;
+    return separada ? (
+      <path d={d} fill={p.fill} stroke="var(--color-superficie)" strokeWidth={2} />
+    ) : (
+      <path d={d} fill={p.fill} />
+    );
   };
 }
 
@@ -336,7 +367,10 @@ export function ColumnasEnElTiempo<V extends Record<string, number>>({
     [datosEstables, seriesEstables],
   );
   const formas = useMemo(
-    () => seriesEstables.map((s) => formaBarra('columna', () => Boolean(s.haciaAbajo))),
+    () =>
+      seriesEstables.map((s) =>
+        formaBarra('columna', () => Boolean(s.haciaAbajo), seriesEstables.length > 1),
+      ),
     [seriesEstables],
   );
 
@@ -436,7 +470,7 @@ export function ColumnasEnElTiempo<V extends Record<string, number>>({
 /* ------------------------------------------------------------------ */
 
 /** Un nombre largo se corta para el eje; completo, está en el recuadro y la tabla. */
-const recortar = (texto: string, largo = 22) =>
+export const recortar = (texto: string, largo = 22) =>
   texto.length > largo ? `${texto.slice(0, largo - 1)}…` : texto;
 
 /**
@@ -560,7 +594,7 @@ export function BarrasRanking({
 }
 
 /* ------------------------------------------------------------------ */
-/* Barra repartida                                                     */
+/* Partes de un total (torta, mapa de árbol)                           */
 /* ------------------------------------------------------------------ */
 
 export interface Parte {
@@ -573,97 +607,7 @@ export interface Parte {
 }
 
 /** Texto oscuro sobre el amarillo (el cuarto color); blanco sobre los demás. */
-const textoSobre = (color: string) => (color === COLOR_SERIE[3] ? '#0b0b0b' : '#ffffff');
-
-/**
- * Un total repartido en partes, una al lado de la otra, con el porcentaje
- * escrito en cada parte donde cabe y el monto en la leyenda.
- */
-export function BarraRepartida({
-  partes,
-  formatear,
-  etiqueta,
-}: {
-  partes: Parte[];
-  formatear: (valor: number) => string;
-  etiqueta: string;
-}) {
-  const [encima, setEncima] = useState<number | null>(null);
-  const visibles = partes.filter((p) => p.valor > 0);
-  const total = visibles.reduce((s, p) => s + p.valor, 0);
-  if (total <= 0) return <p className="px-2 py-4 text-sm text-tinta-tenue">Sin montos en el período.</p>;
-
-  const porcentaje = (p: Parte) => (p.valor / total) * 100;
-  let acumulado = 0;
-  const centros = visibles.map((p) => {
-    const centro = acumulado + porcentaje(p) / 2;
-    acumulado += porcentaje(p);
-    return centro;
-  });
-  const activa = encima === null ? null : visibles[encima];
-
-  return (
-    <div role="figure" aria-label={etiqueta} className="px-2 pt-2">
-      <div className="relative">
-        {activa && encima !== null && (
-          // Debajo de la barra: arriba la tarjeta lo cortaría.
-          <div
-            className="pointer-events-none absolute top-full z-10 mt-2 -translate-x-1/2"
-            style={{ left: `${Math.min(Math.max(centros[encima], 15), 85)}%` }}
-          >
-            <Recuadro
-              titulo={activa.nombre}
-              filas={[
-                { valor: formatear(activa.valor), nombre: '' },
-                { valor: formatearPorcentaje(porcentaje(activa)), nombre: 'del total' },
-              ]}
-              notas={activa.detalle ? [activa.detalle] : undefined}
-            />
-          </div>
-        )}
-        <div className="flex h-7 gap-0.5">
-          {visibles.map((p, i) => {
-            const pct = porcentaje(p);
-            return (
-              <div
-                key={p.nombre}
-                tabIndex={0}
-                role="img"
-                aria-label={`${p.nombre}: ${formatear(p.valor)}, ${formatearPorcentaje(pct)} del total`}
-                onPointerEnter={() => setEncima(i)}
-                onPointerLeave={() => setEncima(null)}
-                onFocus={() => setEncima(i)}
-                onBlur={() => setEncima(null)}
-                className="flex min-w-0 items-center rounded-[4px] px-2 outline-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-tinta"
-                style={{ width: `${pct}%`, background: p.color, color: textoSobre(p.color) }}
-              >
-                {/* Solo donde cabe: cortado no se lee y confunde. */}
-                {pct >= 14 && (
-                  <span className="truncate text-xs font-semibold tabular-nums">{Math.round(pct)} %</span>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      <ul className="mt-4 space-y-2">
-        {visibles.map((p) => (
-          <li key={p.nombre} className="flex items-center justify-between gap-3 text-sm">
-            <span className="flex min-w-0 items-center gap-2 text-tinta-suave">
-              <span aria-hidden className="size-2.5 shrink-0 rounded-[3px]" style={{ background: p.color }} />
-              <span className="truncate">{p.nombre}</span>
-            </span>
-            <span className="shrink-0 tabular-nums text-tinta">
-              {formatear(p.valor)}
-              {p.detalle && <span className="ml-2 text-xs text-tinta-tenue">{p.detalle}</span>}
-            </span>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
+export const textoSobre = (color: string) => (color === COLOR_SERIE[3] ? '#0b0b0b' : '#ffffff');
 
 /* ------------------------------------------------------------------ */
 /* Lista de avance                                                     */

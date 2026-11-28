@@ -14,15 +14,15 @@ import {
   type ColumnaTabla,
 } from '@/components/reportes/PiezasReporte';
 import {
-  BarrasRanking,
-  COLOR_MARCA,
+  COLOR_SERIE,
   ColumnasEnElTiempo,
   Tablero,
   TarjetaGrafico,
 } from '@/components/reportes/Graficos';
+import { MapaArbol, Torta, partesConColor } from '@/components/reportes/GraficosEstadisticos';
 import type { ProductoCatalogo, ReporteProduccion } from '@/types';
 import { formatearBs, formatearCantidad } from '@/lib/formato';
-import { agruparEnElTiempo, diaDe, esPorMes, plural, ranking } from '@/lib/series';
+import { agruparEnElTiempo, diaDe, esPorMes, plural } from '@/lib/series';
 
 /**
  * RF-PRO-08 — reporte de producción por fecha y producto, con el costo de cada
@@ -190,8 +190,9 @@ function TableroProduccion({ reporte }: { reporte: ReporteProduccion }) {
     <Tablero>
       <TarjetaGrafico
         ancho
-        titulo={`¿Cuánto se produjo cada ${periodo}?`}
-        descripcion={`Unidades obtenidas por ${periodo}. La merma y el costo están en el recuadro de cada columna`}
+        tipo="Columnas apiladas"
+        titulo={`¿Cuánto se produjo y cuánto se perdió cada ${periodo}?`}
+        descripcion={`Unidades obtenidas y, encima, la merma de cada ${periodo}: el alto total es lo que se planificó. El costo está en el recuadro`}
         tabla={
           <TablaDatos
             filas={dias.filter((d) => d.corridas > 0)}
@@ -208,34 +209,35 @@ function TableroProduccion({ reporte }: { reporte: ReporteProduccion }) {
       >
         <ColumnasEnElTiempo
           datos={dias}
-          series={[{ clave: 'unidades', nombre: 'unidades', color: COLOR_MARCA }]}
+          series={[
+            { clave: 'unidades', nombre: 'Obtenidas', color: COLOR_SERIE[0] },
+            { clave: 'merma', nombre: 'Merma', color: COLOR_SERIE[1] },
+          ]}
           formatear={(n) => formatearCantidad(n)}
           enteros
-          notas={(d) => [
-            plural(d.corridas, 'corrida', 'corridas'),
-            ...(d.merma > 0 ? [`${plural(d.merma, 'unidad', 'unidades')} de merma`] : []),
-            `Costo ${formatearBs(d.costo)}`,
-          ]}
-          etiqueta={`Columnas: unidades producidas por ${periodo}`}
+          notas={(d) => [plural(d.corridas, 'corrida', 'corridas'), `Costo ${formatearBs(d.costo)}`]}
+          etiqueta={`Columnas apiladas: unidades obtenidas y merma por ${periodo}`}
         />
       </TarjetaGrafico>
 
       {productos.filas.length > 1 ? (
         <TarjetaGrafico
+          tipo="Gráfico de torta"
           titulo="¿Qué se produjo más?"
-          descripcion="Unidades obtenidas de cada producto"
+          descripcion="La parte de cada producto en las unidades obtenidas"
           tabla={<TablaDatos {...productos} />}
         >
-          <BarrasRanking
-            barras={ranking(
+          <Torta
+            partes={partesConColor(
               reporte.porProducto.map((p) => ({
                 nombre: p.producto,
                 valor: p.unidades,
-                detalle: [plural(p.corridas, 'corrida', 'corridas'), `Costo ${formatearBs(p.costo)}`],
+                detalle: plural(p.corridas, 'corrida', 'corridas'),
               })),
             )}
-            formatear={(n) => formatearCantidad(n)}
-            etiqueta="Barras: unidades producidas por producto, de mayor a menor"
+            formatear={(n) => `${formatearCantidad(n)} u`}
+            centro={{ valor: formatearCantidad(reporte.resumen.unidades), texto: 'unidades' }}
+            etiqueta="Torta: unidades producidas por producto"
           />
         </TarjetaGrafico>
       ) : (
@@ -245,20 +247,21 @@ function TableroProduccion({ reporte }: { reporte: ReporteProduccion }) {
       {/* En bolivianos y no en cantidad: kilos y litros no se comparan entre sí. */}
       {insumos.filas.length > 1 ? (
         <TarjetaGrafico
+          tipo="Mapa de árbol"
           titulo="¿En qué insumos se gastó más?"
-          descripcion="Lo que costaron los insumos consumidos, en bolivianos"
+          descripcion="Cada rectángulo es un insumo, tan grande como lo que costó lo consumido"
           tabla={<TablaDatos {...insumos} />}
         >
-          <BarrasRanking
-            barras={ranking(
+          <MapaArbol
+            partes={partesConColor(
               reporte.insumosConsumidos.map((i) => ({
                 nombre: i.insumo,
                 valor: i.costo,
-                detalle: [`${formatearCantidad(i.cantidad)} ${i.unidad} consumidos`],
+                detalle: `${formatearCantidad(i.cantidad)} ${i.unidad} consumidos`,
               })),
             )}
             formatear={formatearBs}
-            etiqueta="Barras: costo de los insumos consumidos, de mayor a menor"
+            etiqueta="Mapa de árbol: costo de los insumos consumidos"
           />
         </TarjetaGrafico>
       ) : (

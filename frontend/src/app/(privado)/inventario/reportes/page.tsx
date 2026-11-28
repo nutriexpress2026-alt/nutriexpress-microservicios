@@ -6,16 +6,11 @@ import { Selector } from '@/components/ui/Selector';
 import { Insignia } from '@/components/ui/Insignia';
 import { MarcoReporte } from '@/components/reportes/MarcoReporte';
 import { Cifra, Cifras, TablaDatos, TablaReporte } from '@/components/reportes/PiezasReporte';
-import {
-  BarrasRanking,
-  COLOR_SERIE,
-  ColumnasEnElTiempo,
-  Tablero,
-  TarjetaGrafico,
-} from '@/components/reportes/Graficos';
+import { COLOR_SERIE, ColumnasEnElTiempo, Tablero, TarjetaGrafico } from '@/components/reportes/Graficos';
+import { Pareto, Torta, partesConColor } from '@/components/reportes/GraficosEstadisticos';
 import type { ExistenciaStock, ReporteInventario } from '@/types';
-import { formatearBs, formatearCantidad } from '@/lib/formato';
-import { agruparEnElTiempo, diaDe, esPorMes, ranking } from '@/lib/series';
+import { formatearBs, formatearCantidad, formatearPorcentaje } from '@/lib/formato';
+import { agruparEnElTiempo, diaDe, esPorMes, pareto, plural } from '@/lib/series';
 import { ETIQUETA_MOTIVO } from '@/lib/inventario';
 
 /** Valor del selector: todos los ítems, o un insumo o producto concreto. */
@@ -272,12 +267,29 @@ function TableroInventario({
     inversion.set(m.item, previo);
   }
   const invertido = [...inversion].map(([item, d]) => ({ item, ...d }));
-  type FilaInversion = (typeof invertido)[number];
+  const tipoDe = new Map(invertido.map((f) => [f.item, f.tipo]));
+  const abc = pareto(
+    invertido.map((f) => ({ nombre: f.item, valor: f.valor, detalle: [f.tipo] })),
+    15,
+  );
+  const cuantosA = abc.filter((b) => b.clase === 'A' && !b.otros).length;
+
+  // Por qué se movió el inventario: cuántos movimientos de cada motivo.
+  const porMotivo = new Map<string, number>();
+  for (const m of reporte.movimientos) {
+    const motivo = ETIQUETA_MOTIVO[m.motivo] ?? m.motivo;
+    porMotivo.set(motivo, (porMotivo.get(motivo) ?? 0) + 1);
+  }
+  const motivos = partesConColor(
+    [...porMotivo].map(([nombre, valor]) => ({ nombre, valor })),
+    6,
+  );
 
   return (
     <Tablero>
       <TarjetaGrafico
         ancho
+        tipo="Columnas divergentes"
         titulo={`¿Qué entró y qué salió cada ${periodo}?`}
         descripcion={
           unico
@@ -310,30 +322,55 @@ function TableroInventario({
         />
       </TarjetaGrafico>
 
-      {invertido.length > 1 && (
-        // Es la única de su fila: a lo ancho, para no dejar media tarjeta vacía.
+      {abc.length > 1 && (
         <TarjetaGrafico
           ancho
+          tipo="Análisis ABC (Pareto)"
           titulo="¿En qué se invirtió más?"
-          descripcion="Lo que costó lo que entró de cada ítem, en bolivianos"
+          descripcion={`Lo que costó lo que entró de cada ítem. ${
+            cuantosA === 1 ? 'Un ítem (clase A) concentra' : `${cuantosA} ítems (clase A) concentran`
+          } el 80 % de lo invertido: son los que más conviene vigilar`}
           tabla={
             <TablaDatos
-              filas={[...invertido].sort((a, b) => b.valor - a.valor)}
-              clave={(f: FilaInversion) => f.item}
+              filas={abc}
+              clave={(b) => b.nombre}
               columnas={[
-                { titulo: 'Ítem', celda: (f) => f.item },
-                { titulo: 'Tipo', celda: (f) => f.tipo },
-                { titulo: 'Costo ingresado', numerica: true, celda: (f) => formatearBs(f.valor) },
+                { titulo: 'Ítem', celda: (b) => b.nombre },
+                { titulo: 'Tipo', celda: (b) => tipoDe.get(b.nombre) ?? '—' },
+                { titulo: 'Costo ingresado', numerica: true, celda: (b) => formatearBs(b.valor) },
+                { titulo: '% del total', numerica: true, celda: (b) => formatearPorcentaje(b.porcentaje) },
+                { titulo: '% acumulado', numerica: true, celda: (b) => formatearPorcentaje(b.acumulado) },
+                { titulo: 'Clase', celda: (b) => b.clase },
               ]}
             />
           }
         >
-          <BarrasRanking
-            barras={ranking(
-              invertido.map((f) => ({ nombre: f.item, valor: f.valor, detalle: [f.tipo] })),
-            )}
-            formatear={formatearBs}
-            etiqueta="Barras: costo ingresado por ítem, de mayor a menor"
+          <Pareto barras={abc} formatear={formatearBs} etiqueta="Análisis ABC: costo ingresado por ítem" />
+        </TarjetaGrafico>
+      )}
+
+      {motivos.length > 1 && (
+        <TarjetaGrafico
+          ancho
+          tipo="Gráfico de torta"
+          titulo="¿Por qué se movió el inventario?"
+          descripcion="Los movimientos del período según su motivo: compras, producción, ventas, ajustes…"
+          tabla={
+            <TablaDatos
+              filas={motivos}
+              clave={(m) => m.nombre}
+              columnas={[
+                { titulo: 'Motivo', celda: (m) => m.nombre },
+                { titulo: 'Movimientos', numerica: true, celda: (m) => m.valor },
+              ]}
+            />
+          }
+        >
+          <Torta
+            partes={motivos}
+            formatear={(n) => plural(n, 'movimiento', 'movimientos')}
+            centro={{ valor: String(reporte.movimientos.length), texto: 'movimientos' }}
+            etiqueta="Torta: movimientos del inventario por motivo"
           />
         </TarjetaGrafico>
       )}

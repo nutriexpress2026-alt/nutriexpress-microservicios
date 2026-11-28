@@ -140,6 +140,208 @@ export function ranking(barras: BarraRanking[], maximo = 8): BarraRanking[] {
   return [...ordenadas.slice(0, maximo - 1), barraOtros(ordenadas.slice(maximo - 1))];
 }
 
+/* ------------------------------------------------------------------ */
+/* Ojiva: lo acumulado                                                 */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Cada punto con lo acumulado hasta él y qué porcentaje del total es: la ojiva
+ * (curva de frecuencias acumuladas).
+ */
+export function acumular<T>(
+  puntos: T[],
+  valor: (punto: T) => number,
+): (T & { acumulado: number; porcentaje: number })[] {
+  const total = puntos.reduce((s, p) => s + valor(p), 0);
+  let acumulado = 0;
+  return puntos.map((p) => {
+    acumulado += valor(p);
+    return {
+      ...p,
+      acumulado: Math.round(acumulado * 100) / 100,
+      porcentaje: total > 0 ? Math.round((acumulado / total) * 1000) / 10 : 0,
+    };
+  });
+}
+
+/* ------------------------------------------------------------------ */
+/* Pareto y clasificación ABC                                          */
+/* ------------------------------------------------------------------ */
+
+export type ClaseAbc = 'A' | 'B' | 'C';
+
+export interface BarraPareto extends BarraRanking {
+  /** Su parte del total, en porcentaje. */
+  porcentaje: number;
+  /** Lo acumulado hasta ella, en porcentaje (la línea del diagrama). */
+  acumulado: number;
+  /** A: hasta el 80 % del total; B: hasta el 95 %; C: el resto. */
+  clase: ClaseAbc;
+}
+
+/**
+ * Diagrama de Pareto con la clasificación ABC: de mayor a menor, cada uno con
+ * su porcentaje y el acumulado.
+ *
+ * Es clase A el que todavía empieza antes del 80 % (el que cruza la línea
+ * también es A); B hasta el 95 %; C el resto. Los que no entran en el gráfico
+ * se suman en «Otros», al final, y son C.
+ */
+export function pareto(barras: BarraRanking[], maximo = 12): BarraPareto[] {
+  const ordenadas = [...barras].filter((b) => b.valor > 0).sort((a, b) => b.valor - a.valor);
+  const visibles =
+    ordenadas.length <= maximo
+      ? ordenadas
+      : [...ordenadas.slice(0, maximo - 1), barraOtros(ordenadas.slice(maximo - 1))];
+  const total = visibles.reduce((s, b) => s + b.valor, 0);
+  let acumulado = 0;
+  return visibles.map((b) => {
+    const antes = acumulado;
+    acumulado += total > 0 ? (b.valor / total) * 100 : 0;
+    return {
+      ...b,
+      porcentaje: Math.round((total > 0 ? (b.valor / total) * 100 : 0) * 10) / 10,
+      acumulado: Math.round(acumulado * 10) / 10,
+      clase: b.otros ? 'C' : antes < 80 ? 'A' : antes < 95 ? 'B' : 'C',
+    };
+  });
+}
+
+/* ------------------------------------------------------------------ */
+/* Histograma (regla de Sturges)                                       */
+/* ------------------------------------------------------------------ */
+
+/** Una clase (intervalo) del histograma. */
+export interface ClaseHistograma {
+  desde: number;
+  hasta: number;
+  /** El punto medio: por donde pasa el polígono de frecuencias. */
+  marca: number;
+  /** «20–30». */
+  etiqueta: string;
+  frecuencia: number;
+  /** Frecuencia relativa, en porcentaje. */
+  relativa: number;
+  /** Frecuencia acumulada (para la ojiva). */
+  acumulada: number;
+  porcentajeAcumulado: number;
+}
+
+/**
+ * Agrupa los valores en clases de igual ancho.
+ *
+ * El número de clases sale de la **regla de Sturges** (k = 1 + 3,322·log₁₀ n)
+ * y el ancho se redondea hacia arriba a un número cómodo de leer (de 5 en 5
+ * minutos, por ejemplo). Cada clase incluye su límite inferior y no el
+ * superior, salvo la última, que incluye el valor más alto.
+ */
+export function histograma(
+  valores: number[],
+  redondeo = 5,
+): { clases: ClaseHistograma[]; ancho: number; k: number } {
+  const n = valores.length;
+  if (n === 0) return { clases: [], ancho: 0, k: 0 };
+
+  const minimo = Math.min(...valores);
+  const maximo = Math.max(...valores);
+  const k = Math.ceil(1 + 3.322 * Math.log10(n));
+  const ancho = Math.max(Math.ceil((maximo - minimo) / k / redondeo) * redondeo, redondeo);
+  const inicio = Math.floor(minimo / redondeo) * redondeo;
+
+  const clases: ClaseHistograma[] = [];
+  for (let desde = inicio; desde <= maximo; desde += ancho) {
+    const hasta = desde + ancho;
+    clases.push({
+      desde,
+      hasta,
+      marca: desde + ancho / 2,
+      etiqueta: `${desde}–${hasta}`,
+      frecuencia: 0,
+      relativa: 0,
+      acumulada: 0,
+      porcentajeAcumulado: 0,
+    });
+  }
+  for (const v of valores) {
+    const i = Math.min(Math.floor((v - inicio) / ancho), clases.length - 1);
+    clases[i].frecuencia += 1;
+  }
+  let acumulada = 0;
+  for (const c of clases) {
+    acumulada += c.frecuencia;
+    c.relativa = Math.round((c.frecuencia / n) * 1000) / 10;
+    c.acumulada = acumulada;
+    c.porcentajeAcumulado = Math.round((acumulada / n) * 1000) / 10;
+  }
+  return { clases, ancho, k };
+}
+
+/**
+ * El valor bajo el que queda el `p` % de los datos, leído en la ojiva por
+ * interpolación lineal dentro de su clase (con `p` = 50, la mediana).
+ */
+export function percentil(clases: ClaseHistograma[], p: number): number | null {
+  let previo = 0;
+  for (const c of clases) {
+    if (c.porcentajeAcumulado >= p && c.frecuencia > 0) {
+      const dentro = (p - previo) / (c.porcentajeAcumulado - previo);
+      return Math.round((c.desde + dentro * (c.hasta - c.desde)) * 10) / 10;
+    }
+    previo = c.porcentajeAcumulado;
+  }
+  return null;
+}
+
+/* ------------------------------------------------------------------ */
+/* Días de la semana                                                   */
+/* ------------------------------------------------------------------ */
+
+const NOMBRES_DIA = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+
+/**
+ * El promedio de cada día de la semana en el rango.
+ *
+ * Promedio y no suma: un mes puede tener cinco sábados y cuatro lunes, y la
+ * suma haría parecer que el sábado vende más solo por eso. Se divide entre
+ * cuántos de ese día **tiene el rango**, hayan tenido ventas o no.
+ */
+export function porDiaDeLaSemana(
+  desde: string,
+  hasta: string,
+  dias: { dia: string; total: number; cantidad: number }[],
+): { dia: string; corto: string; promedio: number; cantidadPromedio: number; veces: number }[] {
+  let inicio = esDia(desde) ? diaLocal(desde) : null;
+  let fin = esDia(hasta) ? diaLocal(hasta) : null;
+  if (!inicio || !fin || inicio > fin) {
+    const ordenados = dias.map((d) => d.dia).filter(esDia).sort();
+    if (ordenados.length === 0) return [];
+    inicio = diaLocal(ordenados[0]);
+    fin = diaLocal(ordenados[ordenados.length - 1]);
+  }
+
+  // getDay(): 0 es domingo; aquí la semana empieza el lunes.
+  const indice = (fecha: Date) => (fecha.getDay() + 6) % 7;
+  const veces = Array(7).fill(0);
+  for (const cursor = new Date(inicio); cursor <= fin; cursor.setDate(cursor.getDate() + 1)) {
+    veces[indice(cursor)] += 1;
+  }
+  const total = Array(7).fill(0);
+  const cantidad = Array(7).fill(0);
+  for (const d of dias) {
+    if (!esDia(d.dia)) continue;
+    const i = indice(diaLocal(d.dia));
+    total[i] += d.total;
+    cantidad[i] += d.cantidad;
+  }
+  return NOMBRES_DIA.map((dia, i) => ({
+    dia,
+    corto: dia.slice(0, 3),
+    promedio: veces[i] ? Math.round((total[i] / veces[i]) * 100) / 100 : 0,
+    cantidadPromedio: veces[i] ? Math.round((cantidad[i] / veces[i]) * 10) / 10 : 0,
+    veces: veces[i],
+  }));
+}
+
 /**
  * De mayor a menor, pero cuando son muchas se quedan **las dos puntas**: las
  * que más dejan y las que más pierden, con las del medio en «Otros».

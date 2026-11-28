@@ -13,18 +13,26 @@ import {
   type ColumnaTabla,
 } from '@/components/reportes/PiezasReporte';
 import { CifrasGanancia, columnasGanancia } from '@/components/reportes/Ganancia';
+import { BarrasRanking, Tablero, TarjetaGrafico, colorMetodoPago } from '@/components/reportes/Graficos';
 import {
-  BarraRepartida,
-  BarrasRanking,
-  COLOR_MARCA,
-  ColumnasEnElTiempo,
-  Tablero,
-  TarjetaGrafico,
-  colorMetodoPago,
-} from '@/components/reportes/Graficos';
+  AreaEnElTiempo,
+  Burbujas,
+  Ojiva,
+  Pareto,
+  RadarSemana,
+  Torta,
+} from '@/components/reportes/GraficosEstadisticos';
 import type { LineaProductoReporte, ProductoCatalogo, ReporteVentas } from '@/types';
-import { formatearBs, formatearPorcentaje } from '@/lib/formato';
-import { agruparEnElTiempo, esPorMes, extremos, plural, ranking } from '@/lib/series';
+import { formatearBs, formatearCantidad, formatearPorcentaje } from '@/lib/formato';
+import {
+  acumular,
+  agruparEnElTiempo,
+  esPorMes,
+  pareto,
+  plural,
+  porDiaDeLaSemana,
+  ranking,
+} from '@/lib/series';
 
 /**
  * RF-VEN-07 — reporte parametrizado de ventas por rango de fechas y producto,
@@ -131,10 +139,11 @@ function Reportes() {
 }
 
 /**
- * Los gráficos del reporte, cada uno con su tabla al lado (botón «Tabla»).
+ * Los gráficos del reporte, cada uno con su tabla al lado (botón «Tabla») y el
+ * nombre del gráfico junto al título.
  *
- * Un gráfico con una sola barra no dice más que la cifra: cuando el filtro deja
- * un solo producto o un solo vendedor, va la tabla directamente.
+ * Un gráfico con un solo dato no dice más que la cifra: cuando el filtro deja un
+ * solo producto, un solo método o un solo vendedor, va la tabla directamente.
  */
 function TableroVentas({ reporte }: { reporte: ReporteVentas }) {
   const dias = agruparEnElTiempo(
@@ -147,6 +156,34 @@ function TableroVentas({ reporte }: { reporte: ReporteVentas }) {
     { total: 0, cantidadVentas: 0 },
   );
   const periodo = esPorMes(dias) ? 'mes' : 'día';
+
+  // Ojiva: lo vendido acumulado, y cuándo se llegó a la mitad del total.
+  const acumulado = acumular(dias, (d) => d.total);
+  const totalVendido = acumulado[acumulado.length - 1]?.acumulado ?? 0;
+  const mitad = acumulado.find((d) => d.porcentaje >= 50);
+
+  // Radar: solo si el rango tiene cada día de la semana al menos una vez y hubo
+  // ventas en tres días distintos o más (con uno solo, la figura es una raya).
+  const semana = porDiaDeLaSemana(
+    reporte.desde,
+    reporte.hasta,
+    reporte.porDia.map((d) => ({ dia: d.dia, total: d.total, cantidad: d.cantidadVentas })),
+  );
+  const conSemana =
+    semana.length === 7 &&
+    semana.every((d) => d.veces > 0) &&
+    semana.filter((d) => d.promedio > 0).length >= 3;
+  const mejorDia = [...semana].sort((a, b) => b.promedio - a.promedio)[0];
+
+  const barrasPareto = pareto(
+    reporte.porProducto.map((p) => ({
+      nombre: p.nombre,
+      valor: p.importe,
+      detalle: [plural(p.unidades, 'unidad', 'unidades')],
+    })),
+  );
+  const cuantosA = barrasPareto.filter((b) => b.clase === 'A' && !b.otros).length;
+  const conCosto = reporte.porProducto.filter((p) => p.ganancia !== null && p.margen !== null);
 
   // Cada tabla se arma una vez: va en la vista «Tabla» de su gráfico o, si no
   // hay gráfico, sola.
@@ -165,7 +202,6 @@ function TableroVentas({ reporte }: { reporte: ReporteVentas }) {
       ...columnasGanancia<LineaProductoReporte>(),
     ] as ColumnaTabla<LineaProductoReporte>[],
   };
-  const conCosto = reporte.porProducto.filter((p) => p.ganancia !== null);
 
   type FilaVendedor = NonNullable<ReporteVentas['porVendedor']>[number];
   const vendedores = {
@@ -188,11 +224,13 @@ function TableroVentas({ reporte }: { reporte: ReporteVentas }) {
       { titulo: 'Total', numerica: true, celda: (m) => formatearBs(m.total) },
     ] as ColumnaTabla<FilaMetodo>[],
   };
+  const totalMetodos = reporte.porMetodoPago.reduce((s, m) => s + m.total, 0);
 
   return (
     <Tablero>
       <TarjetaGrafico
         ancho
+        tipo="Gráfico de área"
         titulo={`¿Cuánto se vendió cada ${periodo}?`}
         descripcion={`Total cobrado por ${periodo}, en bolivianos. Los ${periodo === 'mes' ? 'meses' : 'días'} sin ventas quedan en cero`}
         tabla={
@@ -207,35 +245,113 @@ function TableroVentas({ reporte }: { reporte: ReporteVentas }) {
           />
         }
       >
-        <ColumnasEnElTiempo
-          datos={dias}
-          series={[{ clave: 'total', nombre: 'vendido', color: COLOR_MARCA }]}
+        <AreaEnElTiempo
+          puntos={dias.map((d) => ({
+            etiqueta: d.etiqueta,
+            etiquetaLarga: d.etiquetaLarga,
+            valor: d.total,
+            notas: [plural(d.cantidadVentas, 'venta', 'ventas')],
+          }))}
           formatear={formatearBs}
-          notas={(d) => [plural(d.cantidadVentas, 'venta', 'ventas')]}
-          etiqueta={`Columnas: total vendido por ${periodo}`}
+          nombre="vendido"
+          etiqueta={`Área: total vendido por ${periodo}`}
         />
       </TarjetaGrafico>
 
-      {reporte.porProducto.length > 1 ? (
-        <TarjetaGrafico
-          titulo="¿Qué productos se venden más?"
-          descripcion="Lo cobrado por cada producto, en bolivianos"
-          tabla={<TablaDatos {...productos} />}
-        >
-          <BarrasRanking
-            barras={ranking(
-              reporte.porProducto.map((p) => ({
-                nombre: p.nombre,
-                valor: p.importe,
-                detalle: [
-                  plural(p.unidades, 'unidad', 'unidades'),
-                  `${formatearPorcentaje(p.participacion)} de lo vendido`,
-                ],
-              })),
-            )}
-            formatear={formatearBs}
-            etiqueta="Barras: importe vendido por producto, de mayor a menor"
+      <TarjetaGrafico
+        ancho={!conSemana}
+        tipo="Ojiva"
+        titulo="¿A qué ritmo se llegó al total?"
+        descripcion={
+          mitad
+            ? `Lo vendido acumulado. La mitad del total se alcanzó ${periodo === 'mes' ? 'en' : 'el'} ${mitad.etiquetaLarga}`
+            : 'Lo vendido acumulado en el período'
+        }
+        tabla={
+          <TablaDatos
+            filas={acumulado.filter((d) => d.cantidadVentas > 0)}
+            clave={(d) => d.clave}
+            columnas={[
+              { titulo: periodo === 'mes' ? 'Mes' : 'Día', celda: (d) => d.etiquetaLarga },
+              { titulo: 'Vendido', numerica: true, celda: (d) => formatearBs(d.total) },
+              { titulo: 'Acumulado', numerica: true, celda: (d) => formatearBs(d.acumulado) },
+              { titulo: '% acumulado', numerica: true, celda: (d) => formatearPorcentaje(d.porcentaje) },
+            ]}
           />
+        }
+      >
+        <Ojiva
+          puntos={acumulado.map((d) => ({
+            etiqueta: d.etiqueta,
+            valor: d.acumulado,
+            titulo: `Hasta ${periodo === 'mes' ? '' : 'el '}${d.etiquetaLarga}`,
+            notas: [
+              `${formatearPorcentaje(d.porcentaje)} del total`,
+              `Ese ${periodo}: ${formatearBs(d.total)}`,
+            ],
+          }))}
+          formatear={formatearBs}
+          nombre="acumulado"
+          referencia={totalVendido > 0 ? { valor: totalVendido / 2, etiqueta: 'Mitad del total' } : undefined}
+          etiqueta="Ojiva: ventas acumuladas en el período"
+        />
+      </TarjetaGrafico>
+
+      {conSemana && (
+        <TarjetaGrafico
+          tipo="Gráfico de radar"
+          titulo="¿Qué días de la semana se vende más?"
+          descripcion={`Promedio cobrado por cada día de la semana. El ${mejorDia.dia.toLowerCase()} es el más fuerte`}
+          tabla={
+            <TablaDatos
+              filas={semana}
+              clave={(d) => d.dia}
+              columnas={[
+                { titulo: 'Día', celda: (d) => d.dia },
+                { titulo: 'Veces en el rango', numerica: true, celda: (d) => d.veces },
+                { titulo: 'Ventas por día', numerica: true, celda: (d) => d.cantidadPromedio },
+                { titulo: 'Promedio', numerica: true, celda: (d) => formatearBs(d.promedio) },
+              ]}
+            />
+          }
+        >
+          <RadarSemana
+            puntos={semana.map((d) => ({
+              corto: d.corto,
+              dia: d.dia,
+              valor: d.promedio,
+              notas: [`${d.cantidadPromedio} ventas en promedio`, `Promedio de ${plural(d.veces, 'día', 'días')}`],
+            }))}
+            formatear={formatearBs}
+            nombre="en promedio"
+            etiqueta="Radar: promedio vendido por día de la semana"
+          />
+        </TarjetaGrafico>
+      )}
+
+      {barrasPareto.length > 1 ? (
+        <TarjetaGrafico
+          ancho
+          tipo="Diagrama de Pareto"
+          titulo="¿Qué productos hacen la mayor parte de las ventas?"
+          descripcion={`Cada producto con su parte de lo cobrado y el acumulado. ${
+            cuantosA === 1 ? 'Un producto (clase A) hace' : `${cuantosA} productos (clase A) hacen`
+          } el 80 % de lo vendido`}
+          tabla={
+            <TablaDatos
+              filas={barrasPareto}
+              clave={(b) => b.nombre}
+              columnas={[
+                { titulo: 'Producto', celda: (b) => b.nombre },
+                { titulo: 'Importe', numerica: true, celda: (b) => formatearBs(b.valor) },
+                { titulo: '% del total', numerica: true, celda: (b) => formatearPorcentaje(b.porcentaje) },
+                { titulo: '% acumulado', numerica: true, celda: (b) => formatearPorcentaje(b.acumulado) },
+                { titulo: 'Clase', celda: (b) => b.clase },
+              ]}
+            />
+          }
+        >
+          <Pareto barras={barrasPareto} formatear={formatearBs} etiqueta="Diagrama de Pareto: productos por importe" />
         </TarjetaGrafico>
       ) : (
         // Siete columnas no caben en media pantalla: a lo ancho.
@@ -246,35 +362,40 @@ function TableroVentas({ reporte }: { reporte: ReporteVentas }) {
 
       {conCosto.length > 1 && (
         <TarjetaGrafico
-          titulo="¿Qué productos dejan ganancia?"
-          descripcion="Cobrado menos costo, en bolivianos. En rojo, lo vendido bajo su costo"
+          ancho
+          tipo="Gráfico de burbujas"
+          titulo="¿Qué productos venden mucho y dejan buen margen?"
+          descripcion="Cada burbuja es un producto: a la derecha, más unidades; arriba, más margen; más grande, más cobrado. En rojo, los vendidos bajo su costo"
           tabla={<TablaDatos {...productos} />}
         >
-          <BarrasRanking
-            barras={extremos(
-              conCosto.map((p) => ({
-                nombre: p.nombre,
-                valor: p.ganancia ?? 0,
-                detalle: [
-                  `Cobrado ${formatearBs(p.importe)}`,
-                  `Costó ${formatearBs(p.costo ?? 0)}`,
-                  `Margen ${p.margen === null ? '—' : formatearPorcentaje(p.margen)}`,
-                ],
-              })),
-            )}
-            formatear={formatearBs}
-            etiqueta="Barras: ganancia por producto; las pérdidas van a la izquierda del cero"
+          <Burbujas
+            puntos={conCosto.map((p) => ({
+              nombre: p.nombre,
+              x: p.unidades,
+              y: p.margen ?? 0,
+              z: p.importe,
+              notas: [`Cobrado ${formatearBs(p.importe)}`, `Ganancia ${formatearBs(p.ganancia ?? 0)}`],
+            }))}
+            ejeX="Unidades vendidas"
+            ejeY="Margen"
+            tamano="lo cobrado"
+            formatearX={(v) => formatearCantidad(v)}
+            formatearY={(v) => formatearPorcentaje(v)}
+            formatearEjeY={(v) => `${Math.round(v)} %`}
+            promedioY={reporte.resumen.margen ?? undefined}
+            etiqueta="Burbujas: unidades vendidas, margen e importe de cada producto"
           />
         </TarjetaGrafico>
       )}
 
       {reporte.porMetodoPago.length > 1 ? (
         <TarjetaGrafico
+          tipo="Gráfico de torta"
           titulo="¿Cómo pagan los clientes?"
-          descripcion="Cómo se reparte el total entre los métodos de pago"
+          descripcion="Cómo se reparte lo cobrado entre los métodos de pago"
           tabla={<TablaDatos {...metodos} />}
         >
-          <BarraRepartida
+          <Torta
             partes={reporte.porMetodoPago.map((m) => ({
               nombre: m.metodo,
               valor: m.total,
@@ -282,7 +403,8 @@ function TableroVentas({ reporte }: { reporte: ReporteVentas }) {
               detalle: plural(m.cantidadVentas, 'venta', 'ventas'),
             }))}
             formatear={formatearBs}
-            etiqueta="Barra repartida: total vendido por método de pago"
+            centro={{ valor: formatearBs(totalMetodos), texto: 'cobrado' }}
+            etiqueta="Torta: total vendido por método de pago"
           />
         </TarjetaGrafico>
       ) : (
@@ -291,6 +413,7 @@ function TableroVentas({ reporte }: { reporte: ReporteVentas }) {
 
       {vendedores.filas.length > 1 ? (
         <TarjetaGrafico
+          tipo="Barras horizontales"
           titulo="¿Quién vendió más?"
           descripcion="Total cobrado por cada vendedor, en bolivianos"
           tabla={<TablaDatos {...vendedores} />}

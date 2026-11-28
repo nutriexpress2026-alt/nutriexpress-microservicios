@@ -413,6 +413,10 @@ input[type="number"] {
   --grafico-2: #e76624;
   --grafico-3: #00a888;
   --grafico-4: #d28e05;
+  --grafico-5: #e24d8b;
+  --grafico-6: #0aac23;
+  --grafico-7: #9887ef;
+  --grafico-8: #eb6263;
 }
 
 :root[data-modo='dia'] {
@@ -420,6 +424,10 @@ input[type="number"] {
   --grafico-2: #f47230;
   --grafico-3: #00b894;
   --grafico-4: #f2a600;
+  --grafico-5: #ee7fac;
+  --grafico-6: #008a17;
+  --grafico-7: #6a4ce2;
+  --grafico-8: #ec4647;
 }
 
 /* --- Lo que el modo día cambia en todos los temas --- */

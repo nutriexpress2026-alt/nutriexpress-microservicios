@@ -15,20 +15,31 @@ import {
 import { CifrasGanancia, columnasGanancia } from '@/components/reportes/Ganancia';
 import {
   BarrasRanking,
-  COLOR_MARCA,
+  COLOR_OTROS,
+  COLOR_SERIE,
   ColumnasEnElTiempo,
   ListaAvance,
   Tablero,
   TarjetaGrafico,
 } from '@/components/reportes/Graficos';
-import { agruparEnElTiempo, diaDe, esPorMes, extremos, plural, ranking } from '@/lib/series';
+import { Embudo, HistogramaPoligono, Ojiva } from '@/components/reportes/GraficosEstadisticos';
+import {
+  agruparEnElTiempo,
+  diaDe,
+  esPorMes,
+  extremos,
+  histograma,
+  percentil,
+  plural,
+  ranking,
+} from '@/lib/series';
 import type {
   LineaProductoReporte,
   ProductoCatalogo,
   ReportePedidos,
   Repartidor,
 } from '@/types';
-import { formatearBs, formatearPorcentaje } from '@/lib/formato';
+import { formatearBs, formatearCantidad, formatearPorcentaje } from '@/lib/formato';
 import { ETIQUETA_ESTADO } from '@/lib/pedidos';
 
 /**
@@ -187,9 +198,31 @@ const ORDEN_ESTADO = Object.keys(ETIQUETA_ESTADO);
 const etiquetaEstado = (estado: string) =>
   ETIQUETA_ESTADO[estado as keyof typeof ETIQUETA_ESTADO] ?? estado;
 
+
 /**
- * Los gráficos del reporte, cada uno con su tabla a un botón. Un gráfico de una
- * sola barra no dice más que la cifra: en ese caso va la tabla.
+ * Las etapas del embudo: hasta dónde llegó cada pedido. Un pedido en camino ya
+ * pasó por «recibido» y «en preparación», así que cuenta en las tres. Los
+ * cancelados no tienen etapa (se pudieron cancelar en cualquiera) y van aparte.
+ */
+const ETAPAS: { nombre: string; desde: number }[] = [
+  { nombre: 'Entraron', desde: 0 },
+  { nombre: 'Recibidos (pagados)', desde: 1 },
+  { nombre: 'En preparación', desde: 2 },
+  { nombre: 'En camino', desde: 3 },
+  { nombre: 'Entregados', desde: 4 },
+];
+const RANGO_ESTADO: Record<string, number> = {
+  'Pendiente de pago': 0,
+  Recibido: 1,
+  'En preparacion': 2,
+  'En camino': 3,
+  Entregado: 4,
+};
+
+/**
+ * Los gráficos del reporte, cada uno con su tabla a un botón y el nombre del
+ * gráfico junto al título. Un gráfico de un solo dato no dice más que la cifra:
+ * en ese caso va la tabla.
  */
 function TableroPedidos({ reporte }: { reporte: ReportePedidos }) {
   const dias = agruparEnElTiempo(
@@ -197,14 +230,53 @@ function TableroPedidos({ reporte }: { reporte: ReportePedidos }) {
     reporte.hasta,
     reporte.pedidos.map((p) => {
       const cancelado = p.estado === 'Cancelado';
+      const entregado = p.estado === 'Entregado';
       return {
         dia: diaDe(p.fecha),
-        valores: { pedidos: 1, total: cancelado ? 0 : p.total, cancelados: cancelado ? 1 : 0 },
+        valores: {
+          entregados: entregado ? 1 : 0,
+          enCurso: !entregado && !cancelado ? 1 : 0,
+          cancelados: cancelado ? 1 : 0,
+          total: cancelado ? 0 : p.total,
+        },
       };
     }),
-    { pedidos: 0, total: 0, cancelados: 0 },
+    { entregados: 0, enCurso: 0, cancelados: 0, total: 0 },
   );
   const periodo = esPorMes(dias) ? 'mes' : 'día';
+
+  // Embudo: cuántos llegaron a cada etapa.
+  const etapas = ETAPAS.map((e) => ({
+    nombre: e.nombre,
+    valor: reporte.porEstado
+      .filter((x) => (RANGO_ESTADO[x.estado] ?? -1) >= e.desde)
+      .reduce((s, x) => s + x.cantidad, 0),
+  }));
+  const entraron = etapas[0].valor;
+  const cancelados = reporte.porEstado.find((x) => x.estado === 'Cancelado')?.cantidad ?? 0;
+
+  // Histograma y ojiva de los minutos de entrega (solo los que llegaron).
+  const minutosEntrega = reporte.pedidos
+    .map((p) => p.minutosDeEntrega)
+    .filter((m): m is number => m !== null);
+  const { clases, ancho, k } = histograma(minutosEntrega, 5);
+  const mediana = percentil(clases, 50);
+  const p90 = percentil(clases, 90);
+  const conTiempos = minutosEntrega.length >= 3 && clases.length > 1;
+  const tablaFrecuencias = (
+    <TablaDatos
+      filas={clases}
+      clave={(c) => c.etiqueta}
+      columnas={[
+        { titulo: 'Minutos', celda: (c) => `${c.desde} a ${c.hasta}` },
+        { titulo: 'Marca de clase', numerica: true, celda: (c) => formatearCantidad(c.marca) },
+        { titulo: 'Frecuencia', numerica: true, celda: (c) => c.frecuencia },
+        { titulo: 'Frec. relativa', numerica: true, celda: (c) => formatearPorcentaje(c.relativa) },
+        { titulo: 'Frec. acumulada', numerica: true, celda: (c) => c.acumulada },
+        { titulo: '% acumulado', numerica: true, celda: (c) => formatearPorcentaje(c.porcentajeAcumulado) },
+      ]}
+    />
+  );
 
   const productos = {
     filas: reporte.porProducto,
@@ -223,11 +295,10 @@ function TableroPedidos({ reporte }: { reporte: ReportePedidos }) {
   };
   const conCosto = reporte.porProducto.filter((p) => p.ganancia !== null);
 
-  const estadosOrdenados = [...reporte.porEstado].sort(
-    (a, b) => ORDEN_ESTADO.indexOf(a.estado) - ORDEN_ESTADO.indexOf(b.estado),
-  );
   const estados = {
-    filas: estadosOrdenados,
+    filas: [...reporte.porEstado].sort(
+      (a, b) => ORDEN_ESTADO.indexOf(a.estado) - ORDEN_ESTADO.indexOf(b.estado),
+    ),
     clave: (e: FilaEstado) => e.estado,
     columnas: [
       { titulo: 'Estado', celda: (e) => etiquetaEstado(e.estado) },
@@ -255,15 +326,17 @@ function TableroPedidos({ reporte }: { reporte: ReportePedidos }) {
     <Tablero>
       <TarjetaGrafico
         ancho
+        tipo="Columnas apiladas"
         titulo={`¿Cuántos pedidos entraron cada ${periodo}?`}
-        descripcion={`Pedidos por ${periodo}, contados todos sus estados. El monto del recuadro no suma los cancelados`}
+        descripcion={`Pedidos por ${periodo}, partidos según cómo terminaron. El monto del recuadro no suma los cancelados`}
         tabla={
           <TablaDatos
-            filas={dias.filter((d) => d.pedidos > 0)}
+            filas={dias.filter((d) => d.entregados + d.enCurso + d.cancelados > 0)}
             clave={(d) => d.clave}
             columnas={[
               { titulo: periodo === 'mes' ? 'Mes' : 'Día', celda: (d) => d.etiquetaLarga },
-              { titulo: 'Pedidos', numerica: true, celda: (d) => d.pedidos },
+              { titulo: 'Entregados', numerica: true, celda: (d) => d.entregados },
+              { titulo: 'En curso', numerica: true, celda: (d) => d.enCurso },
               { titulo: 'Cancelados', numerica: true, celda: (d) => d.cancelados },
               { titulo: 'Total sin cancelados', numerica: true, celda: (d) => formatearBs(d.total) },
             ]}
@@ -272,32 +345,45 @@ function TableroPedidos({ reporte }: { reporte: ReportePedidos }) {
       >
         <ColumnasEnElTiempo
           datos={dias}
-          series={[{ clave: 'pedidos', nombre: 'pedidos', color: COLOR_MARCA }]}
+          series={[
+            { clave: 'entregados', nombre: 'Entregados', color: COLOR_SERIE[0] },
+            { clave: 'enCurso', nombre: 'En curso', color: COLOR_SERIE[1] },
+            { clave: 'cancelados', nombre: 'Cancelados', color: COLOR_OTROS },
+          ]}
           formatear={(n) => String(n)}
           enteros
-          notas={(d) => [
-            `${formatearBs(d.total)} sin cancelados`,
-            ...(d.cancelados > 0 ? [plural(d.cancelados, 'cancelado', 'cancelados')] : []),
-          ]}
-          etiqueta={`Columnas: pedidos por ${periodo}`}
+          notas={(d) => [`${formatearBs(d.total)} sin cancelados`]}
+          etiqueta={`Columnas apiladas: pedidos por ${periodo} según cómo terminaron`}
         />
       </TarjetaGrafico>
 
-      {estados.filas.length > 1 ? (
+      {entraron > 0 ? (
         <TarjetaGrafico
-          titulo="¿En qué estado están?"
-          descripcion="Pedidos del período según hasta dónde llegaron, en el orden del recorrido"
-          tabla={<TablaDatos {...estados} />}
+          tipo="Embudo"
+          titulo="¿Hasta dónde llegan los pedidos?"
+          descripcion={`Cuántos llegaron a cada etapa del recorrido${
+            cancelados ? `, sin los ${plural(cancelados, 'cancelado', 'cancelados')}` : ''
+          }. Lo que se angosta es lo que todavía no avanza`}
+          tabla={
+            <>
+              <TablaDatos
+                filas={etapas}
+                clave={(e) => e.nombre}
+                columnas={[
+                  { titulo: 'Etapa', celda: (e) => e.nombre },
+                  { titulo: 'Llegaron', numerica: true, celda: (e) => e.valor },
+                  {
+                    titulo: '% de los que entraron',
+                    numerica: true,
+                    celda: (e) => formatearPorcentaje(entraron ? (e.valor / entraron) * 100 : 0),
+                  },
+                ]}
+              />
+              <TablaDatos {...estados} />
+            </>
+          }
         >
-          <BarrasRanking
-            barras={estadosOrdenados.map((e) => ({
-              nombre: etiquetaEstado(e.estado),
-              valor: e.cantidad,
-              detalle: [`${formatearBs(e.total)} en total`],
-            }))}
-            formatear={(n) => String(n)}
-            etiqueta="Barras: pedidos por estado, en el orden del recorrido"
-          />
+          <Embudo etapas={etapas} nombre="pedidos" etiqueta="Embudo: pedidos que llegaron a cada etapa" />
         </TarjetaGrafico>
       ) : (
         <TablaReporte titulo="Por estado" {...estados} />
@@ -305,6 +391,7 @@ function TableroPedidos({ reporte }: { reporte: ReportePedidos }) {
 
       {reporte.porRepartidor.length > 0 ? (
         <TarjetaGrafico
+          tipo="Medidores"
           titulo="¿Cómo rinden los repartidores?"
           descripcion="Cuántos de sus pedidos asignados entregó cada uno, y en cuánto tiempo"
           tabla={<TablaDatos {...repartidores} />}
@@ -325,8 +412,56 @@ function TableroPedidos({ reporte }: { reporte: ReportePedidos }) {
         <TablaReporte titulo="Por repartidor" {...repartidores} />
       )}
 
+      {/* Junto a los repartidores cuando el embudo no está, para no dejar un hueco. */}
+      {conTiempos && (
+        <TarjetaGrafico
+          tipo="Histograma y polígono de frecuencias"
+          titulo="¿Cuánto tardan las entregas?"
+          descripcion={`${plural(minutosEntrega.length, 'pedido entregado', 'pedidos entregados')} según los minutos que tardó, en ${k} clases de ${ancho} min (regla de Sturges)`}
+          tabla={tablaFrecuencias}
+        >
+          <HistogramaPoligono clases={clases} unidad="min" nombre="pedidos" etiqueta="Histograma de los minutos de entrega" />
+        </TarjetaGrafico>
+      )}
+
+      {conTiempos && (
+        <TarjetaGrafico
+          tipo="Ojiva"
+          titulo="¿Qué parte llega a tiempo?"
+          descripcion={
+            mediana === null
+              ? 'Porcentaje acumulado de pedidos entregados hasta cada tiempo'
+              : `La mitad de los pedidos se entrega en ${formatearCantidad(mediana)} min o menos (mediana)${
+                  p90 === null ? '' : `, y el 90 % en ${formatearCantidad(p90)} min o menos`
+                }`
+          }
+          tabla={tablaFrecuencias}
+        >
+          <Ojiva
+            puntos={[
+              { etiqueta: String(clases[0].desde), valor: 0, titulo: `Menos de ${clases[0].desde} min` },
+              ...clases.map((c) => ({
+                etiqueta: String(c.hasta),
+                valor: c.porcentajeAcumulado,
+                titulo: `Hasta ${c.hasta} min`,
+                notas: [`${c.acumulada} de ${minutosEntrega.length} pedidos`],
+              })),
+            ]}
+            formatear={formatearPorcentaje}
+            formatearEje={(v) => `${v} %`}
+            nombre="de los pedidos"
+            maximoEje={100}
+            referencia={
+              mediana === null ? undefined : { valor: 50, etiqueta: `Mediana ≈ ${formatearCantidad(mediana)} min` }
+            }
+            etiqueta="Ojiva: porcentaje acumulado de pedidos por minutos de entrega"
+          />
+        </TarjetaGrafico>
+      )}
+
       {reporte.porProducto.length > 1 ? (
         <TarjetaGrafico
+          tipo="Barras horizontales"
           titulo="¿Qué productos se piden más?"
           descripcion="Lo vendido de cada producto en los pedidos no cancelados, en bolivianos"
           tabla={<TablaDatos {...productos} />}
@@ -355,6 +490,7 @@ function TableroPedidos({ reporte }: { reporte: ReportePedidos }) {
 
       {conCosto.length > 1 && (
         <TarjetaGrafico
+          tipo="Barras divergentes"
           titulo="¿Qué productos dejan ganancia?"
           descripcion="Cobrado menos costo, en bolivianos. En rojo, lo vendido bajo su costo"
           tabla={<TablaDatos {...productos} />}

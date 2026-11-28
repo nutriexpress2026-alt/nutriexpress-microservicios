@@ -1,7 +1,15 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { BarraRepartida, ListaAvance, TarjetaGrafico, colorMetodoPago } from '@/components/reportes/Graficos';
+import { ListaAvance, TarjetaGrafico, colorMetodoPago } from '@/components/reportes/Graficos';
+import { Torta, partesConColor } from '@/components/reportes/GraficosEstadisticos';
+
+// Recharts mide su contenedor con ResizeObserver, que jsdom no trae.
+globalThis.ResizeObserver ??= class {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+};
 import { TablaDatos } from '@/components/reportes/PiezasReporte';
 import { formatearBs } from '@/lib/formato';
 
@@ -43,27 +51,45 @@ describe('TarjetaGrafico', () => {
   });
 });
 
-describe('BarraRepartida', () => {
+describe('Torta', () => {
   const partes = [
     { nombre: 'QR', valor: 75, color: colorMetodoPago('QR'), detalle: '3 ventas' },
     { nombre: 'Efectivo', valor: 25, color: colorMetodoPago('Efectivo'), detalle: '1 venta' },
   ];
 
-  it('escribe el porcentaje en cada parte y el monto en la leyenda', () => {
-    render(<BarraRepartida partes={partes} formatear={formatearBs} etiqueta="Métodos de pago" />);
+  it('deja escritos el total, el monto y el porcentaje de cada parte', () => {
+    render(
+      <Torta
+        partes={partes}
+        formatear={formatearBs}
+        centro={{ valor: 'Bs 100,00', texto: 'cobrado' }}
+        etiqueta="Métodos de pago"
+      />,
+    );
 
-    expect(screen.getByText('75 %')).toBeInTheDocument();
-    expect(screen.getByText('25 %')).toBeInTheDocument();
+    expect(screen.getByRole('figure', { name: 'Métodos de pago' })).toBeInTheDocument();
+    expect(screen.getByText('cobrado')).toBeInTheDocument();
     expect(screen.getByText('Bs 75,00')).toBeInTheDocument();
-    expect(screen.getByText('3 ventas')).toBeInTheDocument();
-    // Con el teclado o un lector de pantalla, cada parte dice su nombre y su monto.
-    // (Intl separa «Bs» del número con un espacio duro: \s lo reconoce.)
-    expect(screen.getByRole('img', { name: /QR: Bs\s75,00, 75,0\s%/ })).toBeInTheDocument();
+    // (Intl separa «Bs» y «%» con un espacio duro: \s lo reconoce.)
+    expect(screen.getByText(/75,0\s%\s·\s3 ventas/)).toBeInTheDocument();
+    expect(screen.getByText(/25,0\s%\s·\s1 venta/)).toBeInTheDocument();
   });
 
   it('cada método conserva su color aunque cambie el orden', () => {
     expect(colorMetodoPago('QR')).not.toBe(colorMetodoPago('Efectivo'));
     expect(colorMetodoPago('QR')).toBe(colorMetodoPago('QR'));
+  });
+});
+
+describe('partesConColor', () => {
+  it('da un color fijo a cada una y pasada la octava suma el resto en «Otros»', () => {
+    const partes = partesConColor(
+      Array.from({ length: 10 }, (_, i) => ({ nombre: `Insumo ${i + 1}`, valor: 100 - i })),
+    );
+
+    expect(partes).toHaveLength(8);
+    expect(new Set(partes.map((p) => p.color)).size).toBe(8);
+    expect(partes[7]).toMatchObject({ nombre: 'Otros (3)', valor: 93 + 92 + 91 });
   });
 });
 
